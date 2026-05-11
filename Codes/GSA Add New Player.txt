@@ -1,0 +1,700 @@
+<head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css" type="text/css" />
+
+<style>
+a.selected {
+  background-color:#1F75CC;
+  color:white;
+  z-index:100;
+}
+
+.messagepop {
+  background-color:#FFFFFF;
+  border:1px solid #999999;
+  cursor:default;
+  display:none;
+  margin-top: 15px;
+  position:absolute;
+  text-align:left;
+  width:394px;
+  z-index:50;
+  padding: 25px 25px 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 3px;
+  padding-left: 15px;
+  text-indent: -15px;
+}
+
+.messagepop p, .messagepop.div {
+  border-bottom: 1px solid #EFEFEF;
+  margin: 8px 0;
+  padding-bottom: 8px;
+}
+.trans_name { display: none; }
+.error-row {
+	color:red;
+	font-size: 13px;
+}
+.existing-check {
+	display: flex;
+	height: 25px;
+	align-items: center;
+	width: 100%;
+	font-size: 13px;
+}
+.existing-check .col-1 { 
+	min-width: 80px;
+}
+.existing-check .col-2 { 
+	min-width: 90px;
+}
+.existing-check .col-3 { 
+	min-width: 150px;
+}
+</style>
+<script>
+
+</script>
+<div class="messagepop pop"><div style="margin:0 auto;width:300px; text-align: left;font-weight:bold;font-size:18px;display: inline-block;
+    margin-bottom: 20px;">Add New City</div><div style="display:inline-block;float:right;"><img id="closewindow" style="cursor:pointer" src="https://globalsportsarchive.com/images/minus-icon.png"/></div><br><div style="margin:0 auto;width:980px;"><div class="header_row1"><span style="display:table-cell;width:140px;font-weight:bold;">&nbsp;&nbsp;&nbsp;Area *</span><span style="display:table-cell;width:330px;"><select name="areaid_ajax" size="1" required><option value=""></option><option value="8" >Afghanistan</option><option value="3" >Africa</option><option value="306" >Åland Islands</option><option value="9" >Albania</option><option value="290" >Alderney</option><option value="10" >Algeria</option><option value="11" >American Samoa</option><option value="12" >Andorra</option><option value="13" >Angola</option><option value="14" >Anguilla</option><option value="15" >Antigua and Barbuda</option><option value="287" >Arameans Suryoye</option><option value="16" >Argentina</option><option value="17" >Armenia</option><option value="18" >Aruba</option><option value="2" >Asia</option><option value="19" >Australia</option><option value="20" >Austria</option><option value="21" >Azerbaijan</option><option value="22" >Bahamas</option><option value="23" >Bahrain</option><option value="24" >Bangladesh</option><option value="25" >Barbados</option><option value="26" >Belarus</option><option value="27" >Belgium</option><option value="28" >Belize</option><option value="29" >Benin</option><option value="30" >Bermuda</option><option value="31" >Bhutan</option><option value="32" >Bolivia</option><option value="260" >Bonaire</option><option value="33" >Bosnia and Herzegovina</option><option value="34" >Botswana</option><option value="35" >Brazil</option><option value="36" >British Virgin Islands</option><option value="37" >Brunei Darussalam</option><option value="38" >Bulgaria</option><option value="39" >Burkina Faso</option><option value="40" >Burundi</option><option value="44" >Cabo Verde</option><option value="41" >Cambodia</option><option value="42" >Cameroon</option><option value="43" >Canada</option><option value="315" >Catalonia</option><option value="45" >Cayman Islands</option><option value="46" >Central African Republic</option><option value="47" >Chad</option><option value="48" >Chile</option><option value="49" >China PR</option><option value="50" >Chinese Taipei</option><option value="292" >CIS</option><option value="51" >Colombia</option><option value="232" >Comoros</option><option value="52" >Congo</option><option value="54" >Cook Islands</option><option value="294" >Corsica</option><option value="55" >Costa Rica</option><option value="60" >Côte d’Ivoire</option><option value="291" >Crimea</option><option value="56" >Croatia</option><option value="310" >Croatia-Slavonia</option><option value="57" >Cuba</option><option value="139" >Curaçao</option><option value="58" >Cyprus</option><option value="59" >Czechia</option><option value="264" >Czechoslovakia</option><option value="281" >Darfur</option><option value="61" >Denmark</option><option value="62" >Djibouti</option><option value="63" >Dominica</option><option value="64" >Dominican Republic</option><option value="53" >DR Congo</option><option value="65" >Ecuador</option><option value="66" >Egypt</option><option value="67" >El Salvador</option><option value="68" >England</option><option value="69" >Equatorial Guinea</option><option value="70" >Eritrea</option><option value="71" >Estonia</option><option value="183" >Eswatini</option><option value="72" >Ethiopia</option><option value="7" >Europe</option><option value="304" >Falkland Islands</option><option value="73" >Faroe Islands</option><option value="74" >Fiji</option><option value="75" >Finland</option><option value="76" >France</option><option value="231" >French Guiana</option><option value="77" >Gabon</option><option value="78" >Gambia</option><option value="263" >GDR</option><option value="79" >Georgia</option><option value="80" >Germany</option><option value="81" >Ghana</option><option value="226" >Gibraltar</option><option value="269" >Gozo</option><option value="250" >Great Britain</option><option value="82" >Greece</option><option value="271" >Greenland</option><option value="83" >Grenada</option><option value="227" >Guadeloupe</option><option value="84" >Guam</option><option value="85" >Guatemala</option><option value="254" >Guernsey</option><option value="86" >Guinea</option><option value="87" >Guinea-Bissau</option><option value="88" >Guyana</option><option value="89" >Haiti</option><option value="90" >Honduras</option><option value="91" >Hong Kong SAR</option><option value="92" >Hungary</option><option value="93" >Iceland</option><option value="94" >India</option><option value="296" >Individual Neutral Athlete</option><option value="95" >Indonesia</option><option value="96" >IR Iran</option><option value="97" >Iraq</option><option value="236" >Isle of Man</option><option value="99" >Israel</option><option value="100" >Italy</option><option value="101" >Jamaica</option><option value="102" >Japan</option><option value="235" >Jersey</option><option value="103" >Jordan</option><option value="104" >Kazakhstan</option><option value="105" >Kenya</option><option value="252" >Kiribati</option><option value="106" >Korea DPR</option><option value="107" >Korea Republic</option><option value="249" >Kosovo</option><option value="276" >Kurdistan</option><option value="108" >Kuwait</option><option value="109" >Kyrgyz Republic</option><option value="110" >Lao PDR</option><option value="111" >Latvia</option><option value="112" >Lebanon</option><option value="113" >Lesotho</option><option value="114" >Liberia</option><option value="115" >Libya</option><option value="116" >Liechtenstein</option><option value="117" >Lithuania</option><option value="118" >Luxembourg</option><option value="119" >Macau</option><option value="121" >Madagascar</option><option value="122" >Malawi</option><option value="123" >Malaysia</option><option value="124" >Maldives</option><option value="125" >Mali</option><option value="126" >Malta</option><option value="266" >Marshall Islands</option><option value="229" >Martinique</option><option value="127" >Mauritania</option><option value="128" >Mauritius</option><option value="255" >Mayotte</option><option value="129" >Mexico</option><option value="267" >Micronesia</option><option value="130" >Moldova</option><option value="253" >Monaco</option><option value="131" >Mongolia</option><option value="225" >Montenegro</option><option value="132" >Montserrat</option><option value="133" >Morocco</option><option value="134" >Mozambique</option><option value="135" >Myanmar</option><option value="4" >N/C America</option><option value="136" >Namibia</option><option value="258" >Nauru</option><option value="137" >Nepal</option><option value="138" >Netherlands</option><option value="312" >Neutral Athletes A</option><option value="313" >Neutral Athletes B</option><option value="314" >Neutral Independent Athletes</option><option value="308" >Neutral Paralympic Athletes</option><option value="140" >New Caledonia</option><option value="141" >New Zealand</option><option value="275" >NF-Board</option><option value="142" >Nicaragua</option><option value="143" >Niger</option><option value="144" >Nigeria</option><option value="257" >Niue</option><option value="302" >Norfolk Island</option><option value="120" >North Macedonia</option><option value="145" >Northern Ireland</option><option value="251" >Northern Mariana Islands</option><option value="146" >Norway</option><option value="278" >Occitania</option><option value="6" >Oceania</option><option value="301" >Olympic Athlete from Russia</option><option value="147" >Oman</option><option value="311" >Ottoman State</option><option value="283" >Padania</option><option value="148" >Pakistan</option><option value="234" >Palau</option><option value="149" >Palestine</option><option value="150" >Panama</option><option value="151" >Papua New Guinea</option><option value="152" >Paraguay</option><option value="153" >Peru</option><option value="154" >Philippines</option><option value="155" >Poland</option><option value="156" >Portugal</option><option value="277" >Provence</option><option value="157" >Puerto Rico</option><option value="158" >Qatar</option><option value="280" >Raetia</option><option value="298" >Refugee Olympic Team</option><option value="307" >Refugee Paralympic Team</option><option value="98" >Republic of Ireland</option><option value="223" >Réunion</option><option value="159" >Romania</option><option value="160" >Russia</option><option value="297" >Russian Olympic Committee</option><option value="300" >Russian Parlympic Committee</option><option value="161" >Rwanda</option><option value="305" >Saarland</option><option value="228" >Saint Martin</option><option value="289" >Saint Pierre and Miquelon</option><option value="162" >Samoa</option><option value="163" >San Marino</option><option value="187" >São Tomé e Príncipe</option><option value="288" >Sápmi</option><option value="164" >Saudi Arabia</option><option value="165" >Scotland</option><option value="166" >Senegal</option><option value="224" >Serbia</option><option value="167" >Serbia and Montenegro</option><option value="168" >Seychelles</option><option value="261" >SFR Yugoslavia</option><option value="272" >Shetland</option><option value="169" >Sierra Leone</option><option value="170" >Singapore</option><option value="259" >Sint Eustatius</option><option value="230" >Sint Maarten</option><option value="171" >Slovakia</option><option value="172" >Slovenia</option><option value="173" >Solomon Islands</option><option value="174" >Somalia</option><option value="265" >Somaliland</option><option value="175" >South Africa</option><option value="5" >South America</option><option value="256" >South Sudan</option><option value="285" >Southern Cameroon</option><option value="262" >Soviet Union</option><option value="176" >Spain</option><option value="177" >Sri Lanka</option><option value="274" >St. Helena</option><option value="178" >St. Kitts and Nevis</option><option value="179" >St. Lucia</option><option value="180" >St. Vincent and the Grenadines</option><option value="181" >Sudan</option><option value="182" >Suriname</option><option value="184" >Sweden</option><option value="185" >Switzerland</option><option value="186" >Syria</option><option value="188" >Tahiti</option><option value="189" >Tajikistan</option><option value="279" >Tamil Eelam</option><option value="190" >Tanzania</option><option value="191" >Thailand</option><option value="221" >Timor-Leste</option><option value="192" >Togo</option><option value="303" >Tokelau</option><option value="193" >Tonga</option><option value="270" >TR Northern Cyprus</option><option value="194" >Trinidad and Tobago</option><option value="195" >Tunisia</option><option value="196" >Türkiye</option><option value="197" >Turkmenistan</option><option value="198" >Turks and Caicos Islands</option><option value="233" >Tuvalu</option><option value="284" >Two Sicilies</option><option value="200" >Uganda</option><option value="201" >Ukraine</option><option value="202" >United Arab Emirates</option><option value="309" >United Arab Republic</option><option value="203" >United States</option><option value="204" >Uruguay</option><option value="199" >US Virgin Islands</option><option value="205" >Uzbekistan</option><option value="206" >Vanuatu</option><option value="268" >Vatican City</option><option value="207" >Venezuela</option><option value="208" >Vietnam</option><option value="209" >Wales</option><option value="295" >Wallis and Futuna</option><option value="282" >West Indies</option><option value="273" >Western Sahara</option><option value="1" >World</option><option value="210" >Yemen</option><option value="211" >Zambia</option><option value="220" >Zanzibar</option><option value="212" >Zimbabwe</option></select></span></div><div style="margin:0 auto;width:980px;height:3px;"></div><div class="header_row1"><span style="display:table-cell;width:140px;font-weight:bold;">&nbsp;&nbsp;&nbsp;Name *</span><span style="display:table-cell;width:330px;"><input type="text" name="cityname_ajax" maxlength="100" size="25" value="" required></input></span></div><div style="margin:0 auto;width:980px;height:3px;"></div><div class="header_row1"><span style="display:table-cell;width:140px;font-weight:bold;">&nbsp;&nbsp;&nbsp;Local Name</span><span style="display:table-cell;width:330px;"><input type="text" name="citylocal_ajax" maxlength="100" size="25" value=""></input></span></div><div style="margin:0 auto;width:980px;height:3px;"></div><div class="header_row1"><span style="display:table-cell;width:140px;font-weight:bold;">&nbsp;&nbsp;&nbsp;Non-Latin Name</span><span style="display:table-cell;width:330px;"><input type="text" name="citynonlatin_ajax" maxlength="100" size="25" value=""></input></span></div><div class="header_row1 city_add_error" style="margin-top: 10px;color: red;font-weight:bold;    width: 400px;"></div><br><input type="hidden" name="abgeschickt" value="1"></input><div align="left"><input type="button" id="submit_ajax" value="Add"></input></div><br><br></div></div><div class='row head-inner'><span class='inner-title'>&nbsp;&nbsp;&nbsp;Add new People</span></div><div class='row inner-content people-add'><form method="post" enctype="multipart/form-data" onsubmit="return validateForm();" name="form"><table cellspacing=0><tr style="display:none;"><td><b>Mapping ID:</b></td>
+<td><input type="text" name="mappingid" maxlength="7" size="7" value=""></input></td></tr><tr><td><b>Firstname:</b></td>
+<td><input type="text" name="firstname" maxlength="100" size="25" value="" style="background-color:#F8E0E0;"></input></td></tr><tr><td><b>Lastname:</b></td>
+<td><input type="text" name="lastname" maxlength="100" size="25" value="" style="background-color:#F8E0E0;"></input></td></tr><tr><td><b>Matchname:</b></td>
+<td><input type="text" name="matchname" maxlength="100" size="25" value="" style="background-color:#F8E0E0;"></input></td></tr><tr><td><b>Common Name:</b></td>
+<td><input type="text" name="commonname" maxlength="100" size="25" value="" style="background-color:#F8E0E0;"></input></td></tr><tr><td><b>Date of Birth:</b></td>
+<td><input type="date_of_birth_day" name="date_of_birth_day" maxlength="2" size="2" value=""></input><input type="date_of_birth_month" name="date_of_birth_month" maxlength="2" size="2" value=""></input><input type="date_of_birth_year" name="date_of_birth_year" maxlength="4" size="4" value=""></input></td></tr><tr id="date_of_death" style="display:none;"><td><b>Date of Death:</b></td>
+<td><input type="text" name="date_of_death_day" maxlength="2" size="2" value=""></input><input type="text" name="date_of_death_month" maxlength="2" size="2" value=""></input><input type="text" name="date_of_death_year" maxlength="4" size="4" value=""></input></td></tr><tr><td><b>Place of Birth:</b></td>
+<td><input type="text" name="place_of_birth" value="" class="auto"  style="width:350px;"></td></tr><tr><td><b>Country of Birth:</b></td>
+<td><select name="country_of_birth" size="1" style="background-color:#F8E0E0;"><option value=""></option><option value="8" >Afghanistan</option><option value="306" >Åland Islands</option><option value="9" >Albania</option><option value="290" >Alderney</option><option value="10" >Algeria</option><option value="11" >American Samoa</option><option value="12" >Andorra</option><option value="13" >Angola</option><option value="14" >Anguilla</option><option value="15" >Antigua and Barbuda</option><option value="287" >Arameans Suryoye</option><option value="16" >Argentina</option><option value="17" >Armenia</option><option value="18" >Aruba</option><option value="19" >Australia</option><option value="20" >Austria</option><option value="21" >Azerbaijan</option><option value="22" >Bahamas</option><option value="23" >Bahrain</option><option value="24" >Bangladesh</option><option value="25" >Barbados</option><option value="26" >Belarus</option><option value="27" >Belgium</option><option value="28" >Belize</option><option value="29" >Benin</option><option value="30" >Bermuda</option><option value="31" >Bhutan</option><option value="32" >Bolivia</option><option value="260" >Bonaire</option><option value="33" >Bosnia and Herzegovina</option><option value="34" >Botswana</option><option value="35" >Brazil</option><option value="36" >British Virgin Islands</option><option value="37" >Brunei Darussalam</option><option value="38" >Bulgaria</option><option value="39" >Burkina Faso</option><option value="40" >Burundi</option><option value="44" >Cabo Verde</option><option value="41" >Cambodia</option><option value="42" >Cameroon</option><option value="43" >Canada</option><option value="315" >Catalonia</option><option value="45" >Cayman Islands</option><option value="46" >Central African Republic</option><option value="47" >Chad</option><option value="48" >Chile</option><option value="49" >China PR</option><option value="50" >Chinese Taipei</option><option value="292" >CIS</option><option value="51" >Colombia</option><option value="232" >Comoros</option><option value="52" >Congo</option><option value="54" >Cook Islands</option><option value="294" >Corsica</option><option value="55" >Costa Rica</option><option value="60" >Côte d’Ivoire</option><option value="291" >Crimea</option><option value="56" >Croatia</option><option value="310" >Croatia-Slavonia</option><option value="57" >Cuba</option><option value="139" >Curaçao</option><option value="58" >Cyprus</option><option value="59" >Czechia</option><option value="264" >Czechoslovakia</option><option value="281" >Darfur</option><option value="61" >Denmark</option><option value="62" >Djibouti</option><option value="63" >Dominica</option><option value="64" >Dominican Republic</option><option value="53" >DR Congo</option><option value="65" >Ecuador</option><option value="66" >Egypt</option><option value="67" >El Salvador</option><option value="68" >England</option><option value="69" >Equatorial Guinea</option><option value="70" >Eritrea</option><option value="71" >Estonia</option><option value="183" >Eswatini</option><option value="72" >Ethiopia</option><option value="304" >Falkland Islands</option><option value="73" >Faroe Islands</option><option value="74" >Fiji</option><option value="75" >Finland</option><option value="76" >France</option><option value="231" >French Guiana</option><option value="77" >Gabon</option><option value="78" >Gambia</option><option value="263" >GDR</option><option value="79" >Georgia</option><option value="80" >Germany</option><option value="81" >Ghana</option><option value="226" >Gibraltar</option><option value="269" >Gozo</option><option value="250" >Great Britain</option><option value="82" >Greece</option><option value="271" >Greenland</option><option value="83" >Grenada</option><option value="227" >Guadeloupe</option><option value="84" >Guam</option><option value="85" >Guatemala</option><option value="254" >Guernsey</option><option value="86" >Guinea</option><option value="87" >Guinea-Bissau</option><option value="88" >Guyana</option><option value="89" >Haiti</option><option value="90" >Honduras</option><option value="91" >Hong Kong SAR</option><option value="92" >Hungary</option><option value="93" >Iceland</option><option value="94" >India</option><option value="296" >Individual Neutral Athlete</option><option value="95" >Indonesia</option><option value="96" >IR Iran</option><option value="97" >Iraq</option><option value="236" >Isle of Man</option><option value="99" >Israel</option><option value="100" >Italy</option><option value="101" >Jamaica</option><option value="102" >Japan</option><option value="235" >Jersey</option><option value="103" >Jordan</option><option value="104" >Kazakhstan</option><option value="105" >Kenya</option><option value="252" >Kiribati</option><option value="106" >Korea DPR</option><option value="107" >Korea Republic</option><option value="249" >Kosovo</option><option value="276" >Kurdistan</option><option value="108" >Kuwait</option><option value="109" >Kyrgyz Republic</option><option value="110" >Lao PDR</option><option value="111" >Latvia</option><option value="112" >Lebanon</option><option value="113" >Lesotho</option><option value="114" >Liberia</option><option value="115" >Libya</option><option value="116" >Liechtenstein</option><option value="117" >Lithuania</option><option value="118" >Luxembourg</option><option value="119" >Macau</option><option value="121" >Madagascar</option><option value="122" >Malawi</option><option value="123" >Malaysia</option><option value="124" >Maldives</option><option value="125" >Mali</option><option value="126" >Malta</option><option value="266" >Marshall Islands</option><option value="229" >Martinique</option><option value="127" >Mauritania</option><option value="128" >Mauritius</option><option value="255" >Mayotte</option><option value="129" >Mexico</option><option value="267" >Micronesia</option><option value="130" >Moldova</option><option value="253" >Monaco</option><option value="131" >Mongolia</option><option value="225" >Montenegro</option><option value="132" >Montserrat</option><option value="133" >Morocco</option><option value="134" >Mozambique</option><option value="135" >Myanmar</option><option value="136" >Namibia</option><option value="258" >Nauru</option><option value="137" >Nepal</option><option value="138" >Netherlands</option><option value="312" >Neutral Athletes A</option><option value="313" >Neutral Athletes B</option><option value="314" >Neutral Independent Athletes</option><option value="308" >Neutral Paralympic Athletes</option><option value="140" >New Caledonia</option><option value="141" >New Zealand</option><option value="275" >NF-Board</option><option value="142" >Nicaragua</option><option value="143" >Niger</option><option value="144" >Nigeria</option><option value="257" >Niue</option><option value="302" >Norfolk Island</option><option value="120" >North Macedonia</option><option value="145" >Northern Ireland</option><option value="251" >Northern Mariana Islands</option><option value="146" >Norway</option><option value="278" >Occitania</option><option value="301" >Olympic Athlete from Russia</option><option value="147" >Oman</option><option value="311" >Ottoman State</option><option value="283" >Padania</option><option value="148" >Pakistan</option><option value="234" >Palau</option><option value="149" >Palestine</option><option value="150" >Panama</option><option value="151" >Papua New Guinea</option><option value="152" >Paraguay</option><option value="153" >Peru</option><option value="154" >Philippines</option><option value="155" >Poland</option><option value="156" >Portugal</option><option value="277" >Provence</option><option value="157" >Puerto Rico</option><option value="158" >Qatar</option><option value="280" >Raetia</option><option value="298" >Refugee Olympic Team</option><option value="307" >Refugee Paralympic Team</option><option value="98" >Republic of Ireland</option><option value="223" >Réunion</option><option value="159" >Romania</option><option value="160" >Russia</option><option value="297" >Russian Olympic Committee</option><option value="300" >Russian Parlympic Committee</option><option value="161" >Rwanda</option><option value="305" >Saarland</option><option value="228" >Saint Martin</option><option value="289" >Saint Pierre and Miquelon</option><option value="162" >Samoa</option><option value="163" >San Marino</option><option value="187" >São Tomé e Príncipe</option><option value="288" >Sápmi</option><option value="164" >Saudi Arabia</option><option value="165" >Scotland</option><option value="166" >Senegal</option><option value="224" >Serbia</option><option value="167" >Serbia and Montenegro</option><option value="168" >Seychelles</option><option value="261" >SFR Yugoslavia</option><option value="272" >Shetland</option><option value="169" >Sierra Leone</option><option value="170" >Singapore</option><option value="259" >Sint Eustatius</option><option value="230" >Sint Maarten</option><option value="171" >Slovakia</option><option value="172" >Slovenia</option><option value="173" >Solomon Islands</option><option value="174" >Somalia</option><option value="265" >Somaliland</option><option value="175" >South Africa</option><option value="256" >South Sudan</option><option value="285" >Southern Cameroon</option><option value="262" >Soviet Union</option><option value="176" >Spain</option><option value="177" >Sri Lanka</option><option value="274" >St. Helena</option><option value="178" >St. Kitts and Nevis</option><option value="179" >St. Lucia</option><option value="180" >St. Vincent and the Grenadines</option><option value="181" >Sudan</option><option value="182" >Suriname</option><option value="184" >Sweden</option><option value="185" >Switzerland</option><option value="186" >Syria</option><option value="188" >Tahiti</option><option value="189" >Tajikistan</option><option value="279" >Tamil Eelam</option><option value="190" >Tanzania</option><option value="191" >Thailand</option><option value="221" >Timor-Leste</option><option value="192" >Togo</option><option value="303" >Tokelau</option><option value="193" >Tonga</option><option value="270" >TR Northern Cyprus</option><option value="194" >Trinidad and Tobago</option><option value="195" >Tunisia</option><option value="196" >Türkiye</option><option value="197" >Turkmenistan</option><option value="198" >Turks and Caicos Islands</option><option value="233" >Tuvalu</option><option value="284" >Two Sicilies</option><option value="200" >Uganda</option><option value="201" >Ukraine</option><option value="202" >United Arab Emirates</option><option value="309" >United Arab Republic</option><option value="203" >United States</option><option value="204" >Uruguay</option><option value="199" >US Virgin Islands</option><option value="205" >Uzbekistan</option><option value="206" >Vanuatu</option><option value="268" >Vatican City</option><option value="207" >Venezuela</option><option value="208" >Vietnam</option><option value="209" >Wales</option><option value="295" >Wallis and Futuna</option><option value="282" >West Indies</option><option value="273" >Western Sahara</option><option value="210" >Yemen</option><option value="211" >Zambia</option><option value="220" >Zanzibar</option><option value="212" >Zimbabwe</option></select></td></tr><tr><td><b>Nationality:</b></td>
+<td><select name="nationality" size="1" style="background-color:#F8E0E0;"><option value=""></option><option value="8" >Afghanistan</option><option value="306" >Åland Islands</option><option value="9" >Albania</option><option value="290" >Alderney</option><option value="10" >Algeria</option><option value="11" >American Samoa</option><option value="12" >Andorra</option><option value="13" >Angola</option><option value="14" >Anguilla</option><option value="15" >Antigua and Barbuda</option><option value="287" >Arameans Suryoye</option><option value="16" >Argentina</option><option value="17" >Armenia</option><option value="18" >Aruba</option><option value="19" >Australia</option><option value="20" >Austria</option><option value="21" >Azerbaijan</option><option value="22" >Bahamas</option><option value="23" >Bahrain</option><option value="24" >Bangladesh</option><option value="25" >Barbados</option><option value="26" >Belarus</option><option value="27" >Belgium</option><option value="28" >Belize</option><option value="29" >Benin</option><option value="30" >Bermuda</option><option value="31" >Bhutan</option><option value="32" >Bolivia</option><option value="260" >Bonaire</option><option value="33" >Bosnia and Herzegovina</option><option value="34" >Botswana</option><option value="35" >Brazil</option><option value="36" >British Virgin Islands</option><option value="37" >Brunei Darussalam</option><option value="38" >Bulgaria</option><option value="39" >Burkina Faso</option><option value="40" >Burundi</option><option value="44" >Cabo Verde</option><option value="41" >Cambodia</option><option value="42" >Cameroon</option><option value="43" >Canada</option><option value="315" >Catalonia</option><option value="45" >Cayman Islands</option><option value="46" >Central African Republic</option><option value="47" >Chad</option><option value="48" >Chile</option><option value="49" >China PR</option><option value="50" >Chinese Taipei</option><option value="51" >Colombia</option><option value="232" >Comoros</option><option value="52" >Congo</option><option value="54" >Cook Islands</option><option value="294" >Corsica</option><option value="55" >Costa Rica</option><option value="60" >Côte d’Ivoire</option><option value="291" >Crimea</option><option value="56" >Croatia</option><option value="57" >Cuba</option><option value="139" >Curaçao</option><option value="58" >Cyprus</option><option value="59" >Czechia</option><option value="281" >Darfur</option><option value="61" >Denmark</option><option value="62" >Djibouti</option><option value="63" >Dominica</option><option value="64" >Dominican Republic</option><option value="53" >DR Congo</option><option value="65" >Ecuador</option><option value="66" >Egypt</option><option value="67" >El Salvador</option><option value="68" >England</option><option value="69" >Equatorial Guinea</option><option value="70" >Eritrea</option><option value="71" >Estonia</option><option value="183" >Eswatini</option><option value="72" >Ethiopia</option><option value="304" >Falkland Islands</option><option value="73" >Faroe Islands</option><option value="74" >Fiji</option><option value="75" >Finland</option><option value="76" >France</option><option value="231" >French Guiana</option><option value="77" >Gabon</option><option value="78" >Gambia</option><option value="79" >Georgia</option><option value="80" >Germany</option><option value="81" >Ghana</option><option value="226" >Gibraltar</option><option value="269" >Gozo</option><option value="250" >Great Britain</option><option value="82" >Greece</option><option value="271" >Greenland</option><option value="83" >Grenada</option><option value="227" >Guadeloupe</option><option value="84" >Guam</option><option value="85" >Guatemala</option><option value="254" >Guernsey</option><option value="86" >Guinea</option><option value="87" >Guinea-Bissau</option><option value="88" >Guyana</option><option value="89" >Haiti</option><option value="90" >Honduras</option><option value="91" >Hong Kong SAR</option><option value="92" >Hungary</option><option value="93" >Iceland</option><option value="94" >India</option><option value="95" >Indonesia</option><option value="96" >IR Iran</option><option value="97" >Iraq</option><option value="236" >Isle of Man</option><option value="99" >Israel</option><option value="100" >Italy</option><option value="101" >Jamaica</option><option value="102" >Japan</option><option value="235" >Jersey</option><option value="103" >Jordan</option><option value="104" >Kazakhstan</option><option value="105" >Kenya</option><option value="252" >Kiribati</option><option value="106" >Korea DPR</option><option value="107" >Korea Republic</option><option value="249" >Kosovo</option><option value="276" >Kurdistan</option><option value="108" >Kuwait</option><option value="109" >Kyrgyz Republic</option><option value="110" >Lao PDR</option><option value="111" >Latvia</option><option value="112" >Lebanon</option><option value="113" >Lesotho</option><option value="114" >Liberia</option><option value="115" >Libya</option><option value="116" >Liechtenstein</option><option value="117" >Lithuania</option><option value="118" >Luxembourg</option><option value="119" >Macau</option><option value="121" >Madagascar</option><option value="122" >Malawi</option><option value="123" >Malaysia</option><option value="124" >Maldives</option><option value="125" >Mali</option><option value="126" >Malta</option><option value="266" >Marshall Islands</option><option value="229" >Martinique</option><option value="127" >Mauritania</option><option value="128" >Mauritius</option><option value="255" >Mayotte</option><option value="129" >Mexico</option><option value="267" >Micronesia</option><option value="130" >Moldova</option><option value="253" >Monaco</option><option value="131" >Mongolia</option><option value="225" >Montenegro</option><option value="132" >Montserrat</option><option value="133" >Morocco</option><option value="134" >Mozambique</option><option value="135" >Myanmar</option><option value="136" >Namibia</option><option value="258" >Nauru</option><option value="137" >Nepal</option><option value="138" >Netherlands</option><option value="312" >Neutral Athletes A</option><option value="313" >Neutral Athletes B</option><option value="314" >Neutral Independent Athletes</option><option value="140" >New Caledonia</option><option value="141" >New Zealand</option><option value="142" >Nicaragua</option><option value="143" >Niger</option><option value="144" >Nigeria</option><option value="257" >Niue</option><option value="302" >Norfolk Island</option><option value="120" >North Macedonia</option><option value="145" >Northern Ireland</option><option value="251" >Northern Mariana Islands</option><option value="146" >Norway</option><option value="278" >Occitania</option><option value="147" >Oman</option><option value="283" >Padania</option><option value="148" >Pakistan</option><option value="234" >Palau</option><option value="149" >Palestine</option><option value="150" >Panama</option><option value="151" >Papua New Guinea</option><option value="152" >Paraguay</option><option value="153" >Peru</option><option value="154" >Philippines</option><option value="155" >Poland</option><option value="156" >Portugal</option><option value="277" >Provence</option><option value="157" >Puerto Rico</option><option value="158" >Qatar</option><option value="280" >Raetia</option><option value="98" >Republic of Ireland</option><option value="223" >Réunion</option><option value="159" >Romania</option><option value="160" >Russia</option><option value="161" >Rwanda</option><option value="305" >Saarland</option><option value="228" >Saint Martin</option><option value="289" >Saint Pierre and Miquelon</option><option value="162" >Samoa</option><option value="163" >San Marino</option><option value="187" >São Tomé e Príncipe</option><option value="288" >Sápmi</option><option value="164" >Saudi Arabia</option><option value="165" >Scotland</option><option value="166" >Senegal</option><option value="224" >Serbia</option><option value="167" >Serbia and Montenegro</option><option value="168" >Seychelles</option><option value="272" >Shetland</option><option value="169" >Sierra Leone</option><option value="170" >Singapore</option><option value="259" >Sint Eustatius</option><option value="230" >Sint Maarten</option><option value="171" >Slovakia</option><option value="172" >Slovenia</option><option value="173" >Solomon Islands</option><option value="174" >Somalia</option><option value="265" >Somaliland</option><option value="175" >South Africa</option><option value="256" >South Sudan</option><option value="285" >Southern Cameroon</option><option value="176" >Spain</option><option value="177" >Sri Lanka</option><option value="274" >St. Helena</option><option value="178" >St. Kitts and Nevis</option><option value="179" >St. Lucia</option><option value="180" >St. Vincent and the Grenadines</option><option value="181" >Sudan</option><option value="182" >Suriname</option><option value="184" >Sweden</option><option value="185" >Switzerland</option><option value="186" >Syria</option><option value="188" >Tahiti</option><option value="189" >Tajikistan</option><option value="279" >Tamil Eelam</option><option value="190" >Tanzania</option><option value="191" >Thailand</option><option value="221" >Timor-Leste</option><option value="192" >Togo</option><option value="303" >Tokelau</option><option value="193" >Tonga</option><option value="270" >TR Northern Cyprus</option><option value="194" >Trinidad and Tobago</option><option value="195" >Tunisia</option><option value="196" >Türkiye</option><option value="197" >Turkmenistan</option><option value="198" >Turks and Caicos Islands</option><option value="233" >Tuvalu</option><option value="284" >Two Sicilies</option><option value="200" >Uganda</option><option value="201" >Ukraine</option><option value="202" >United Arab Emirates</option><option value="203" >United States</option><option value="204" >Uruguay</option><option value="199" >US Virgin Islands</option><option value="205" >Uzbekistan</option><option value="206" >Vanuatu</option><option value="268" >Vatican City</option><option value="207" >Venezuela</option><option value="208" >Vietnam</option><option value="209" >Wales</option><option value="295" >Wallis and Futuna</option><option value="282" >West Indies</option><option value="273" >Western Sahara</option><option value="210" >Yemen</option><option value="211" >Zambia</option><option value="220" >Zanzibar</option><option value="212" >Zimbabwe</option></select></td></tr><tr><td><b>Status:</b></td>
+<td><input type="radio" name="status" value="active" checked>active</input>&nbsp;&nbsp;<input type="radio" name="status" value="retired" >retired</input>&nbsp;&nbsp;<input type="radio" name="status" value="dead" >dead</input></td></tr><tr><td><b>Gender:</b></td>
+<td><input type="radio" name="gender" value="male" checked>male</input>&nbsp;&nbsp;<input type="radio" name="gender" value="female" >female</input></td></tr><tr><td style="vertical-align: top;"><b>Position:</b></td>
+<td><select name="positions[0]" style="margin-right: 5px;"><option value="">Soccer</option><option value="">-----------</option><option value="7" >Attacker</option><option value="35" >Defender</option><option value="76" >Goalkeeper</option><option value="104" >Midfielder</option></select><input type="hidden" name="people_position_id[0]" value="" /><select name="positions[1]" style="margin-right: 5px;"><option value="">Futsal</option><option value="">-----------</option><option value="258" >Attacker</option><option value="259" >Defender</option><option value="262" >Winger</option><option value="263" >Pivot</option><option value="260" >Goalkeeper</option><option value="261" >Midfielder</option></select><input type="hidden" name="people_position_id[1]" value="" /><select name="positions[2]" style="margin-right: 5px;"><option value="">Beach Soccer</option><option value="">-----------</option><option value="297" >Winger</option><option value="298" >Pivot</option><option value="296" >Midfielder</option><option value="295" >Goalkeeper</option><option value="293" >Forward</option><option value="294" >Defender</option></select><input type="hidden" name="people_position_id[2]" value="" /><select name="positions[3]" style="margin-right: 5px;"><option value="">Blind Football</option><option value="">-----------</option><option value="301" >Goalkeeper</option><option value="302" >Midfielder</option><option value="300" >Defender</option><option value="299" >Attacker</option></select><input type="hidden" name="people_position_id[3]" value="" /></td></tr><tr><td style="vertical-align: top;"><b>Detailed Position 1:</b></td>
+<td><select name="position_extra[1]" size="1"><option value=""></option><option value="Attacking Midfield" >Attacking Midfield</option><option value="Centre Forward" >Centre Forward</option><option value="Central Midfield" >Central Midfield</option><option value="Defensive Midfield" >Defensive Midfield</option><option value="Left Midfield" >Left Midfield</option><option value="Left Winger" >Left Winger</option><option value="Libero" >Libero</option><option value="Right Winger" >Right Winger</option><option value="Right Back" >Right Back</option><option value="Left Back" >Left Back</option><option value="Right Midfield" >Right Midfield</option><option value="Centre Defender" >Centre Defender</option><option value="Second Striker" >Second Striker</option></select></td></tr><tr><td style="vertical-align: top;"><b>Detailed Position 2:</b></td>
+<td><select name="position_extra[2]" size="1"><option value=""></option><option value="Attacking Midfield" >Attacking Midfield</option><option value="Centre Forward" >Centre Forward</option><option value="Central Midfield" >Central Midfield</option><option value="Defensive Midfield" >Defensive Midfield</option><option value="Left Midfield" >Left Midfield</option><option value="Left Winger" >Left Winger</option><option value="Libero" >Libero</option><option value="Right Winger" >Right Winger</option><option value="Right Back" >Right Back</option><option value="Left Back" >Left Back</option><option value="Right Midfield" >Right Midfield</option><option value="Centre Defender" >Centre Defender</option><option value="Second Striker" >Second Striker</option></select></td></tr><tr><td style="vertical-align: top;"><b>Detailed Position 3:</b></td>
+<td><select name="position_extra[3]" size="1"><option value=""></option><option value="Attacking Midfield" >Attacking Midfield</option><option value="Centre Forward" >Centre Forward</option><option value="Central Midfield" >Central Midfield</option><option value="Defensive Midfield" >Defensive Midfield</option><option value="Left Midfield" >Left Midfield</option><option value="Left Winger" >Left Winger</option><option value="Libero" >Libero</option><option value="Right Winger" >Right Winger</option><option value="Right Back" >Right Back</option><option value="Left Back" >Left Back</option><option value="Right Midfield" >Right Midfield</option><option value="Centre Defender" >Centre Defender</option><option value="Second Striker" >Second Striker</option></select></td></tr><tr><td><b>Referee:</b></td>
+<td><input type="radio" name="ref" value="1" >yes</input>&nbsp;&nbsp;<input type="radio" name="ref" value="0" checked>no</input></td></tr><tr><td><b>Strong Foot:</b></td>
+<td><input type="radio" name="people_extra[value_char][foot]" value="left" >left</input>&nbsp;&nbsp;<input type="radio" name="people_extra[value_char][foot]" value="right" >right</input>&nbsp;&nbsp;<input type="radio" name="people_extra[value_char][foot]" value="both" >both</input></td></tr><input type="hidden" name="people_extra_old[value_char][foot]" maxlength="3" size="3" value="" /><tr><td><b>Height:</b></td>
+<td><input type="text" name="height" maxlength="3" size="3" value=""placeholder="cm"></input><input type="text" name="height_ft" maxlength="3" size="3" value="" placeholder="ft" style="margin-left:40px;width: 27px;"></input><input type="text" name="height_in" maxlength="3" size="3" value="" placeholder="in" style="margin-left:4px;width: 27px;"></input></td></tr><tr><td><b>Weight:</b></td>
+<td><input type="text" name="weight" maxlength="3" size="3" value="" placeholder="kg"></input><input type="text" name="weight_lbs" maxlength="3" size="3" value="" placeholder="lbs" style="margin-left: 40px;"></input></td></tr><tr><td><b>Nickname:</b></td>
+<td><input type="text" name="people_extra[value_char][nickname]" maxlength="100" size="20" value=""></input></td></tr><input type="hidden" name="people_extra_old[value_char][nickname]" maxlength="3" size="3" value="" /><tr><td><b>Birth Year:</b></td>
+<td><input type="text" name="birthyear" maxlength="4" size="4" value=""></input></td></tr><input type="hidden" name="people_extra_old[value_char][birth_year]" maxlength="3" size="3" value="" /><tr><td><select name="new_mapping" id="mappingsource"><option value="">Mapping Source</option><option value="174|int">falebanon</option></select></td><td><input style="margin-right:10px;display:none;" type="text" name="new_mapping_int" maxlength="55" size="12" id="mappinputint" /><input style="margin-right:10px;display:none;" type="text" name="new_mapping_char" maxlength="55" size="12" id="mappinputchar" /></td></tr>		<script>
+		$(function() {
+			$('select[name=new_mapping]').on('change', function() {
+				if ($(this).val()) {
+					var type = $(this).val().split('|')[1];
+					
+					if (type == 'int_char') {
+						$('input[name=new_mapping_int]').css('display','inline-block');
+						$('input[name=new_mapping_char]').css('display','inline-block');
+					} else if (type == 'int') {
+						$('input[name=new_mapping_char]').css('display','none');
+						$('input[name=new_mapping_int]').css('display','inline-block');
+					} else if (type == 'char') {
+						$('input[name=new_mapping_int]').css('display','none');
+						$('input[name=new_mapping_char]').css('display','inline-block');
+					}
+				}
+			});
+		});
+		</script>
+		<tr><td colspan="2">&nbsp;</td></tr><tr><td colspan="2"><input type="hidden" name="abgeschickt" value="1" id="hiddensubmitt"></input><input type="Submit" value="Send Data" id="submitt"></input></td></tr></table></form></div><!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>-->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>	
+<script>
+
+function deselect(e) {
+  $('.pop').slideFadeToggle(function() {
+    e.removeClass('selected');
+  });    
+}
+$(function() {
+	$('input[name=weight_lbs]').on('input', function() {
+		if ($(this).val() > 0) {
+			$('input[name=weight]').val(Math.round($(this).val() / 2.2046));
+		} else {
+			$('input[name=weight]').val('');
+		}	
+	});
+	$('input[name=weight]').on('input', function() {
+		if ($(this).val() > 0) {
+			$('input[name=weight_lbs]').val(Math.round($(this).val() * 2.2046));
+		} else {
+			$('input[name=weight_lbs]').val('');
+		}	
+	});
+	/*
+	$height_ft = $row222->height > 0 ? intval($row222->height / 30.48) : '';
+		$height_in = $row222->height > 0 ? round(($row222->height / 30.48 - floor($row222->height / 30.48)) * 12) : '';
+	*/
+	$('input[name=height_ft],input[name=height_in]').on('input', function() {	
+		if ($('input[name=height_ft]').val() > 0 || $('input[name=height_ft]').val() > 0) {
+			var ft = $('input[name=height_ft]').val() > 0 ? $('input[name=height_ft]').val() : 0;
+			var inch = $('input[name=height_in]').val() > 0 ? parseInt($('input[name=height_in]').val()) : 0;
+			$('input[name=height]').val(Math.round((ft * 12 + inch) * 2.54));		
+		}	
+	});
+	$('input[name=height]').on('input', function() {	
+		if ($('input[name=height]').val() > 0) {
+			var height = $('input[name=height]').val();
+			var ft = parseInt(height / 30.48);
+			var inch = Math.round((height / 30.48 - parseInt(height / 30.48)) * 12);
+			$('input[name=height_ft]').val(ft);		
+			$('input[name=height_in]').val(inch);		
+		}	
+	});
+    $('.messagepop').css({
+        'position' : 'absolute',
+        'left' : '50%',
+        'top' : '50%',
+        'margin-left' : -$('.messagepop').outerWidth()/2,
+        'margin-top' : -$('.messagepop').outerHeight()/2 - 80
+    });
+	$('input[name=status]').on('change', function() {
+		if ($(this).val() == 'dead') {
+			$('#date_of_death').show();
+		} else {
+			$('#date_of_death').hide();
+		}
+	});
+
+	$('#closewindow').on('click', function() {
+		deselect($('#city_ajax'));
+		$('select[name=areaid_ajax]').val('');
+		$('input[name=cityname_ajax]').val('');
+		$('input[name=citylocal_ajax]').val('');
+		$('input[name=citynonlatin_ajax]').val('');
+	});
+
+  $('#city_ajax').on('click', function() {
+    if($(this).hasClass('selected')) {
+      deselect($(this));               
+    } else {
+      $(this).addClass('selected');
+      $('.pop').slideFadeToggle();
+    }
+    return false;
+  });
+
+});
+
+$.fn.slideFadeToggle = function() {
+  return this.animate({ opacity: 'toggle', height: 'toggle' }, 'fast');
+};
+
+$(function() {
+	$('#submit_ajax').on('click', function() {
+		var area = $('select[name=areaid_ajax]').val();
+		var cityname = $('input[name=cityname_ajax]').val();
+		var citylocal = $('input[name=citylocal_ajax]').val();
+		var citynonlatin = $('input[name=citynonlatin_ajax]').val();
+		console.log(area);
+		$.ajax({
+			url:'city_ajax.php',
+			dataType: 'json',
+			type: 'post',
+			data: {areaid:area,cityname:cityname,citylocal:citylocal,citynonlatin:citynonlatin,userid:101},
+			success: function(data) {
+				if (data.success == 1) {
+					$('input[name=place_of_birth]').val(data.message);
+					deselect($('#city_ajax'));
+					$('select[name=areaid_ajax]').val('');
+					$('input[name=cityname_ajax]').val('');
+					$('input[name=citylocal_ajax]').val('');
+					$('input[name=citynonlatin_ajax]').val('');
+				} else {
+					$('.city_add_error').html(data.message);
+				}
+			}
+		});
+	});
+	
+	$('select[name=nationality]').on('change', function() {
+		var nat = $(this).val();
+		
+		
+		
+		$.ajax({
+			url:'people_add_ajax.php',
+			dataType: 'json',
+			type: 'post',
+			data: {user_id : 101, area_id: nat},
+			success: function(data) {
+				if (data.result) {
+					$('#trans_lang').val(data.result);
+					$('.trans_name').show();
+				} else {
+					$('#trans_lang').val('');
+					$('.trans_name').hide();
+				}
+			}
+		});
+	});
+	
+	
+});
+
+
+
+</script>
+<script>
+    function validateForm() {
+           
+        var y = document.forms["form"]["image"].value;
+        if (y == null || y == "") {
+            document.getElementById('error2').innerHTML = "Image Field is empty";
+            $("input").click(function () {
+                $("#error2").remove();
+            });
+            return false;
+        }
+
+
+    }
+
+</script>
+
+<script type="text/javascript">
+$(function() {
+	
+		$('form[name=form]').on('submit', function(e) {
+		//e.preventDefault();
+		var nat = $('select[name=nationality]').val();
+		var firstname = $('input[name=firstname]').val().toLowerCase();
+		var lastname = $('input[name=lastname]').val().toLowerCase();
+		var matchname = $('input[name=matchname]').val().toLowerCase();
+		var commonname = $('input[name=commonname]').val().toLowerCase();
+		
+		if ((nat == 35 || nat == 134 || nat == 156 || nat == 13 || nat == 176) && (matchname.indexOf('.') > -1 || commonname.indexOf('.') > -1)) {
+			e.preventDefault();
+			alert("Portuguese & Spanish names have the same short name than common name, so Abner instead of A. Gomes for example");	
+		} else if (nat == 160 && (firstname.indexOf('x') > -1 || lastname.indexOf('x') > -1 || matchname.indexOf('x') > -1 || commonname.indexOf('x') > -1)) {
+			e.preventDefault();
+			alert('Russian names dont use the letter x, instead it should be ks. Example: Maksim instead of Maxim');	
+		} else if (nat == 166 && (firstname.indexOf("'") > -1 || lastname.indexOf("'") > -1 || matchname.indexOf("'") > -1 || commonname.indexOf("'") > -1)) {
+			e.preventDefault();
+			alert("Senegal names should not use the ' character. Example: Ndoye instead of N'Doye");	
+		} else if (nat == 205 && (firstname.indexOf("'") > -1 || lastname.indexOf("'") > -1 || matchname.indexOf("'") > -1 || commonname.indexOf("'") > -1)) {
+			e.preventDefault();
+			alert("Uzbekistan names should not use the ' character but ʻ . Example: Turgʻunboyev instead of Turg'unboyev");	
+		} else if (nat == 197 && (firstname.indexOf("v") > -1 || lastname.indexOf("v") > -1 || matchname.indexOf("v") > -1 || commonname.indexOf("v") > -1)) {
+			e.preventDefault();
+			alert("Turkmen names does not include the letter v but instead it should be a w . Example: Annasparov instead of Annasparow");	
+		} else if (nat == 197 && (firstname.indexOf("sh") > -1 || lastname.indexOf("sh") > -1 || matchname.indexOf("sh") > -1 || commonname.indexOf("sh") > -1)) {
+			e.preventDefault();
+			alert("Turkmen names does not include the letter sh but instead it should be a ş . Example: Aşgabat instead of Ashgabat");	
+		} else if (nat == 197 && (firstname.indexOf("ch") > -1 || lastname.indexOf("ch") > -1 || matchname.indexOf("ch") > -1 || commonname.indexOf("ch") > -1)) {
+			e.preventDefault();
+			alert("Turkmen names does not include the letter ch but instead it should be a ç . Example: Begenç instead of Begench or Çary instead of Chary");	
+		} else if ((nat == 107) && (firstname.indexOf("-") > -1 || lastname.indexOf("-") > -1 || firstname.indexOf(" ") > -1 || lastname.indexOf(" ") > -1)) {
+			e.preventDefault();
+			alert("Korean names should not use - und or empty space. Example: Minseok instead of Min-Seok or Min Seok");	
+		} else if ((nat == 106) && (firstname.indexOf("-") > -1 || lastname.indexOf("-") > -1)) {
+			e.preventDefault();
+			alert("Korean names should not use - . Example: Minseok instead of Min-Seok");	
+		} else if ((nat == 106 || nat == 107) && ((lastname +" "+ firstname) != matchname || (lastname +" "+ firstname) != commonname || matchname.indexOf('.') > -1 || commonname.indexOf('.') > -1)) {
+			e.preventDefault();
+			alert("Korean names use the last name as first. So the common name and short name should be Kim Minseok instead of Minseok Kim for example.");	
+		} else if ((nat == 49 || nat == 50 || nat == 119) && ((lastname +" "+ firstname) != matchname || (lastname +" "+ firstname) != commonname || matchname.indexOf('.') > -1 || commonname.indexOf('.') > -1)) {
+			e.preventDefault();
+			alert("Chinese names use the last name as first. So the common name and short name should be Cai Mingmin instead of Mingmin Cai for example.");	
+		} else {
+			console.log('all good');	
+		}
+	});
+		//autocomplete
+	$(".auto").autocomplete({
+		source: "./internal/autosearch_city.php",
+		minLength: 2
+	});	
+
+});
+</script>
+</body>
+</html>

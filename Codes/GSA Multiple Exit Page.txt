@@ -1,0 +1,460 @@
+<head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5670">Lebanon -  National Solidarity cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css" type="text/css" />
+<style>
+.match-row {
+	margin:0 auto 5px auto;
+	width: 100%;
+}
+.secondary-name {
+	display: none;
+}
+.error-row {
+	line-height: 25px;
+    font-size: 13px;
+    color: red;
+}
+</style>
+<div style="width:950px;"><div class="name-toggle" style="font-weight: bold;width:100px;float:left;cursor:pointer;">Name Toggle</div><div style="display:inline-block;width:125px;margin-left:412px;margin-bottom:20px;">
+			<input class="fill_day" type="text" name="end_date_day[]" maxlength="2" value="" style="width:20px;"></input>
+			<input class="fill_month" type="text" name="end_date_month[]" maxlength="2" value="" style="width:20px;margin-left:2px;"></input>
+			<input class="fill_year" type="text" name="end_date_year[]" maxlength="4" value="" style="width:45px;margin-left:2px;"></input>
+	  </div><div style="display:inline-block;width:40px;margin-left:-10px"><input type="button" value="All" id="all"/></div><div style="display:inline-block;width:40px;margin-right:20px"><input type="button" value="None" id="none"/></div><div style="display:inline-block;width:40px;margin-right: 40px;"><input type="button" value="End Day" id="end"/></div><div style="display:inline-block;width:40px;"><input type="button" value="End Month" id="end-month"/></div></div><form action="team_people_end_tool.php?t=16373" method="post"><div class='row-sec inner-content-m' style="margin:0 auto;width: 100%;"><div class="match-row" data-tpid="9709463"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=436471">436471</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Abbas Sherkawi</span><span class="secondary-name">Abbas Mahmoud Sherkawi</span><input type="hidden" name="teampeople[0]" value="9709463"></input></span><span style="display:table-cell;width:75px;">1999-07-02</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2025-08-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[0]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[0]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[0]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[0]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[0]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[0]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[0]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[0]" type="hidden" value="Abbas Sherkawi" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9532877"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=567428">567428</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Abbass Ballout</span><span class="secondary-name">Abbass Mohamad Ballout</span><input type="hidden" name="teampeople[1]" value="9532877"></input></span><span style="display:table-cell;width:75px;">2003-04-20</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2024-07-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[1]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[1]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[1]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[1]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[1]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[1]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[1]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[1]" type="hidden" value="Abbass Ballout" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9509803"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=7799243">7799243</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Ahmad Kheir El Dine</span><span class="secondary-name">Ahmad Hussein Kheir El Dine</span><input type="hidden" name="teampeople[2]" value="9509803"></input></span><span style="display:table-cell;width:75px;">1995-07-07</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2024-08-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[2]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[2]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[2]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[2]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[2]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[2]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[2]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[2]" type="hidden" value="Ahmad Kheir El Dine" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9725148"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=7973921">7973921</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/144.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Akuki Jibrin</span><span class="secondary-name">Abubakar Akuki Jibrin</span><input type="hidden" name="teampeople[3]" value="9725148"></input></span><span style="display:table-cell;width:75px;">2001-05-05</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2025-08-29</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[3]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[3]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[3]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[3]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[3]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[3]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[3]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4048272">2026-02-13</a></span><input name="name[3]" type="hidden" value="Akuki Jibrin" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="6580571"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=436172">436172</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Ali Tneich</span><span class="secondary-name">Ali Samir 'Sisi' Tneich</span><input type="hidden" name="teampeople[4]" value="6580571"></input></span><span style="display:table-cell;width:75px;">1992-07-16</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2021-06-30</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[4]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[4]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[4]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[4]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[4]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[4]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[4]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[4]" type="hidden" value="Ali Tneich" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9856002"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=53739">53739</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/166.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Elhadji Malick Tall</span><span class="secondary-name">Elhadji Malick Tall</span><input type="hidden" name="teampeople[5]" value="9856002"></input></span><span style="display:table-cell;width:75px;">1995-01-25</span><span style="display:table-cell;width:100px;">Attacker</span><span style="display:table-cell;width:100px;">2026-01-12</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[5]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[5]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[5]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[5]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[5]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[5]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[5]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[5]" type="hidden" value="Elhadji Malick Tall" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="3316177"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=383194">383194</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Hadi Kanj</span><span class="secondary-name">Hadi Wissam Kanj</span><input type="hidden" name="teampeople[6]" value="3316177"></input></span><span style="display:table-cell;width:75px;">2001-09-14</span><span style="display:table-cell;width:100px;">Goalkeeper</span><span style="display:table-cell;width:100px;">2019-06-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[6]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[6]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[6]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[6]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[6]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[6]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[6]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[6]" type="hidden" value="Hadi Kanj" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9271438"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=567432">567432</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Hassan Nasser</span><span class="secondary-name">Hassan Ahmad Nasser</span><input type="hidden" name="teampeople[7]" value="9271438"></input></span><span style="display:table-cell;width:75px;">2005-05-13</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2023-07-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[7]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[7]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[7]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[7]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[7]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[7]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[7]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4048280">2026-02-22</a></span><input name="name[7]" type="hidden" value="Hassan Nasser" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9690444"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=74855">74855</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/10.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Hicham Khalf Allah</span><span class="secondary-name">Hicham Houssam Eddine Khalf Allah</span><input type="hidden" name="teampeople[8]" value="9690444"></input></span><span style="display:table-cell;width:75px;">1991-10-02</span><span style="display:table-cell;width:100px;">Attacker</span><span style="display:table-cell;width:100px;">2024-01-15</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[8]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[8]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[8]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[8]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[8]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[8]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[8]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[8]" type="hidden" value="Hicham Khalf Allah" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9769141"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=7927722">7927722</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Hussein Hajj Hassan</span><span class="secondary-name">Hussein Ali Hajj Hassan</span><input type="hidden" name="teampeople[9]" value="9769141"></input></span><span style="display:table-cell;width:75px;">2006-12-08</span><span style="display:table-cell;width:100px;">Goalkeeper</span><span style="display:table-cell;width:100px;">2025-09-08</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[9]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[9]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[9]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[9]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[9]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[9]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[9]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id="></a></span><input name="name[9]" type="hidden" value="Hussein Hajj Hassan" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9886029"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=65440">65440</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/125.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Ichaka Diarra</span><span class="secondary-name">Ichaka Diarra</span><input type="hidden" name="teampeople[10]" value="9886029"></input></span><span style="display:table-cell;width:75px;">1995-01-18</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2026-02-25</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[10]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[10]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[10]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[10]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[10]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[10]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[10]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[10]" type="hidden" value="Ichaka Diarra" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9738029"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=345356">345356</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Khaled Al Hajjar</span><span class="secondary-name">Khaled Fadi Al Hajjar</span><input type="hidden" name="teampeople[11]" value="9738029"></input></span><span style="display:table-cell;width:75px;">2004-09-22</span><span style="display:table-cell;width:100px;">Attacker</span><span style="display:table-cell;width:100px;">2025-09-09</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[11]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[11]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[11]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[11]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[11]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[11]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[11]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[11]" type="hidden" value="Khaled Al Hajjar" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9856003"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=170215">170215</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Khalil Bader</span><span class="secondary-name">Khalil Abdel Salam Bader</span><input type="hidden" name="teampeople[12]" value="9856003"></input></span><span style="display:table-cell;width:75px;">1999-07-27</span><span style="display:table-cell;width:100px;">Attacker</span><span style="display:table-cell;width:100px;">2026-01-12</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[12]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[12]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[12]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[12]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[12]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[12]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[12]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[12]" type="hidden" value="Khalil Bader" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9850047"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=140519">140519</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mahdi Zein</span><span class="secondary-name">Mahdi Wissam Zein</span><input type="hidden" name="teampeople[13]" value="9850047"></input></span><span style="display:table-cell;width:75px;">2000-05-23</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2026-01-05</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[13]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[13]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[13]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[13]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[13]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[13]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[13]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[13]" type="hidden" value="Mahdi Zein" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9708860"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=461826">461826</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Majed Osman</span><span class="secondary-name">Majed Sobhi Osman</span><input type="hidden" name="teampeople[14]" value="9708860"></input></span><span style="display:table-cell;width:75px;">1994-06-09</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2025-08-12</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[14]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[14]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[14]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[14]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[14]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[14]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[14]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4048286">2026-02-17</a></span><input name="name[14]" type="hidden" value="Majed Osman" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9054374"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=140532">140532</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Maxime Aoun</span><span class="secondary-name">Maxime Elias Aoun</span><input type="hidden" name="teampeople[15]" value="9054374"></input></span><span style="display:table-cell;width:75px;">2001-03-04</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2022-07-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[15]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[15]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[15]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[15]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[15]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[15]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[15]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[15]" type="hidden" value="Maxime Aoun" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="8867313"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=7742587">7742587</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mohamad Bou Saleh</span><span class="secondary-name">Mohamad Khodor Bou Saleh</span><input type="hidden" name="teampeople[16]" value="8867313"></input></span><span style="display:table-cell;width:75px;">2003-03-19</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2021-11-20</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[16]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[16]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[16]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[16]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[16]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[16]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[16]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[16]" type="hidden" value="Mohamad Bou Saleh" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9532896"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=436774">436774</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mohamad El Dor</span><span class="secondary-name">Mohamad Reda El Dor</span><input type="hidden" name="teampeople[17]" value="9532896"></input></span><span style="display:table-cell;width:75px;">1997-09-01</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2024-08-04</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[17]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[17]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[17]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[17]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[17]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[17]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[17]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[17]" type="hidden" value="Mohamad El Dor" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9769137"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=8061737">8061737</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mohamad Hbouss</span><span class="secondary-name">Mohamad Kassem Hbouss</span><input type="hidden" name="teampeople[18]" value="9769137"></input></span><span style="display:table-cell;width:75px;">2005-03-14</span><span style="display:table-cell;width:100px;"></span><span style="display:table-cell;width:100px;">2025-10-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[18]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[18]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[18]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[18]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[18]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[18]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[18]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4048270">2026-02-08</a></span><input name="name[18]" type="hidden" value="Mohamad Hbouss" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="6389586"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=436340">436340</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/149.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mohamad Hebous</span><span class="secondary-name">Mohamad Anwar Ali Hebous</span><input type="hidden" name="teampeople[19]" value="6389586"></input></span><span style="display:table-cell;width:75px;">2001-07-25</span><span style="display:table-cell;width:100px;">Midfielder</span><span style="display:table-cell;width:100px;">2020-07-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[19]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[19]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[19]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[19]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[19]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[19]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[19]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[19]" type="hidden" value="Mohamad Hebous" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9852724"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=584895">584895</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mohammad Shoumar</span><span class="secondary-name">Mohammad Jamil Shoumar</span><input type="hidden" name="teampeople[20]" value="9852724"></input></span><span style="display:table-cell;width:75px;">2004-11-30</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2026-01-08</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[20]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[20]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[20]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[20]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[20]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[20]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[20]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[20]" type="hidden" value="Mohammad Shoumar" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9496518"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=120672">120672</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mostafa Kassab</span><span class="secondary-name">Mostafa Imad Kassab</span><input type="hidden" name="teampeople[21]" value="9496518"></input></span><span style="display:table-cell;width:75px;">1997-08-30</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2024-08-06</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[21]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[21]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[21]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[21]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[21]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[21]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[21]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[21]" type="hidden" value="Mostafa Kassab" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9388257"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=204503">204503</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Mouhammed-Ali Dhaini</span><span class="secondary-name">Mouhammed-Ali Najib Dhaini</span><input type="hidden" name="teampeople[22]" value="9388257"></input></span><span style="display:table-cell;width:75px;">1994-03-01</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2023-12-29</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[22]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[22]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[22]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[22]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[22]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[22]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[22]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=3989727">2025-12-30</a></span><input name="name[22]" type="hidden" value="Mouhammed-Ali Dhaini" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="8906505"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=170224">170224</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Nader Matar</span><span class="secondary-name">Nader Charbel Matar</span><input type="hidden" name="teampeople[23]" value="8906505"></input></span><span style="display:table-cell;width:75px;">1992-05-12</span><span style="display:table-cell;width:100px;">Attacker</span><span style="display:table-cell;width:100px;">2022-01-18</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[23]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[23]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[23]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[23]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[23]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[23]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[23]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[23]" type="hidden" value="Nader Matar" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="2611848"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=148752">148752</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Nassar Nassar</span><span class="secondary-name">Nassar Mahmoud Nassar</span><input type="hidden" name="teampeople[24]" value="2611848"></input></span><span style="display:table-cell;width:75px;">1992-01-01</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2016-07-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[24]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[24]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[24]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[24]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[24]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[24]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[24]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[24]" type="hidden" value="Nassar Nassar" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="3316184"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=56355">56355</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Nazih Assaad</span><span class="secondary-name">Nazih Hassan Khodr Assaad</span><input type="hidden" name="teampeople[25]" value="3316184"></input></span><span style="display:table-cell;width:75px;">1991-01-01</span><span style="display:table-cell;width:100px;">Goalkeeper</span><span style="display:table-cell;width:100px;">2019-08-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[25]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[25]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[25]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[25]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[25]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[25]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[25]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[25]" type="hidden" value="Nazih Assaad" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9519933"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=441006">441006</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/195.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Rafik Mednini</span><span class="secondary-name">Rafik Mednini</span><input type="hidden" name="teampeople[26]" value="9519933"></input></span><span style="display:table-cell;width:75px;">1996-02-08</span><span style="display:table-cell;width:100px;">Defender</span><span style="display:table-cell;width:100px;">2024-09-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[26]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[26]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[26]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[26]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[26]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[26]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[26]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[26]" type="hidden" value="Rafik Mednini" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9725142"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=168624">168624</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/81.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">Samuel Konney</span><span class="secondary-name">Samuel Mensah Konney</span><input type="hidden" name="teampeople[27]" value="9725142"></input></span><span style="display:table-cell;width:75px;">1995-09-23</span><span style="display:table-cell;width:100px;">Attacker</span><span style="display:table-cell;width:100px;">2025-08-28</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[27]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[27]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[27]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[27]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[27]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[27]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[27]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[27]" type="hidden" value="Samuel Konney" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><div class="match-row" data-tpid="9886030"><span style="display:table-cell;width:70px;"><a href="people_view.php?p=7952520">7952520</a></span><span style="display:table-cell;width:14px;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-position:center;background-size:12px 12px;"></span><span style="display:table-cell;width:175px;"><span class="main-name">William Sanan</span><span class="secondary-name">William Wael Sanan</span><input type="hidden" name="teampeople[28]" value="9886030"></input></span><span style="display:table-cell;width:75px;">2005-08-15</span><span style="display:table-cell;width:100px;">Goalkeeper</span><span style="display:table-cell;width:100px;">2026-02-01</span><span style="display:table-cell;width:125px;"><input class="eday" type="text" name="end_date_day[28]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="emonth" type="text" name="end_date_month[28]" maxlength="2" value="" style="width:25px;"></input>&nbsp;&nbsp;<input class="eyear" type="text" name="end_date_year[28]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:200px;"><input type="text" name="team[28]" value="" class="auto" style="width:195px;"></input></span><span style="display:table-cell;width:125px;"><input type="text" name="start_date_day[28]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_month[28]" maxlength="2" value="" style="width:20px;"></input>&nbsp;&nbsp;<input type="text" name="start_date_year[28]" maxlength="4" value="" style="width:45px;"></input></span><span style="display:table-cell;width:70px;"><a href="events_adding.php?match_id=4042399">2026-04-19</a></span><input name="name[28]" type="hidden" value="William Sanan" /><input class="end_day" type="hidden" value="" /><input class="end_month" type="hidden" value="" /><input class="end_year" type="hidden" value="" /><input class="end_month_day" type="hidden" value="" /><input class="end_month_month" type="hidden" value="" /><input class="end_month_year" type="hidden" value="" /></div><br><input type="hidden" name="abgeschickt" value="29"><input type="Submit" value="Submit"></input></div></form><script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>	
+<script type="text/javascript">
+$(function() {
+	//autocomplete
+	$(".auto").autocomplete({
+		source: "./internal/autosearch_team2.php?gender=male&sport=soccer",
+		minLength: 2
+	});	
+
+});
+$('.name-toggle').on('click', function() {
+	$('.main-name').toggle();
+	$('.secondary-name').toggle();
+	
+});
+$('#all').on('click', function() {
+	$('.eday').val($('.fill_day').val());
+	$('.emonth').val($('.fill_month').val());
+	$('.eyear').val($('.fill_year').val());
+});
+$('#none').on('click', function() {
+	$('.eday').val('');
+	$('.fill_day').val('');
+	$('.fill_month').val('');
+	$('.emonth').val('');
+	$('.eyear').val('');
+	$('.fill_year').val('');
+});
+$('#end').on('click', function() {
+	$('.match-row').each(function() {
+		var day = $(this).find('.end_day').val();
+		var month = $(this).find('.end_month').val();
+		var year = $(this).find('.end_year').val();
+		
+		if (day !== '' && month !== '' && year !== '') {
+			$(this).find('.eday').val(day);
+			$(this).find('.emonth').val(month);
+			$(this).find('.eyear').val(year);
+		}
+	});
+});
+$('#end-month').on('click', function() {
+	$('.match-row').each(function() {
+		var day = $(this).find('.end_month_day').val();
+		var month = $(this).find('.end_month_month').val();
+		var year = $(this).find('.end_month_year').val();
+		
+		if (day !== '' && month !== '' && year !== '') {
+			$(this).find('.eday').val(day);
+			$(this).find('.emonth').val(month);
+			$(this).find('.eyear').val(year);
+		}
+	});
+});
+</script>

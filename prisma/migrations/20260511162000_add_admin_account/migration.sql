@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS "AdminAccount" (
+  "id" SERIAL PRIMARY KEY,
+  "username" TEXT NOT NULL,
+  "passwordHash" TEXT NOT NULL,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "AdminAccount_username_key"
+  ON "AdminAccount" ("username");

@@ -1,0 +1,520 @@
+<head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><style>
+.medalists {
+	margin: auto;
+    width: 980px;
+}
+.medalist-row {
+	display: grid;
+    width: 100%;
+    min-height: 40px;
+    align-items: center;
+    gap: 5px;
+    grid-template-columns: 20px 180px 1fr;
+    font-size: 11px;
+	border-bottom: 1px solid #dfdfdf;
+}
+.medalist-column {
+	display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.medalist-group {
+	display: flex;
+    align-items: center;
+    gap: 10px;
+	height: 30px;
+}
+.medalist-group div {
+	display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.medalist-column img {
+	width: 16px;
+}
+.rotate {
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
+<div style="margin: 0 auto; width: 980px;display:flex;align-items:center;color:#B40404;text-decoration:none;font-weight:bold;margin-bottom: 10px;"><img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" alt="soccer" title="soccer" style="margin: 0 5px;"/><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg" alt="male" title="male" style="margin: 0 5px;"/><a href="client_comps.php?comp=223"  style="color:#B40404;text-decoration:none;font-weight:bold;">	Lebanese First Division 2025/2026</a></div><form id="submit_venue" method="post" style="display:none;margin: 0px auto 15px auto;width: 980px;"><input class="auto" type="text" name="venue_id"><input type="submit" name="submit_venue" value="submit" style="margin-left: 10px;"></form><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+    -moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Rounds</span><span style="display:table-cell;width:10px;"></span><span style="display:table-cell;width:10px;vertical-align:middle;"><a href="backend_add_round.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg"></a></span><span style="display:table-cell;width:10px;"></span></div><table style="margin: 0 auto; width: 970px; border: 1px solid #B40404;font-size:11px;" cellspacing=0><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+			-moz-border-radius:8px;border-radius:8px;font-weight:bold;display: flex;    justify-content: space-between;">
+				<span style="display:table-cell;width:900px">&nbsp;<img src="https://dsg-backend.com/resources/img/icons/svg/male.svg" style="float: left;margin: 0 5px;">senior | &nbsp;&nbsp;Soccer</span>
+				<span style="display:table-cell;width:80px;vertical-align:middle;display:flex;gap: 5px;align-items: center;">&nbsp;&nbsp;&nbsp;&nbsp; 
+				<a href="backend_add_round.php?s=77207&d=27&g=male&a=senior"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg"></a> <div style="height: 1px;width: 47px;float: left;margin-right: -32px;"></div><a href="backend_add_round.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg"></a>
+				</span>
+			  </div><table style="margin: 0 auto; width: 970px; border: 1px solid #B40404;font-size:11px;" cellspacing=0><tr style="background-color: #E0E0E0"><td><b></b></td><td></td><td><b>Discipline</b></td><td><b>title (type)</b></td><td><b>start_date</b></td><td><b>end_date</td><td><b>Status</b></td><td><b>Set</b></td><td><b>Num</b></td><td><b>Draw Date</b></td><td><b>Matches</b></td><td title="Round Check"><b>RC</b></td><td></td><td></td></tr><tr><td><a href="backend_add_round.php?s=77207&r=130982"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a>&nbsp;&nbsp;<a href="backend_round.php?r=130982">130982</a></td><td></td><td>Soccer</td><td>Regular Season (table)</td><td>2025-09-19</td><td>2026-05-17</td><td></td><td>121</td><td><span >121</span></td><td></td><td><a href="match_today.php?round_id=130982&type=time&sel=upcoming">Matches</a></td><td></td><td><a href="https://globalsportsarchive.com/competition/soccer/lebanese-first-division-2025-2026/regular-season/130982/" target="_blank"><img src="https://globalsportsarchive.com/images/gsa_logo4.png" style="width:20px;"/></a></td><td><div style="min-width:10px;"></div></td></tr></table></table><br><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+		-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbspSeason Venues (9)</span><span style="display:table-cell;width:10px;vertical-align:middle;"><a href="backend_add_seasonvenue.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg"></a></span><span style="display:table-cell;width:10px;">&nbsp;</span></div><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+			-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbspSeason Referees (44)</span><span style="display:table-cell;width:10px;vertical-align:middle;"><a href="backend_add_seasonreferee.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg"></a></span><span style="display:table-cell;width:10px;">&nbsp;</span></div><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+		-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Season Winner</span><span style="display:table-cell;width:10px;vertical-align:middle;"><a href="backend_add_seasonwinner.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg"></a></span><span style="display:table-cell;width:10px;">&nbsp;</span></div><div class="medalists"></div><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+		-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Error View Entries (cached 15 mins)</span><span style="display:table-cell;width:10px;vertical-align:middle;"></span><span style="display:table-cell;width:10px;"></span></div><div><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+		-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Player Rankings</span></div><table style="margin: 0 auto; width: 970px; border: 1px solid #B40404;font-size:11px;table-layout:fixed;" cellspacing=0><tr style="line-height:17px;padding-left: 5px;"><td style="width:5%;text-align: center;"><a href="people_season_ranks.php?season_id=77207&stat=goals"><img src="https://globalsportsarchive.com/images/view.png"></a></td><td style="width:95%;font-weight:bold;">Goalscorers</td></tr><tr style="line-height:17px;padding-left: 5px;"><td style="width:5%;text-align: center;"><a href="people_season_ranks.php?season_id=77207&stat=own_goals"><img src="https://globalsportsarchive.com/images/view.png"></a></td><td style="width:95%;font-weight:bold;">Own Goals</td></tr><tr style="line-height:17px;padding-left: 5px;"><td style="width:5%;text-align: center;"><a href="people_season_ranks.php?season_id=77207&stat=clean_sheets"><img src="https://globalsportsarchive.com/images/view.png"></a></td><td style="width:95%;font-weight:bold;">Clean Sheets</td></tr><tr style="line-height:17px;padding-left: 5px;"><td style="width:5%;text-align: center;"><a href="people_season_ranks.php?season_id=77207&stat=bookings"><img src="https://globalsportsarchive.com/images/view.png"></a></td><td style="width:95%;font-weight:bold;">Bookings</td></tr><tr style="line-height:17px;padding-left: 5px;"><td style="width:5%;text-align: center;"><a href="people_season_ranks.php?season_id=77207&stat=assists"><img src="https://globalsportsarchive.com/images/view.png"></a></td><td style="width:95%;font-weight:bold;">Assists</td></tr></table><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+	-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Season Players&nbsp;(0)&nbsp;<a href="backend_season_player_list.php?season=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg"><a href="season_player_add.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg" style="float:right;margin-top:2px;margin-right:-10px;"/></a></a></span></div><table style="margin: 0 auto; width: 970px; border: 1px solid #B40404;font-size:11px;table-layout:fixed;" cellspacing=0><tr style="line-height:17px;"><td style="width: 25px;"></td><td style="width: 50px;"><a href="people_view.php?p="></a></td><td style="width: 30px;"><img src="https://globalsportsarchive.com/images/.png" alt="" title="" style="margin: 0 5px;"/> </td><td style="width:40%;">-- No Winner Entry -- </td><td style="width:10%;"></td><td style="width:20%;"></td><td style="width:3%;"></td><td style="width:10%;"></td><td style="width:5%;"></td><td style="width:5%;"></td><td style="width:10%;"></td><td style="width:5%;"></td><td style="width:10%;"></td><td style="width:10%;"></td></tr></table><br><form action="backend_season.php?id=77207" method="post" style="margin-bottom:0px;"><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+		-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Season Teams&nbsp;(12)&nbsp;
+				<a href="backend_season_team_list.php?season=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg"></a>&nbsp;
+				<a href="backend_season.php?id=77207&amp;copy_season_shirts=1"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg"></a>&nbsp;
+				</a>&nbsp;<a href="season_black_logos.php?id=77207" target="_blank"><b>B</b></a>
+				
+				</span></form>	
+		<span style="display:table-cell;width:10px;vertical-align:middle;"><a href="backend_add_seasonteam.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg"></a></span><span style="display:table-cell;width:10px;">&nbsp;</span>
+		</div><table style="margin: 0 auto; width: 970px; border: 1px solid #B40404;font-size:11px;" cellspacing=0><tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16373" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16373&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16373">16373</a></td><td>Al Ansar SC</td><td>Al Ansar</td><td>ANS</td><td>1630</td><td>Bayrūt</td><td>Al Ansar SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16374" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16374&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16374">16374</a></td><td>Tadamon SC Sour</td><td>Tadamon Sour</td><td>TAD</td><td>1616</td><td>Ṣūr</td><td>Tadamon SC Sour</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16375" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16375&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16375">16375</a></td><td>Racing Club Bayrūt</td><td>RC Bayrūt</td><td>RCB</td><td>1631</td><td>Bayrūt</td><td>Racing Club Bayrūt</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16376" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16376&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16376">16376</a></td><td>Nejmeh SC</td><td>Nejmeh</td><td>NEJ</td><td>1629</td><td>Bayrūt</td><td>Nejmeh SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16377" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16377&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16377">16377</a></td><td>Safa SC</td><td>Safa</td><td>SAF</td><td>1613</td><td>Bayrūt</td><td>Safa SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16378" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16378&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16378">16378</a></td><td>Al Ahed SC</td><td>Ahed</td><td>AHD</td><td>1614</td><td>Bayrūt</td><td>Al Ahed SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16381" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16381&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16381">16381</a></td><td>Shabab Al Sahel SC</td><td>Shabab Sahel</td><td>SAH</td><td>1625</td><td>Bayrūt</td><td>Shabab Al Sahel SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16384" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16384&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16384">16384</a></td><td>Al Mabarrah SC</td><td>Al Mabarrah</td><td>MAB</td><td>1624</td><td>BayrūtBayrūt</td><td>Al Mabarrah SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=16386" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=16386&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=16386">16386</a></td><td>CS Sagesse</td><td>Sagesse</td><td>SAG</td><td>1623</td><td>Bayrūt</td><td>CS Sagesse</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=22911" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=22911&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=22911">22911</a></td><td>Bourj SC</td><td>Bourj</td><td>BRJ</td><td>1626</td><td>Bourj El-Barajneh</td><td>Bourj SC</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=33980" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=33980&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=33980">33980</a></td><td>Al Riyadi Al Abbasiyah Club</td><td>Al Abbasiyah</td><td>ABB</td><td>1632</td><td>Aabbassiyeh</td><td>Al Riyadi Al Abbasiyah Club</td></tr><tr><td style="width:28px;"><a href="backend_season_team_list.php?id=33982" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/svg/edit_icon.svg" style="height:11px"></a></td><td style="width:35px;"><a href="add_season_shirt.php?team_id=33982&season_id=77207" target="_blank"><img src="https://dsg-backend.com/resources/img/icons/events/shirt.svg" style="height:11px"></a></td><td style="width:28px;"><img src="https://dsg-backend.com/resources/img/icons/svg/male.svg"></td><td><a href="team_view.php?t=33982">33982</a></td><td>Jwaya SC</td><td>Jwaya</td><td>JWA</td><td>1637</td><td>Bint Jbeil</td><td>Jwaya SC</td></tr></tr></table><br><div style="display:flex;align-items:center;width: 980px;margin: 0 auto;border: 1px solid #B40404;border-radius:8px;height:18px;background-color: #A0A0A0;font-weight:bold;padding:0px 10px;box-sizing: border-box; justify-content: space-between;">Season Winner - Players <a href="season_player_add.php?s=77207"><img src="https://dsg-backend.com/resources/img/icons/svg/add-icon.svg" style="float:right;margin-top:2px;margin-right:-10px;"/></a></div><br><div style="margin:auto;width:980px; text-align: left;border: 1px solid #B40404;background-color:#A0A0A0;-webkit-border-radius:8px;
+		-moz-border-radius:8px;border-radius:8px;font-weight:bold;"><span style="display:table-cell;width:960px">&nbsp;&nbsp;&nbsp;Season Coverage</span><span style="display:table-cell;width:10px;vertical-align:middle;"></span><span style="display:table-cell;width:10px;">&nbsp;</span></div><table style="margin: 0 auto; width: 970px; border: 1px solid #B40404;font-size:11px;" cellspacing=0><tr><td style="width:30px"></td><td><b>Score</td><td><b>Live</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Period Scores</td><td><b>Live</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Venues</td><td><b>Pre-Match</td><td><b>-9000</td><td><b></td><td><b>-7200</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Lineups</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Goalscorers</td><td><b>Live</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Kick-off times</td><td><b>Pre-Match</td><td><b>-9000</td><td><b></td><td><b>-7200</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Bookings</td><td><b>Live</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Assists</td><td><b>Live</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Subs on Bench</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Referees</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Coaches</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Tables</td><td><b>Post-Match</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Captains</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Participants</td><td><b>Pre-Match</td><td><b></td><td><b></td><td><b></td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Shirtnumbers</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Formations</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr><tr><td style="width:30px"></td><td><b>Video Assistant Referees</td><td><b>Pre-Match</td><td><b>-35</td><td><b></td><td><b>-15</td><td><b></td></tr></tr></table>	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css" type="text/css" />
+	<script type="text/javascript" src="https://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>
+	<script>
+	$(function() {
+		$(".auto").autocomplete({
+			source: "./internal/autosearch_venues.php?sport=soccer",
+			minLength: 2
+		});	
+		$('#gsg').on('click', function() {
+			$(this).addClass('rotate');
+			$.post('https://dsg-backend.com/backend_season.php?id=77207', { action: 'gsa_static_generation' }, function() {
+				window.location.href = window.location.href;
+			});
+		});
+		$('#smg').on('click', function() {
+			$(this).addClass('rotate');
+			$.post('https://dsg-backend.com/backend_season.php?id=77207', { action: 'season_map_generation' }, function() {
+				window.location.href = window.location.href;
+			});
+		});
+		$('#venue-toggle').on('click', function() {
+			$('#submit_venue').toggle();
+		});	
+		$('.rc-submit').on('click', function() {
+			$(this).parent().submit();
+		});
+		$('#toggle-ev').on('click', function() {
+			console.log();
+			
+			if ($(this).attr('src') == 'https://globalsportsarchive.com/images/plus-icon.png') {
+				$(this).attr('src','https://globalsportsarchive.com/images/minus-icon.png');
+				$('.ev-row').show();		
+			} else {
+				$(this).attr('src','https://globalsportsarchive.com/images/plus-icon.png');
+				$('.ev-row').each(function() {
+					if ($(this).data('count') > 20) {
+						$(this).hide();
+					}
+				});
+			}
+			
+			//
+			//forech () 
+		});
+	});
+	$('#live_assign').on('click', function() {
+		if ($('#live_assign_box').css('display') == 'none') {
+			$('#live_assign_box').css('display', 'flex');
+			$(this).attr('src', 'https://globalsportsarchive.com/images/minus-icon.png');
+		}
+		else {
+			$('#live_assign_box').css('display', 'none');
+			$(this).attr('src', 'https://dsg-backend.com/resources/img/icons/svg/add-icon.svg');
+		}
+	});
+	$('#showAllPeople').on('click', function() {
+		console.log($(this).html());
+		if ($(this).html() == 'Show All') {
+			$('.last-updated-people').css('display','flex');
+			$(this).html('Show 20');
+		} else {
+			$('.last-updated-people-hidden').css('display','none');
+			$('.last-updated-people-top').css('display','flex');
+			$(this).html('Show All');
+		}
+		
+	});
+	</script>
+	

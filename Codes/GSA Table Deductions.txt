@@ -1,0 +1,446 @@
+<head>
+<link rel="stylesheet" type="text/css" href="https://globalsportsarchive.com/backend.css" media="screen" >
+</head><body><head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><style>
+#fill-container {
+	display: flex;
+	align-items: center;
+	height: 30px;gap: 5px;
+	padding-left: 20px;
+}
+input[name=fill-cron],
+#bonus-fill {
+	background-color: #dfdfdf;
+    border-radius: 5px;
+    line-height: 21px;
+    font-size: 12px;
+    padding: 0px 10px;
+    cursor: pointer;
+	border: none;
+}
+input[name=fill-cron].cron-green {
+	background-color: green;
+	color: white;
+}
+</style>
+<script>
+$(function() {
+	$('#bonus-fill').on('click', function(e) {
+		e.preventDefault();
+		if ($('#fill-round').val() > 0) {
+			$.ajax({
+				url: 'https://dsg-backend.com/internal/include/deductions/table.php',
+				type: 'POST',
+				dataType: 'json',
+				data: {r: $('#fill-round').val()},
+				success: function({res}) {
+					console.log(res);
+					
+					for (var i in res) {
+						var points = res[i]['points'];
+						if ($('#fill-round-type').val() == 'half') {
+							points = Math.ceil(res[i]['points']/2);
+						}
+						
+						$('#t-'+i+'-matches').val(res[i]['matches']);
+						$('#t-'+i+'-wins').val(res[i]['won']);
+						$('#t-'+i+'-draws').val(res[i]['draw']);
+						$('#t-'+i+'-losses').val(res[i]['lost']);
+						$('#t-'+i+'-g').val(res[i]['goals']);
+						$('#t-'+i+'-ga').val(res[i]['goals_against']);
+						$('#t-'+i+'-points').val(points);
+					}
+				}
+			});
+		}
+		
+		$('.reason').each(function() {
+			$(this).val('bonus_take_over').change();
+		});	
+	});
+});
+</script>
+<table style="margin: 0 auto; width: 980px;" cellspacing=0><tr><td><a href="comp_index.php"  style="color:#B40404;text-decoration:none;font-weight:bold;">Home&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<a href="client_comps.php?comp=223"  style="color:#B40404;text-decoration:none;font-weight:bold;">Lebanese Premier League</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<a href="backend_season.php?id=77207"  style="color:#B40404;text-decoration:none;font-weight:bold;">2025/2026</a><td></tr></table><br><div style="margin:0 auto;width:980px; text-align: left;font-weight:bold;font-size:18px;">Add Deductions & Bonus Take Overs</div><br><div style="margin:0 auto;width:980px;"><form method="post"><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;font-weight:bold;">Team</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">M</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">W</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">D</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">L</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">G</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">GA</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">P</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">PSF</span><span style="display:table-cell;width:30px;font-weight:bold;text-align:center;">PSA</span><span style="display:table-cell;width:50px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;font-weight:bold;">Reason</span></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Al Ahed SC<input type="hidden" name="team[0]" value="16378"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-matches" type="text" name="matches_total[0]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-wins" type="text" name="wins[0]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-draws" type="text" name="draws[0]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-losses" type="text" name="losses[0]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-g" type="text" name="score_for[0]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-ga" type="text" name="score_against[0]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16378-points" type="text" name="points[0]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[0]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[0]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[0]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Al Ansar SC<input type="hidden" name="team[1]" value="16373"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-matches" type="text" name="matches_total[1]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-wins" type="text" name="wins[1]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-draws" type="text" name="draws[1]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-losses" type="text" name="losses[1]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-g" type="text" name="score_for[1]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-ga" type="text" name="score_against[1]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16373-points" type="text" name="points[1]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[1]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[1]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[1]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Al Mabarrah SC<input type="hidden" name="team[2]" value="16384"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-matches" type="text" name="matches_total[2]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-wins" type="text" name="wins[2]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-draws" type="text" name="draws[2]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-losses" type="text" name="losses[2]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-g" type="text" name="score_for[2]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-ga" type="text" name="score_against[2]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16384-points" type="text" name="points[2]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[2]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[2]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[2]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Al Riyadi Al Abbasiyah Club<input type="hidden" name="team[3]" value="33980"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-matches" type="text" name="matches_total[3]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-wins" type="text" name="wins[3]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-draws" type="text" name="draws[3]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-losses" type="text" name="losses[3]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-g" type="text" name="score_for[3]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-ga" type="text" name="score_against[3]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33980-points" type="text" name="points[3]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[3]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[3]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[3]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Bourj SC<input type="hidden" name="team[4]" value="22911"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-matches" type="text" name="matches_total[4]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-wins" type="text" name="wins[4]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-draws" type="text" name="draws[4]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-losses" type="text" name="losses[4]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-g" type="text" name="score_for[4]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-ga" type="text" name="score_against[4]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-22911-points" type="text" name="points[4]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[4]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[4]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[4]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">CS Sagesse<input type="hidden" name="team[5]" value="16386"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-matches" type="text" name="matches_total[5]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-wins" type="text" name="wins[5]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-draws" type="text" name="draws[5]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-losses" type="text" name="losses[5]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-g" type="text" name="score_for[5]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-ga" type="text" name="score_against[5]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16386-points" type="text" name="points[5]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[5]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[5]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[5]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Jwaya SC<input type="hidden" name="team[6]" value="33982"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-matches" type="text" name="matches_total[6]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-wins" type="text" name="wins[6]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-draws" type="text" name="draws[6]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-losses" type="text" name="losses[6]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-g" type="text" name="score_for[6]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-ga" type="text" name="score_against[6]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-33982-points" type="text" name="points[6]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[6]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[6]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[6]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Nejmeh SC<input type="hidden" name="team[7]" value="16376"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-matches" type="text" name="matches_total[7]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-wins" type="text" name="wins[7]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-draws" type="text" name="draws[7]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-losses" type="text" name="losses[7]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-g" type="text" name="score_for[7]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-ga" type="text" name="score_against[7]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16376-points" type="text" name="points[7]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[7]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[7]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[7]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Racing Club Bayrūt<input type="hidden" name="team[8]" value="16375"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-matches" type="text" name="matches_total[8]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-wins" type="text" name="wins[8]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-draws" type="text" name="draws[8]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-losses" type="text" name="losses[8]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-g" type="text" name="score_for[8]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-ga" type="text" name="score_against[8]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16375-points" type="text" name="points[8]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[8]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[8]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[8]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Safa SC<input type="hidden" name="team[9]" value="16377"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-matches" type="text" name="matches_total[9]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-wins" type="text" name="wins[9]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-draws" type="text" name="draws[9]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-losses" type="text" name="losses[9]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-g" type="text" name="score_for[9]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-ga" type="text" name="score_against[9]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16377-points" type="text" name="points[9]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[9]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[9]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[9]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Shabab Al Sahel SC<input type="hidden" name="team[10]" value="16381"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-matches" type="text" name="matches_total[10]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-wins" type="text" name="wins[10]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-draws" type="text" name="draws[10]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-losses" type="text" name="losses[10]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-g" type="text" name="score_for[10]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-ga" type="text" name="score_against[10]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16381-points" type="text" name="points[10]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[10]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[10]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[10]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><div class="margin:0 auto;width:610px;"><span style="display:table-cell;width:250px;">Tadamon SC Sour<input type="hidden" name="team[11]" value="16374"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-matches" type="text" name="matches_total[11]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-wins" type="text" name="wins[11]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-draws" type="text" name="draws[11]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-losses" type="text" name="losses[11]" value="" maxlength="3" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-g" type="text" name="score_for[11]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-ga" type="text" name="score_against[11]" value="" maxlength="4" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input id="t-16374-points" type="text" name="points[11]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_for[11]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:30px;"><input type="text" name="set_points_against[11]" value="" maxlength="6" style="width:29px;"></input></span><span style="display:table-cell;width:20px;font-weight:bold;text-align:center;"></span><span style="display:table-cell;width:150px;"><select class="reason" name="reason[11]" size="1" style="width:150px;"><option value="unknown">Unknown</option><option value="license violations"  >License violations</option><option value="bribery"  >Bribery</option><option value="refused to play"  >Refused to play</option><option value="corruption"  >Corruption</option><option value="fielding ineligible players"  >Fielding ineligible players</option><option value="riots"  >Riots</option><option value="others"  >Others</option><option value="bonus_take_over"  >Bonus_take_over</option></select></span></div><div style="margin:0 auto;width:980px;height:5px;"></div><br><input type="hidden" name="abgeschickt" value="12"></input><div align="left"><input type="Submit" value="Submit"></input></div><br><br></form></div></body

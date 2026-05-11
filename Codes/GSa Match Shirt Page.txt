@@ -1,0 +1,415 @@
+<body><head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5670">Lebanon -  National Solidarity cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><div style="margin:0 auto; width: 450px; top: 85px;"><form action="add_shirtnumbers.php?match_id=3902316&team_id=16376" method="post"><table style="margin: 0 auto; width: 520px; border: 1px solid #dfdfdf" cellspacing=0><tr><td bgcolor="#dfdfdf"><b>Event</b></td><td bgcolor="#dfdfdf"><b>Nat</b></td><td bgcolor="#dfdfdf" id="name_toggle" style="color: blue;cursor: pointer;"><b>Player</b></td><td bgcolor="#dfdfdf"><b>Shirtnumber</b></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Ali Kassas</td><td class="name_common" style="display:none">Ali Mohamad Kassas</td><td><input type="shirtnumber1" name="shirtnumber[1]" maxlength="3" size="2" value="11" style=""></input><input type="hidden" name="team_people[1]" value="9709442"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Hassan Kourani</td><td class="name_common" style="display:none">Hassan Mohamad Kourani</td><td><input type="shirtnumber2" name="shirtnumber[2]" maxlength="3" size="2" value="20" style=""></input><input type="hidden" name="team_people[2]" value="9709499"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Hussein Zein</td><td class="name_common" style="display:none">Hussein Ali Zein</td><td><input type="shirtnumber3" name="shirtnumber[3]" maxlength="3" size="2" value="6" style=""></input><input type="hidden" name="team_people[3]" value="9709444"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Kassem El Zein</td><td class="name_common" style="display:none">Kassem Mohamad El Zein</td><td><input type="shirtnumber4" name="shirtnumber[4]" maxlength="3" size="2" value="18" style=""></input><input type="hidden" name="team_people[4]" value="6573401"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Khalil Bader</td><td class="name_common" style="display:none">Khalil Abdel Salam Bader</td><td><input type="shirtnumber5" name="shirtnumber[5]" maxlength="3" size="2" value="7" style=""></input><input type="hidden" name="team_people[5]" value="9709503"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Khalil Khamis</td><td class="name_common" style="display:none">Khalil Georges Khamis</td><td><input type="shirtnumber6" name="shirtnumber[6]" maxlength="3" size="2" value="5" style=""></input><input type="hidden" name="team_people[6]" value="9709445"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Mahdi Zein</td><td class="name_common" style="display:none">Mahdi Wissam Zein</td><td><input type="shirtnumber7" name="shirtnumber[7]" maxlength="3" size="2" value="10" style=""></input><input type="hidden" name="team_people[7]" value="6389210"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Mohamad Omar Sadek</td><td class="name_common" style="display:none">Mohamad Omar Sadek</td><td><input type="shirtnumber8" name="shirtnumber[8]" maxlength="3" size="2" value="8" style=""></input><input type="hidden" name="team_people[8]" value="9227489"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Mostafa Matar</td><td class="name_common" style="display:none">Mostafa Ali Matar</td><td><input type="shirtnumber9" name="shirtnumber[9]" maxlength="3" size="2" value="95" style=""></input><input type="hidden" name="team_people[9]" value="9709446"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/169.png" /></td><td class="name_common">Rodney Michael</td><td class="name_common" style="display:none">Rodney Michael</td><td><input type="shirtnumber10" name="shirtnumber[10]" maxlength="3" size="2" value="17" style=""></input><input type="hidden" name="team_people[10]" value="9709447"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/appearance.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Shibriko</td><td class="name_common" style="display:none">Hassan Samih Chaitou</td><td><input type="shirtnumber11" name="shirtnumber[11]" maxlength="3" size="2" value="16" style=""></input><input type="hidden" name="team_people[11]" value="9709448"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Ali Alrida Ismail</td><td class="name_common" style="display:none">Ali Alrida Mohamad Ismail</td><td><input type="shirtnumber12" name="shirtnumber[12]" maxlength="3" size="2" value="2" style=""></input><input type="hidden" name="team_people[12]" value="9017137"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Ali El Fadl</td><td class="name_common" style="display:none">Ali Naim El Fadl</td><td><input type="shirtnumber13" name="shirtnumber[13]" maxlength="3" size="2" value="21" style=""></input><input type="hidden" name="team_people[13]" value="9709441"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Antoine Al Douaihy</td><td class="name_common" style="display:none">Antoine Kabalan Knaier Al Douaihy</td><td><input type="shirtnumber14" name="shirtnumber[14]" maxlength="3" size="2" value="99" style=""></input><input type="hidden" name="team_people[14]" value="9535904"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Hassan Jaafar</td><td class="name_common" style="display:none">Hassan Hicham Jaafar</td><td><input type="shirtnumber15" name="shirtnumber[15]" maxlength="3" size="2" value="19" style=""></input><input type="hidden" name="team_people[15]" value="9734146"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Hussein Siblini</td><td class="name_common" style="display:none">Hussein Mohamad Siblini</td><td><input type="shirtnumber16" name="shirtnumber[16]" maxlength="3" size="2" value="71" style=""></input><input type="hidden" name="team_people[16]" value="9433286"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/105.png" /></td><td class="name_common">Juma Masud</td><td class="name_common" style="display:none">Juma Masud Choka</td><td><input type="shirtnumber17" name="shirtnumber[17]" maxlength="3" size="2" value="23" style=""></input><input type="hidden" name="team_people[17]" value="9739031"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/144.png" /></td><td class="name_common">Marios Ogkmpoe</td><td class="name_common" style="display:none">Marios Ogkmpoe</td><td><input type="shirtnumber18" name="shirtnumber[18]" maxlength="3" size="2" value="9" style=""></input><input type="hidden" name="team_people[18]" value="9728077"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" /></td><td class="name_common">Mohamad Safwan</td><td class="name_common" style="display:none">Mohamad Hussein Safwan</td><td><input type="shirtnumber19" name="shirtnumber[19]" maxlength="3" size="2" value="4" style=""></input><input type="hidden" name="team_people[19]" value="9284282"></input></td></tr>
+<tr><td><img src="https://dsg-backend.com/resources/img/icons/events/bench.png" /></td><td><img src="https://dsg-backend.com/resources/img/flags/16x16/105.png" /></td><td class="name_common">Teddy Akumu</td><td class="name_common" style="display:none">Anthony Akumu Agay</td><td><input type="shirtnumber20" name="shirtnumber[20]" maxlength="3" size="2" value="66" style=""></input><input type="hidden" name="team_people[20]" value="9725603"></input></td></tr>
+</table><br><div><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Send Data"></input></div></div><br><br><br></form></body></html><script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script>
+$(document).ready(function(){
+	$("#name_toggle").click(function(){
+		$(".name_common").toggle();
+		$(".name_full").toggle();			
+	});
+});
+</script>

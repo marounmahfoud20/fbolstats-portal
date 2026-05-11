@@ -1,0 +1,1063 @@
+
+<title>Nejmeh vs Safa</title><head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><input type="hidden" name="period_length" value="45" /><div style="display:flex;align-items:center;width: 100%;margin-bottom: 10px;;border: 1px solid #B40404;border-radius:8px;height:25px;background-color:#dfdfdf;font-weight:bold;padding:0px 10px;box-sizing: border-box;"><img src="https://dsg-backend.com/resources/img/icons/sporticons/
+soccer.png" style="margin-right:5px;"/><img src="https://globalsportsarchive.com/images/male.png" style="margin-right:5px;"/><div style="width:600px;">Lebanon - 	Lebanese First Division 2025/2026</div><div style="width:100px;margin-left:auto;display:flex;justify-content:end;gap:10px;"><a href="https://globalsportsarchive.com/match/soccer/2025-09-28/nejmeh-sc-vs-safa-sc/3902314/" target="_blank"><img src="https://globalsportsarchive.com/images/gsa_logo4.png" style="width:50px;"></a></div></div>	<style>
+	a {
+		text-decoration: none;
+	}
+	.team_a input, .team_b input {
+		margin-right: 5px;
+		margin-top: 3px;
+	}
+	.team_b {
+		clear: both;
+		margin: 15px 0 0 10px;
+		width: 100%;
+	}
+	.middle-venue {
+		width: 26% !important;
+	}
+	.middle-venue input {
+		width: 85% !important;
+	}
+
+	#events_adding_attendance span.eventsadding2-r-topheaded-1 {
+		display: table-cell;
+		padding: 0 0 0 29px;
+		text-align: left;
+		width: 27%;
+	}
+
+	#events_adding_attendance span.eventsadding2-r-topheaded-3 {
+		display: table-cell;
+		padding: 0 0 0 18px;
+	}
+	  
+	.float-this {
+		float: left;
+		width: 40% !important;
+		margin:5px auto;
+		clear:both;
+	}
+
+	.float-this img {
+		float: right;
+		margin: 0 20px 0 0;
+	}
+	.delete {
+		float:right;	
+	}
+
+	.delete-2 {
+		float: right;
+		margin-right: 80px;
+	}
+
+	.hidden_onhover {
+		display:none;
+		width:240px !important;
+		margin-left: 5px;
+	}
+	.onhover {
+		width:240px !important;
+		margin-left: 5px;
+	}
+	#name_toggle, #national_toggle, #people-mapping-toggle, #people-mapping-toggle-2 {
+		color: blue;
+		cursor: pointer;
+	}
+	.m1_othide, .m2_othide, .m3_othide, .m4_othide, .m5_othide {
+		display:none;
+	}
+	.national_toggle {
+		width: auto !important;
+		display: none;
+		margin-right:5px;
+		color: #002cd4;
+	}
+	.row.eventsadding2 {
+		display: grid;
+		grid-template-columns: 1fr 77%;
+	}
+	.eventsadding2-r {
+		float: right;
+		width: 100%;
+	}
+	#ea-venue-toggle {
+		cursor: pointer;
+	}
+	#ea-venue-input {
+		display: none;
+	}
+	.rotate {
+	  animation: spin 2s linear infinite;
+	}
+	@keyframes spin {
+	  from {
+		transform: rotate(0deg);
+	  }
+	  to {
+		transform: rotate(360deg);
+	  }
+	}
+  </style>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="thickbox.js"></script>
+<link rel="stylesheet" href="thickbox.css" type="text/css" media="screen" />
+<link rel="stylesheet" type="text/css" href="backend.css" media="screen" ><div class='row eventsadding2'><div><div class='eventsadding2-2'><div style="width: 212px;margin-bottom: 10px;border: 1px solid #B40404;box-sizing: border-box;text-align:left;font-size: 13px;"><div style="background-color:#C8C8C8;border-bottom:1px solid #B40404;text-align:center;font-size:16px;font-weight:bold;position:relative;">Match Info</div><div style="padding-left:5px;"><b>Date/Time:</b> 2025-09-28 15:15:00</div><div style="padding-left:5px;"><b>Round:</b> <a href="https://dsg-backend.com/backend_round.php?r=130982" style="color:black;" target="_blank">Regular Season</a></div><div style="padding-left:5px;"><b>Gameweek:</b> 2</div></div></div><form id="period-scores" method="post" style="position:relative;display: contents;"><div class='eventsadding2-2'><div style="width: 212px;margin-bottom: 10px;border: 1px solid #B40404;box-sizing: border-box;text-align:left;font-size: 13px;position:relative;"><div style="background-color:#C8C8C8;border-bottom:1px solid #B40404;text-align:center;font-size:16px;font-weight:bold;position:relative;">Match Extras</div><div style="display:flex;width: 100%;min-height:25px;align-items: center;padding-left:5px;padding-right:5px;box-sizing: border-box;"><div style="width: 25px;text-align: center;"><img id="ea-venue-toggle" src="https://dsg-backend.com/resources/img/icons/events/venue.svg" style="max-height:20px;margin-right:5px;" title="Venue"></div><div id="ea-venue-text">Fouad Chehab Stadium (Juniya, Lebanon)</div><input id="ea-venue-input" type="text" class="auto ui-autocomplete-input"  value="Fouad Chehab Stadium (Juniya, Lebanon) |President Fouad Shehab Stadium, Jonieh Municipal Stadium|5667" placeholder="Enter Venue" name="venue_id" autocomplete="off"></div><div style="display:flex;width: 100%;height:25px;align-items: center;padding-left:5px;font-weight:bold;padding-left:5px;"><div style="width: 25px;text-align: center;"><img src="https://dsg-backend.com/resources/img/icons/events/attendance.svg" title="Attendance" style="max-height:20px;margin-right:5px;"></div><input type="text" name="attendance" maxlength="5" value="" style="width: 55px;"/></div><div style="display:flex;width: 100%;height:25px;align-items: center;padding-left:5px;font-weight:bold;padding-left:5px;"><a href="delete_events.php?match_id=3902314"><img src="https://dsg-backend.com/resources/img/icons/svg/delete_bin.svg" title="Delete Events" style="max-height:20px;margin-right:5px;"></a><a href="upload.php?p=3902314&TB_iframe=true&height=300&width=400&modal=true" class="thickbox"><img src="https://dsg-backend.com/resources/img/icons/svg/upload_file.svg" title="Upload Match Sheet" style="max-height:20px;margin-right:5px;"></a></div></div></div><div class='eventsadding2-2'><div style="width: 212px;margin-bottom: 10px;border: 1px solid #B40404;box-sizing: border-box;text-align:left;font-size: 13px;position:relative;"><div style="background-color:#C8C8C8;border-bottom:1px solid #B40404;text-align:center;font-size:16px;font-weight:bold;position:relative;">Scores</div><div style="display:flex;width: 100%;height:40px;align-items: center;padding-left:5px;font-weight:bold;padding-left:5px;"><div style="width: 100px;">Period</div><div style="width: 35px;margin: 0 5px;text-align: center;">NEJ</div><div style="width: 35px;margin: 0 5px;text-align: center;">SAF</div></div><div style="display:flex;width: 100%;height:26px;align-items: center;padding-left:5px;font-weight:bold;background-color: #99b4cb;box-sizing: border-box;"><div style="width: 100px;">Full</div><input type="text" name="score_a" value="1" style="width: 35px;margin: 0 5px;text-align: center;"/><input type="text" name="score_b" value="0" style="width: 35px;margin: 0 5px;text-align: center;"/></div><div style="display:flex;width: 100%;height:26px;align-items: center;padding-left:5px;"><div style="width: 100px;">H1</div><input type="text" name="periodScore[soc_p1s][score_a]" value="0" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_p1s_a"/><input type="text" name="periodScore[soc_p1s][score_b]" value="0" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_p1s_b"/></div><div style="display:flex;width: 100%;height:26px;align-items: center;padding-left:5px;"><div style="width: 100px;">H2</div><input type="text" name="periodScore[soc_p2s][score_a]" value="1" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_p2s_a"/><input type="text" name="periodScore[soc_p2s][score_b]" value="0" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_p2s_b"/></div><div style="display:flex;width: 100%;height:26px;align-items: center;padding-left:5px;"><div style="width: 100px;">ET</div><input type="text" name="periodScore[soc_ets][score_a]" value="" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_ets_a"/><input type="text" name="periodScore[soc_ets][score_b]" value="" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_ets_b"/></div><div style="display:flex;width: 100%;height:26px;align-items: center;padding-left:5px;"><div style="width: 100px;">PS</div><input type="text" name="periodScore[soc_pen][score_a]" value="" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_pen_a"/><input type="text" name="periodScore[soc_pen][score_b]" value="" style="width: 35px;margin: 0 5px;text-align: center;" id="ps_soc_pen_b"/></div><div style="display:flex;width: 100%;height:26px;align-items: center;padding-left:5px;"><div style="min-width: 100px;"><input type="submit" name="submit" value="Save"></div><select name="status" style="width:80px;margin-left:5px;"><option value="Played" selected>Played</option><option value="Playing" >Playing</option><option value="Fixture" >Fixture</option><option value="Cancelled" >Cancelled</option><option value="Postponed" >Postponed</option><option value="Suspended" >Suspended</option><option value="Awarded" >Awarded</option><option value="No Result" >No Result</option><option value="Break" >Break</option><option value="Tea" >Tea</option><option value="Lunch" >Lunch</option><option value="Dinner" >Dinner</option><option value="between Innings" >between Innings</option><option value="Stumps" >Stumps</option><option value="rain delay" >rain delay</option><option value="bad light" >bad light</option><option value="crowd trouble" >crowd trouble</option><option value="pitch condition" >pitch condition</option><option value="start delay" >start delay</option><option value="drinks" >drinks</option><option value="super over" >super over</option><option value="floodlight failure" >floodlight failure</option><option value="Retired" >Retired</option><option value="Bye" >Bye</option><option value="No Contest" >No Contest</option><option value="Disqualified" >Disqualified</option><option value="Tech Knockout" >Tech Knockout</option><option value="Knockout" >Knockout</option><option value="Draw" >Draw</option><option value="Submission" >Submission</option><option value="Double Retire" >Double Retire</option></select></div><input type="hidden" name="match_id" value="3902314"><div class="overlay" style="top:0;"><img src="ajax-loader.gif"></div></div></div></form><form action="events_adding.php?match_id=3902314" method="post"><div style="display:none"><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Send Data"></input></div></form><div class='eventsadding2-2'><div style="width: 212px;margin-bottom: 10px;border: 1px solid #B40404;box-sizing: border-box;text-align:left;font-size: 13px;position:relative;"><div style="background-color:#C8C8C8;border-bottom:1px solid #B40404;text-align:center;font-size:16px;font-weight:bold;position:relative;">Checks</div><div><div style="line-height:20px;text-align:center;background-color:grey;color:white;">Quality Check 1</div><form method="post" style="text-align:center;margin:10px 0;"><input type="Submit" value="Submit" style="background-color:#339933;font-weight:bold;font-size:16px;"></input><input type="hidden" name="abgeschickt" value="9"></input></form></div></div></div><div class='eventsadding2-2'><div style="width: 212px;margin-bottom: 10px;border: 1px solid #B40404;box-sizing: border-box;text-align:left;font-size: 13px;"><div style="background-color:#C8C8C8;border-bottom:1px solid #B40404;text-align:center;font-size:16px;font-weight:bold;position:relative">Match Notes <img id="match_note_toggle" src="https://globalsportsarchive.com/images/add-icon.png" style="position:absolute;right:5;top:2;cursor:pointer;"></div><form id="match_note_form" method="post" style="margin-bottom:0px;display:none;"><textarea style="width:100%;height:50px;;" name="match_notes"></textarea><input type="submit" name="save_note" value="Save"></form></div></div><div class='eventsadding2-l'><div style="width:210px;border-top: 1px solid #B40404;border-left: 1px solid #B40404;border-right: 1px solid #B40404;background-color:#C8C8C8;text-align:center;font-weight:bold;">Upcoming & Live Matches</div><div style="width:212px;height:1px;background-color:#B40404;"></div></div><div class='eventsadding2-2' style="margin-top:10px;float:left;"><form id="susp_form" onSubmit="suspForm();return false;"><div id="suspension_container" style="width: 212px;margin-bottom: 10px;border: 1px solid #B40404;box-sizing: border-box;text-align:left;font-size: 13px;background-color:#E6E6E6"><div style="background-color:#C8C8C8;border-bottom:1px solid #B40404;text-align:center;font-size:16px;font-weight:bold;">Suspensions</div><div style="padding: 5px 2px;"><div><button type="button" onClick="suspension(3902314, 'start', 1, 'soc_p1s');">Start</button></div></div></div><input type="hidden" name="suspmatchid" value="3902314"><input type="submit" style="visibility:hidden;"></form></div><div style="float: left;width: 212px;text-align: center;border: 1px solid #B40404;background-color: #E6E6E6;padding-bottom: 5px;"><div style="background-color: #C8C8C8;border-bottom: 1px solid #B40404;font-weight:bold;">GSA Hide</div><form method="post" style="display: inline;margin-right: 5px;"><input type="submit" name="gsa_hide_full" value="Hide Full" style="margin-top:5px;" ></form><form method="post" style="display: inline;"><input type="submit" name="gsa_hide_gsa" value="Hide GSA" style="margin-top:5px;" ></form></div></div><div class='eventsadding2-r'><div id='events-adding-attendance-results'></div><div style="width:100%;height: 56px;background-color: #514E4E;color:white;font-weight:bold;border-radius: 10px;"><div style="height:100%;display:flex;align-items:center;width:50%;float:left;"><img src="https://dsg-images.com/sport_entity/50x50/1629.png" style="margin:0 10px;height:45px;"><div><div class="event-people" data-id="" data-name="Nejmeh SC" style="display:flex;align-items: center;gap: 5px;">Nejmeh SC <img src="https://dsg-backend.com/resources/img/icons/win.png"></div><i style="font-size:10px;display: block;">4-3-3 flat</i></div></div><div style="height:100%;display:flex;align-items:center;width:50%;float:left;justify-content: end;"><div><div class="event-people" data-id="" data-name="Safa SC" style="display:flex;align-items: center;gap: 5px;"> Safa SC</div><i style="font-size:10px;display: block;">4-3-3 flat</i></div><img src="https://dsg-images.com/sport_entity/50x50/1613.png" style="margin:0 10px;height:45px;"></div></div><div id="3902314" class="eventsadding-r-row3" style="display:none;"></div><div class='match-events-rowhead'><span class="referees-head-title">&nbsp;&nbsp;&nbsp;&nbsp;Match Events</span><span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;" id='rhm-widget'>
+				<a href="javascript:anzeigen('m-lineups-add');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+			  </span></div><div id='match-events-wrapper-result' class='match-events-rowhead-wrapper'><div class="overlay"><img src="ajax-loader.gif"></div></div><div id='match-events-wrapper' class='match-events-rowhead-wrapper'><div class="overlay"><img src="ajax-loader.gif"></div><div style="width: 100%;text-align: center;line-height: 24px;background-color: #dedede;margin: 5px 0px;float: left;">2nd Half</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Mohamad Omar Sadek  </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_YC.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Yellow Card">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=436637&tp=9227489&ev=99421163" onClick="loadXMLDoc(this.href); return false;" style="color:black;">90+7'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row2'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=193920&tp=9535925&ev=99421117" onClick="loadXMLDoc(this.href); return false;" style="color:black;">90+7'</a></span>
+<span class='match-events-rowhead-row-f-row4' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_YC.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Yellow Card">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' style=";"> Abbas Assi  </span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row2'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=436683&tp=9753288&ev=99421050" onClick="loadXMLDoc(this.href); return false;" style="color:black;">90+6'</a></span>
+<span class='match-events-rowhead-row-f-row4' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SI.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' style=";"> Ali Markabawi  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SO.svg"> Mohammad El Hayek </span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Mohamad Safwan  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"> Ali Kassas </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SO.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=436787&tp=9284282&ev=99420788" onClick="loadXMLDoc(this.href); return false;" style="color:black;">90'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Juma Masud  </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_G.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Goal">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=105921&tp=9739031&ev=99420596" onClick="loadXMLDoc(this.href); return false;" style="color:black;">86'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row2'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=120684&tp=9709437&ev=99420423" onClick="loadXMLDoc(this.href); return false;" style="color:black;">82'</a></span>
+<span class='match-events-rowhead-row-f-row4' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SI.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' style=";"> Hassan Mehanna  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SO.svg"> Eze Okeuhie </span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row2'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=440914&tp=9708671&ev=99420179" onClick="loadXMLDoc(this.href); return false;" style="color:black;">75'</a></span>
+<span class='match-events-rowhead-row-f-row4' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SI.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' style=";"> Ali Alakbar Mannaa  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SO.svg"> Ali Shaitou </span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row2'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=193919&tp=9709439&ev=99420175" onClick="loadXMLDoc(this.href); return false;" style="color:black;">75'</a></span>
+<span class='match-events-rowhead-row-f-row4' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SI.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' style=";"> Habib Shweikh  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SO.svg"> Rovy Carter Ahiro </span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row2'>&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=436769&tp=9709454&ev=99420117" onClick="loadXMLDoc(this.href); return false;" style="color:black;">75'</a></span>
+<span class='match-events-rowhead-row-f-row4' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SI.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' style=";"> Abed Al Karim Saleh  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SO.svg"> Ali Hallal </span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Mahdi Zein  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"> Ali El Fadl </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SO.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=140519&tp=6389210&ev=99419041" onClick="loadXMLDoc(this.href); return false;" style="color:black;">68'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Juma Masud  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"> Khalil Bader </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SO.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=105921&tp=9739031&ev=99418924" onClick="loadXMLDoc(this.href); return false;" style="color:black;">68'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Rodney Michael  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"> Hassan Kourani </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SO.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=481832&tp=9709447&ev=99416702" onClick="loadXMLDoc(this.href); return false;" style="color:black;">57'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div><div class='match-events-rowhead-row-f' style="">
+<span class='match-events-rowhead-row-f-row1' style="; "> Mohamad Omar Sadek  <img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"> Marios Ogkmpoe </span>
+<span class='match-events-rowhead-row-f-row2' style="background-image:url('https://dsg-backend.com/resources/img/icons/events/soc_SO.svg');background-repeat:no-repeat;background-color:white;background-position:center;" title="Substitute-in">&nbsp;</span>
+<span class='match-events-rowhead-row-f-row3' ><a href="add_event_widget.php?m=3902314&p=436637&tp=9227489&ev=99416696" onClick="loadXMLDoc(this.href); return false;" style="color:black;">57'</a></span>
+<span class='match-events-rowhead-row-f-row4' >&nbsp;</span>
+<span class='match-events-rowhead-row-f-row5' >&nbsp;</span>
+</div></div><style>
+.grid-container {
+	width: 100%;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+}
+.flex-row {
+	display: flex;
+	height: 30px;
+	align-items: center;
+	gap: 5px;
+}
+.flex-header {
+	background-color: #dfdfdf;
+	font-weight: bold;
+	justify-content: center;
+}
+.flex-row select {
+	max-width: 100px;
+}
+.flex-row input {
+	max-width: 30px;
+}
+.ev-me-2 {
+	display: none;
+}
+</style>
+<script>
+$(function() {
+	$('body').on('change', '.ev-me-type', function() {
+		if ($(this).val() == 'soc_OG') {
+			$(this).siblings('.ev-me-scorer').children('.ev-me-1').hide();
+			$(this).siblings('.ev-me-scorer').children('.ev-me-2').show();
+		} else {
+			$(this).siblings('.ev-me-scorer').children('.ev-me-1').show();
+			$(this).siblings('.ev-me-scorer').children('.ev-me-2').hide();
+		}
+	});
+});
+</script>
+<div id='m-lineups-add' class='m-lineups-add' style="overflow: hidden; display:none; "><form id='mlteams-submit' style="float: left; width:100%; margin-top:5px;position: relative;" onsubmit="MultipleLineupsAdding('3902314'); return false;" ><div class="grid-container"><div><div class="flex-row flex-header">Team A Goals</div><div class="flex-row"><select name="scorer[1]" class="ev-me-scorer"><option value=""></option><option value="436787|16376|9284282"  class="ev-me-1">4. Mohamad Safwan</option><option value="89020|16376|9709445"  class="ev-me-1">5. Khalil Khamis</option><option value="89019|16376|9709444"  class="ev-me-1">6. Hussein Zein</option><option value="170215|16376|9709503"  class="ev-me-1">7. Khalil Bader</option><option value="436637|16376|9227489"  class="ev-me-1">8. Mohamad Omar Sadek</option><option value="148300|16376|9728077"  class="ev-me-1">9. Marios Ogkmpoe</option><option value="140519|16376|6389210"  class="ev-me-1">10. Mahdi Zein</option><option value="471542|16376|9709442"  class="ev-me-1">11. Ali Kassas</option><option value="237344|16376|9709448"  class="ev-me-1">16. Shibriko</option><option value="481832|16376|9709447"  class="ev-me-1">17. Rodney Michael</option><option value="56362|16376|6573401"  class="ev-me-1">18. Kassem El Zein</option><option value="7741801|16376|9734146"  class="ev-me-1">19. Hassan Jaafar</option><option value="95439|16376|9709499"  class="ev-me-1">20. Hassan Kourani</option><option value="436765|16376|9709441"  class="ev-me-1">21. Ali El Fadl</option><option value="105921|16376|9739031" selected class="ev-me-1">23. Juma Masud</option><option value="55960|16376|9725603"  class="ev-me-1">66. Teddy Akumu</option><option value="583696|16376|9433286"  class="ev-me-1">71. Hussein Siblini</option><option value="579666|16376|9746433"  class="ev-me-1">77. Mohammad Fakih</option><option value="55022|16376|9709446"  class="ev-me-1">95. Mostafa Matar</option><option value="223301|16376|9535904"  class="ev-me-1">99. Antoine Al Douaihy</option><option value="93303|16377|9535936"  class="ev-me-2">1. Ali Hallal</option><option value="436336|16377|9540596"  class="ev-me-2">3. Mohammad El Hayek</option><option value="440914|16377|9708671"  class="ev-me-2">5. Ali Alakbar Mannaa</option><option value="140516|16377|6390037"  class="ev-me-2">6. Kassem Hayek</option><option value="89029|16377|9535939"  class="ev-me-2">7. Hussein Haidar</option><option value="89026|16377|9215190"  class="ev-me-2">8. Ghazi Honeine</option><option value="120684|16377|9709437"  class="ev-me-2">9. Hassan Mehanna</option><option value="193919|16377|9709439"  class="ev-me-2">10. Habib Shweikh</option><option value="436683|16377|9753288"  class="ev-me-2">11. Ali Markabawi</option><option value="436769|16377|9709454"  class="ev-me-2">13. Abed Al Karim Saleh</option><option value="65090|16377|9733508"  class="ev-me-2">17. Mohamad Zein Tahan</option><option value="7863782|16377|9709457"  class="ev-me-2">19. Tidiane Camara</option><option value="193920|16377|9535925"  class="ev-me-2">20. Abbas Assi</option><option value="472904|16377|9737073"  class="ev-me-2">21. Ali Shaitou</option><option value="56372|16377|9733506"  class="ev-me-2">24. Maher Sabra</option><option value="283640|16377|9746415"  class="ev-me-2">25. Rovy Carter Ahiro</option><option value="170214|16377|9149727"  class="ev-me-2">30. Hussein Sharafeddine</option><option value="223310|16377|9237066"  class="ev-me-2">33. Andrew Sawaya</option><option value="182919|16377|9746414"  class="ev-me-2">72. Nii Noye Narh</option><option value="22152|16377|9709451"  class="ev-me-2">77. Eze Okeuhie</option></select><select name="scorer_assist[1]"><option value="">Assist</option><option value="436787|16376|9284282" >4. Mohamad Safwan</option><option value="89020|16376|9709445" >5. Khalil Khamis</option><option value="89019|16376|9709444" >6. Hussein Zein</option><option value="170215|16376|9709503" >7. Khalil Bader</option><option value="436637|16376|9227489" >8. Mohamad Omar Sadek</option><option value="148300|16376|9728077" >9. Marios Ogkmpoe</option><option value="140519|16376|6389210" >10. Mahdi Zein</option><option value="471542|16376|9709442" >11. Ali Kassas</option><option value="237344|16376|9709448" >16. Shibriko</option><option value="481832|16376|9709447" >17. Rodney Michael</option><option value="56362|16376|6573401" >18. Kassem El Zein</option><option value="7741801|16376|9734146" >19. Hassan Jaafar</option><option value="95439|16376|9709499" >20. Hassan Kourani</option><option value="436765|16376|9709441" >21. Ali El Fadl</option><option value="105921|16376|9739031" >23. Juma Masud</option><option value="55960|16376|9725603" >66. Teddy Akumu</option><option value="583696|16376|9433286" >71. Hussein Siblini</option><option value="579666|16376|9746433" >77. Mohammad Fakih</option><option value="55022|16376|9709446" >95. Mostafa Matar</option><option value="223301|16376|9535904" >99. Antoine Al Douaihy</option></select><select name="goaltype[1]" class="ev-me-type"><option value="">Type</option><option value="soc_G"selected>G</option><option value="soc_OG">OG</option><option value="soc_PG">PG</option></select><input type="text" name="goal_time_min[1]" value="86" placeholder="M"><input type="text" name="goal_time_extra[1]" value="0" placeholder="E"><input type="hidden" name="goal_event_id[1]" value="99420596"><input type="hidden" name="goal_assist_event_id[1]" value=""></div></div><div><div class="flex-row flex-header">Team B Goals</div></div></div><div class="lineups-row-head" style="width:99.7%;" ><span class="mla-title">&nbsp;&nbsp;Lineups</span><span class='mla-teama'>Team A</span><span class='mla-teamb'>Team B</span></div><table style="border: 1px solid #dfdfdf; margin-right:10px; margin-left:10px; float:left;width:46%;" cellspacing=0><div class="overlay"><img src="ajax-loader.gif"></div><tr style="font-weight:bold;text-align:left;background-color:#DCDCDC;"><td style="text-align:center;"><b>#</b></td><td></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/YC.png"></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/Y2C.png"></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/RC.png"></td></tr><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">5</td><td>&nbsp;&nbsp;Khalil Khamis<input type="hidden" name="cardEvents[89020][data]" value="16376|89020|9709445"></input></td><td style="width:35px;"><input type="text" name="cardEvents[89020][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[89020][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[89020][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[89020][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[89020][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[89020][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">6</td><td>&nbsp;&nbsp;Hussein Zein<input type="hidden" name="cardEvents[89019][data]" value="16376|89019|9709444"></input></td><td style="width:35px;"><input type="text" name="cardEvents[89019][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[89019][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[89019][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[89019][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[89019][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[89019][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">7</td><td>&nbsp;&nbsp;Khalil Bader<input type="hidden" name="cardEvents[170215][data]" value="16376|170215|9709503"></input></td><td style="width:35px;"><input type="text" name="cardEvents[170215][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[170215][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[170215][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[170215][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[170215][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[170215][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">9</td><td>&nbsp;&nbsp;Marios Ogkmpoe<input type="hidden" name="cardEvents[148300][data]" value="16376|148300|9728077"></input></td><td style="width:35px;"><input type="text" name="cardEvents[148300][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[148300][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[148300][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[148300][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[148300][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[148300][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">11</td><td>&nbsp;&nbsp;Ali Kassas<input type="hidden" name="cardEvents[471542][data]" value="16376|471542|9709442"></input></td><td style="width:35px;"><input type="text" name="cardEvents[471542][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[471542][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[471542][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[471542][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[471542][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[471542][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">16</td><td>&nbsp;&nbsp;Shibriko<input type="hidden" name="cardEvents[237344][data]" value="16376|237344|9709448"></input></td><td style="width:35px;"><input type="text" name="cardEvents[237344][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[237344][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[237344][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[237344][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[237344][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[237344][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">18</td><td>&nbsp;&nbsp;Kassem El Zein<input type="hidden" name="cardEvents[56362][data]" value="16376|56362|6573401"></input></td><td style="width:35px;"><input type="text" name="cardEvents[56362][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[56362][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[56362][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[56362][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[56362][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[56362][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">20</td><td>&nbsp;&nbsp;Hassan Kourani<input type="hidden" name="cardEvents[95439][data]" value="16376|95439|9709499"></input></td><td style="width:35px;"><input type="text" name="cardEvents[95439][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[95439][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[95439][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[95439][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[95439][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[95439][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">21</td><td>&nbsp;&nbsp;Ali El Fadl<input type="hidden" name="cardEvents[436765][data]" value="16376|436765|9709441"></input></td><td style="width:35px;"><input type="text" name="cardEvents[436765][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[436765][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[436765][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[436765][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[436765][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[436765][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">66</td><td>&nbsp;&nbsp;Teddy Akumu<input type="hidden" name="cardEvents[55960][data]" value="16376|55960|9725603"></input></td><td style="width:35px;"><input type="text" name="cardEvents[55960][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[55960][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[55960][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[55960][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[55960][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[55960][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;width:20px;font-weight:bold;">95</td><td>&nbsp;&nbsp;Mostafa Matar<input type="hidden" name="cardEvents[55022][data]" value="16376|55022|9709446"></input></td><td style="width:35px;"><input type="text" name="cardEvents[55022][yc]" maxlength="6" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[55022][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[55022][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[55022][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[55022][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[55022][rc_id]" value="" /></table><table style="border: 1px solid #dfdfdf; float:left;width:46%;" cellspacing=0><tr style="font-weight:bold;text-align:left;background-color:#DCDCDC;"><td style="text-align:center;"><b>#</b></td><td></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/YC.png"></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/Y2C.png"></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/RC.png"></td></tr><tr><td style="background-color:white;text-align:right;font-weight:bold">1</td><td>&nbsp;&nbsp;Ali Hallal<input type="hidden" name="cardEvents[93303][data]" value="16377|93303|9535936"></input></td><td><input type="text" name="cardEvents[93303][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[93303][yc_id]" value="" /><td><input type="text" name="cardEvents[93303][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[93303][y2c_id]" value="" /><td><input type="text" name="cardEvents[93303][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[93303][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">3</td><td>&nbsp;&nbsp;Mohammad El Hayek<input type="hidden" name="cardEvents[436336][data]" value="16377|436336|9540596"></input></td><td><input type="text" name="cardEvents[436336][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[436336][yc_id]" value="" /><td><input type="text" name="cardEvents[436336][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[436336][y2c_id]" value="" /><td><input type="text" name="cardEvents[436336][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[436336][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">6</td><td>&nbsp;&nbsp;Kassem Hayek<input type="hidden" name="cardEvents[140516][data]" value="16377|140516|6390037"></input></td><td><input type="text" name="cardEvents[140516][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[140516][yc_id]" value="" /><td><input type="text" name="cardEvents[140516][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[140516][y2c_id]" value="" /><td><input type="text" name="cardEvents[140516][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[140516][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">7</td><td>&nbsp;&nbsp;Hussein Haidar<input type="hidden" name="cardEvents[89029][data]" value="16377|89029|9535939"></input></td><td><input type="text" name="cardEvents[89029][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[89029][yc_id]" value="" /><td><input type="text" name="cardEvents[89029][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[89029][y2c_id]" value="" /><td><input type="text" name="cardEvents[89029][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[89029][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">19</td><td>&nbsp;&nbsp;Tidiane Camara<input type="hidden" name="cardEvents[7863782][data]" value="16377|7863782|9709457"></input></td><td><input type="text" name="cardEvents[7863782][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[7863782][yc_id]" value="" /><td><input type="text" name="cardEvents[7863782][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[7863782][y2c_id]" value="" /><td><input type="text" name="cardEvents[7863782][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[7863782][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">20</td><td>&nbsp;&nbsp;Abbas Assi<input type="hidden" name="cardEvents[193920][data]" value="16377|193920|9535925"></input></td><td><input type="text" name="cardEvents[193920][yc]" maxlength="6" size="2" value="90+7" style="width:50px"></input></td><input type="hidden" name="cardEvents[193920][yc_id]" value="99421117" /><td><input type="text" name="cardEvents[193920][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[193920][y2c_id]" value="" /><td><input type="text" name="cardEvents[193920][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[193920][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">21</td><td>&nbsp;&nbsp;Ali Shaitou<input type="hidden" name="cardEvents[472904][data]" value="16377|472904|9737073"></input></td><td><input type="text" name="cardEvents[472904][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[472904][yc_id]" value="" /><td><input type="text" name="cardEvents[472904][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[472904][y2c_id]" value="" /><td><input type="text" name="cardEvents[472904][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[472904][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">25</td><td>&nbsp;&nbsp;Rovy Carter Ahiro<input type="hidden" name="cardEvents[283640][data]" value="16377|283640|9746415"></input></td><td><input type="text" name="cardEvents[283640][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[283640][yc_id]" value="" /><td><input type="text" name="cardEvents[283640][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[283640][y2c_id]" value="" /><td><input type="text" name="cardEvents[283640][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[283640][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">30</td><td>&nbsp;&nbsp;Hussein Sharafeddine<input type="hidden" name="cardEvents[170214][data]" value="16377|170214|9149727"></input></td><td><input type="text" name="cardEvents[170214][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[170214][yc_id]" value="" /><td><input type="text" name="cardEvents[170214][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[170214][y2c_id]" value="" /><td><input type="text" name="cardEvents[170214][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[170214][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">72</td><td>&nbsp;&nbsp;Nii Noye Narh<input type="hidden" name="cardEvents[182919][data]" value="16377|182919|9746414"></input></td><td><input type="text" name="cardEvents[182919][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[182919][yc_id]" value="" /><td><input type="text" name="cardEvents[182919][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[182919][y2c_id]" value="" /><td><input type="text" name="cardEvents[182919][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[182919][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold">77</td><td>&nbsp;&nbsp;Eze Okeuhie<input type="hidden" name="cardEvents[22152][data]" value="16377|22152|9709451"></input></td><td><input type="text" name="cardEvents[22152][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[22152][yc_id]" value="" /><td><input type="text" name="cardEvents[22152][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[22152][y2c_id]" value="" /><td><input type="text" name="cardEvents[22152][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[22152][rc_id]" value="" /></table><div class="lineups-row-head" style="width:99.7%;"><span class="mla-title">&nbsp;&nbsp;Subs on bench</span><span class="mla-teama">Team A</span><span class="mla-teamb">Team B</span></div><table style="border: 1px solid #dfdfdf; margin-right:10px; margin-left:10px; float:left;width:46%;margin-top:5px;" cellspacing=0><tr style="font-weight:bold;text-align:left;background-color:#DCDCDC;"><td style="text-align:center;width:25px;"><b>#</b></td><td style="width:175px;">Subs on bench</td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/YC.png"></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/Y2C.png"></td><td colspan="1" align="center"><img src="https://globalsportsarchive.com/images/RC.png"></td></tr><tr><td style="background-color:white;text-align:right;font-weight:bold;">4</td><td>&nbsp;&nbsp;Mohamad Safwan<input type="hidden" name="cardEvents[436787][data]" value="16376|436787|9284282"></input></td><td style="width:35px;"><input type="text" name="cardEvents[436787][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[436787][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[436787][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[436787][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[436787][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[436787][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">8</td><td>&nbsp;&nbsp;Mohamad Omar Sadek<input type="hidden" name="cardEvents[436637][data]" value="16376|436637|9227489"></input></td><td style="width:35px;"><input type="text" name="cardEvents[436637][yc]" maxlength="6" size="2" value="90+7" style="width:50px;"></input></td><input type="hidden" name="cardEvents[436637][yc_id]" value="99421163" /><td style="width:35px;"><input type="text" name="cardEvents[436637][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[436637][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[436637][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[436637][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">10</td><td>&nbsp;&nbsp;Mahdi Zein<input type="hidden" name="cardEvents[140519][data]" value="16376|140519|6389210"></input></td><td style="width:35px;"><input type="text" name="cardEvents[140519][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[140519][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[140519][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[140519][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[140519][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[140519][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">17</td><td>&nbsp;&nbsp;Rodney Michael<input type="hidden" name="cardEvents[481832][data]" value="16376|481832|9709447"></input></td><td style="width:35px;"><input type="text" name="cardEvents[481832][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[481832][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[481832][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[481832][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[481832][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[481832][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">19</td><td>&nbsp;&nbsp;Hassan Jaafar<input type="hidden" name="cardEvents[7741801][data]" value="16376|7741801|9734146"></input></td><td style="width:35px;"><input type="text" name="cardEvents[7741801][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[7741801][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[7741801][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[7741801][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[7741801][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[7741801][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">23</td><td>&nbsp;&nbsp;Juma Masud<input type="hidden" name="cardEvents[105921][data]" value="16376|105921|9739031"></input></td><td style="width:35px;"><input type="text" name="cardEvents[105921][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[105921][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[105921][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[105921][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[105921][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[105921][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">71</td><td>&nbsp;&nbsp;Hussein Siblini<input type="hidden" name="cardEvents[583696][data]" value="16376|583696|9433286"></input></td><td style="width:35px;"><input type="text" name="cardEvents[583696][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[583696][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[583696][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[583696][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[583696][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[583696][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">77</td><td>&nbsp;&nbsp;Mohammad Fakih<input type="hidden" name="cardEvents[579666][data]" value="16376|579666|9746433"></input></td><td style="width:35px;"><input type="text" name="cardEvents[579666][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[579666][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[579666][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[579666][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[579666][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[579666][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">99</td><td>&nbsp;&nbsp;Antoine Al Douaihy<input type="hidden" name="cardEvents[223301][data]" value="16376|223301|9535904"></input></td><td style="width:35px;"><input type="text" name="cardEvents[223301][yc]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[223301][yc_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[223301][y2c]" maxlength="6" size="2" value="" style="width:50px;"></input></td><input type="hidden" name="cardEvents[223301][y2c_id]" value="" /><td style="width:35px;"><input type="text" name="cardEvents[223301][rc]" maxlength="6" size="2" value="" style="width:50px;"></input></td></tr><input type="hidden" name="cardEvents[223301][rc_id]" value="" /></table><table style="border: 1px solid #dfdfdf; margin-right:10px; margin-left:10px; float:left;width:46%;margin-top:5px;" cellspacing=0><tr style="font-weight:bold;text-align:left;background-color:#DCDCDC;"><td style="text-align:center;width:25px;"><b>#</b></td><td  style="width:175px">Subs on bench</td><td colspan="1" align="center" style="width:60px"><img src="https://globalsportsarchive.com/images/YC.png"></td><td colspan="1"  align="center" style="width:60px"><img src="https://globalsportsarchive.com/images/Y2C.png"></td><td colspan="1" align="center" style="width:60px"><img src="https://globalsportsarchive.com/images/RC.png"></td></tr><tr><td style="background-color:white;text-align:right;font-weight:bold;">5</td><td>&nbsp;&nbsp;Ali Alakbar Mannaa<input type="hidden" name="cardEvents[440914][data]" value="16377|440914|9708671"></input></td><td><input type="text" name="cardEvents[440914][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[440914][yc_id]" value="" /><td><input type="text" name="cardEvents[440914][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[440914][y2c_id]" value="" /><td><input type="text" name="cardEvents[440914][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[440914][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">8</td><td>&nbsp;&nbsp;Ghazi Honeine<input type="hidden" name="cardEvents[89026][data]" value="16377|89026|9215190"></input></td><td><input type="text" name="cardEvents[89026][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[89026][yc_id]" value="" /><td><input type="text" name="cardEvents[89026][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[89026][y2c_id]" value="" /><td><input type="text" name="cardEvents[89026][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[89026][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">9</td><td>&nbsp;&nbsp;Hassan Mehanna<input type="hidden" name="cardEvents[120684][data]" value="16377|120684|9709437"></input></td><td><input type="text" name="cardEvents[120684][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[120684][yc_id]" value="" /><td><input type="text" name="cardEvents[120684][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[120684][y2c_id]" value="" /><td><input type="text" name="cardEvents[120684][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[120684][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">10</td><td>&nbsp;&nbsp;Habib Shweikh<input type="hidden" name="cardEvents[193919][data]" value="16377|193919|9709439"></input></td><td><input type="text" name="cardEvents[193919][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[193919][yc_id]" value="" /><td><input type="text" name="cardEvents[193919][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[193919][y2c_id]" value="" /><td><input type="text" name="cardEvents[193919][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[193919][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">11</td><td>&nbsp;&nbsp;Ali Markabawi<input type="hidden" name="cardEvents[436683][data]" value="16377|436683|9753288"></input></td><td><input type="text" name="cardEvents[436683][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[436683][yc_id]" value="" /><td><input type="text" name="cardEvents[436683][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[436683][y2c_id]" value="" /><td><input type="text" name="cardEvents[436683][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[436683][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">13</td><td>&nbsp;&nbsp;Abed Al Karim Saleh<input type="hidden" name="cardEvents[436769][data]" value="16377|436769|9709454"></input></td><td><input type="text" name="cardEvents[436769][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[436769][yc_id]" value="" /><td><input type="text" name="cardEvents[436769][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[436769][y2c_id]" value="" /><td><input type="text" name="cardEvents[436769][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[436769][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">17</td><td>&nbsp;&nbsp;Mohamad Zein Tahan<input type="hidden" name="cardEvents[65090][data]" value="16377|65090|9733508"></input></td><td><input type="text" name="cardEvents[65090][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[65090][yc_id]" value="" /><td><input type="text" name="cardEvents[65090][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[65090][y2c_id]" value="" /><td><input type="text" name="cardEvents[65090][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[65090][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">24</td><td>&nbsp;&nbsp;Maher Sabra<input type="hidden" name="cardEvents[56372][data]" value="16377|56372|9733506"></input></td><td><input type="text" name="cardEvents[56372][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[56372][yc_id]" value="" /><td><input type="text" name="cardEvents[56372][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[56372][y2c_id]" value="" /><td><input type="text" name="cardEvents[56372][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[56372][rc_id]" value="" /><tr><td style="background-color:white;text-align:right;font-weight:bold;">33</td><td>&nbsp;&nbsp;Andrew Sawaya<input type="hidden" name="cardEvents[223310][data]" value="16377|223310|9237066"></input></td><td><input type="text" name="cardEvents[223310][yc]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[223310][yc_id]" value="" /><td><input type="text" name="cardEvents[223310][y2c]" maxlength="6" size="2" value="" style="width:50px"></input></td><input type="hidden" name="cardEvents[223310][y2c_id]" value="" /><td><input type="text" name="cardEvents[223310][rc]" maxlength="6" size="2" value="" style="width:50px"></input></td></tr><input type="hidden" name="cardEvents[223310][rc_id]" value="" /></table><div class="lineups-row-head" style="width:99.7%;"><span class="mla-title">&nbsp;&nbsp;Substitutions</span></div><table style="border: 1px solid #dfdfdf; margin-right:10px; margin-left:10px; float:left;width:46%;margin-top:5px;" cellspacing=0><tr style="font-weight:bold;text-align:left;background-color:#DCDCDC;"><td>Sub-in Player</td><td>Min +</td><td align="center">Sub-out Player</td></tr><tr><td><select class="subSelect" name="subEvents[1][in]" size="1"  style="width:140px;"><option value=""></option><option value="16376|223301|9535904" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" >19 - Hassan Jaafar</option><option value="16376|583696|9433286" >71 - Hussein Siblini</option><option value="16376|105921|9739031" selected>23 - Juma Masud</option><option value="16376|140519|6389210" >10 - Mahdi Zein</option><option value="16376|436637|9227489" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" >77 - Mohammad Fakih</option><option value="16376|481832|9709447" >17 - Rodney Michael</option></select></td><td><input type="subin_min_a_1" name="subEvents[1][min]" maxlength="6" size="2" value="68"  style="width:50px;"></input>
+				  <input type="hidden" name="subEvents[1][in_id]" value="99418924"> <input type="hidden" name="subEvents[1][out_id]" value="99418925">  
+			  </td><td><select name="subEvents[1][out]" size="1" style="width:150px;"><option value=""></option><option value="16376|436765|9709441" style="" data-pid="436765" >21 - Ali El Fadl</option><option value="16376|471542|9709442" style="" data-pid="471542" >11 - Ali Kassas</option><option value="16376|223301|9535904" style="display:none;" data-pid="223301" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" style="display:none;" data-pid="7741801" >19 - Hassan Jaafar</option><option value="16376|95439|9709499" style="" data-pid="95439" >20 - Hassan Kourani</option><option value="16376|583696|9433286" style="display:none;" data-pid="583696" >71 - Hussein Siblini</option><option value="16376|89019|9709444" style="" data-pid="89019" >6 - Hussein Zein</option><option value="16376|105921|9739031" style="display:none;" data-pid="105921" >23 - Juma Masud</option><option value="16376|56362|6573401" style="" data-pid="56362" >18 - Kassem El Zein</option><option value="16376|170215|9709503" style="" data-pid="170215" selected>7 - Khalil Bader</option><option value="16376|89020|9709445" style="" data-pid="89020" >5 - Khalil Khamis</option><option value="16376|140519|6389210" style="display:none;" data-pid="140519" >10 - Mahdi Zein</option><option value="16376|148300|9728077" style="" data-pid="148300" >9 - Marios Ogkmpoe</option><option value="16376|436637|9227489" style="display:none;" data-pid="436637" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" style="display:none;" data-pid="436787" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" style="display:none;" data-pid="579666" >77 - Mohammad Fakih</option><option value="16376|55022|9709446" style="" data-pid="55022" >95 - Mostafa Matar</option><option value="16376|481832|9709447" style="display:none;" data-pid="481832" >17 - Rodney Michael</option><option value="16376|237344|9709448" style="" data-pid="237344" >16 - Shibriko</option><option value="16376|55960|9725603" style="" data-pid="55960" >66 - Teddy Akumu</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[2][in]" size="1"  style="width:140px;"><option value=""></option><option value="16376|223301|9535904" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" >19 - Hassan Jaafar</option><option value="16376|583696|9433286" >71 - Hussein Siblini</option><option value="16376|105921|9739031" >23 - Juma Masud</option><option value="16376|140519|6389210" selected>10 - Mahdi Zein</option><option value="16376|436637|9227489" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" >77 - Mohammad Fakih</option><option value="16376|481832|9709447" >17 - Rodney Michael</option></select></td><td><input type="subin_min_a_2" name="subEvents[2][min]" maxlength="6" size="2" value="68"  style="width:50px;"></input>
+				  <input type="hidden" name="subEvents[2][in_id]" value="99419041"> <input type="hidden" name="subEvents[2][out_id]" value="99419042">  
+			  </td><td><select name="subEvents[2][out]" size="1" style="width:150px;"><option value=""></option><option value="16376|436765|9709441" style="" data-pid="436765" selected>21 - Ali El Fadl</option><option value="16376|471542|9709442" style="" data-pid="471542" >11 - Ali Kassas</option><option value="16376|223301|9535904" style="display:none;" data-pid="223301" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" style="display:none;" data-pid="7741801" >19 - Hassan Jaafar</option><option value="16376|95439|9709499" style="" data-pid="95439" >20 - Hassan Kourani</option><option value="16376|583696|9433286" style="display:none;" data-pid="583696" >71 - Hussein Siblini</option><option value="16376|89019|9709444" style="" data-pid="89019" >6 - Hussein Zein</option><option value="16376|105921|9739031" style="" data-pid="105921" >23 - Juma Masud</option><option value="16376|56362|6573401" style="" data-pid="56362" >18 - Kassem El Zein</option><option value="16376|170215|9709503" style="" data-pid="170215" >7 - Khalil Bader</option><option value="16376|89020|9709445" style="" data-pid="89020" >5 - Khalil Khamis</option><option value="16376|140519|6389210" style="display:none;" data-pid="140519" >10 - Mahdi Zein</option><option value="16376|148300|9728077" style="" data-pid="148300" >9 - Marios Ogkmpoe</option><option value="16376|436637|9227489" style="display:none;" data-pid="436637" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" style="display:none;" data-pid="436787" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" style="display:none;" data-pid="579666" >77 - Mohammad Fakih</option><option value="16376|55022|9709446" style="" data-pid="55022" >95 - Mostafa Matar</option><option value="16376|481832|9709447" style="display:none;" data-pid="481832" >17 - Rodney Michael</option><option value="16376|237344|9709448" style="" data-pid="237344" >16 - Shibriko</option><option value="16376|55960|9725603" style="" data-pid="55960" >66 - Teddy Akumu</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[3][in]" size="1"  style="width:140px;"><option value=""></option><option value="16376|223301|9535904" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" >19 - Hassan Jaafar</option><option value="16376|583696|9433286" >71 - Hussein Siblini</option><option value="16376|105921|9739031" >23 - Juma Masud</option><option value="16376|140519|6389210" >10 - Mahdi Zein</option><option value="16376|436637|9227489" selected>8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" >77 - Mohammad Fakih</option><option value="16376|481832|9709447" >17 - Rodney Michael</option></select></td><td><input type="subin_min_a_3" name="subEvents[3][min]" maxlength="6" size="2" value="57"  style="width:50px;"></input>
+				  <input type="hidden" name="subEvents[3][in_id]" value="99416696"> <input type="hidden" name="subEvents[3][out_id]" value="99416697">  
+			  </td><td><select name="subEvents[3][out]" size="1" style="width:150px;"><option value=""></option><option value="16376|436765|9709441" style="" data-pid="436765" >21 - Ali El Fadl</option><option value="16376|471542|9709442" style="" data-pid="471542" >11 - Ali Kassas</option><option value="16376|223301|9535904" style="display:none;" data-pid="223301" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" style="display:none;" data-pid="7741801" >19 - Hassan Jaafar</option><option value="16376|95439|9709499" style="" data-pid="95439" >20 - Hassan Kourani</option><option value="16376|583696|9433286" style="display:none;" data-pid="583696" >71 - Hussein Siblini</option><option value="16376|89019|9709444" style="" data-pid="89019" >6 - Hussein Zein</option><option value="16376|105921|9739031" style="" data-pid="105921" >23 - Juma Masud</option><option value="16376|56362|6573401" style="" data-pid="56362" >18 - Kassem El Zein</option><option value="16376|170215|9709503" style="" data-pid="170215" >7 - Khalil Bader</option><option value="16376|89020|9709445" style="" data-pid="89020" >5 - Khalil Khamis</option><option value="16376|140519|6389210" style="" data-pid="140519" >10 - Mahdi Zein</option><option value="16376|148300|9728077" style="" data-pid="148300" selected>9 - Marios Ogkmpoe</option><option value="16376|436637|9227489" style="display:none;" data-pid="436637" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" style="display:none;" data-pid="436787" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" style="display:none;" data-pid="579666" >77 - Mohammad Fakih</option><option value="16376|55022|9709446" style="" data-pid="55022" >95 - Mostafa Matar</option><option value="16376|481832|9709447" style="display:none;" data-pid="481832" >17 - Rodney Michael</option><option value="16376|237344|9709448" style="" data-pid="237344" >16 - Shibriko</option><option value="16376|55960|9725603" style="" data-pid="55960" >66 - Teddy Akumu</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[4][in]" size="1"  style="width:140px;"><option value=""></option><option value="16376|223301|9535904" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" >19 - Hassan Jaafar</option><option value="16376|583696|9433286" >71 - Hussein Siblini</option><option value="16376|105921|9739031" >23 - Juma Masud</option><option value="16376|140519|6389210" >10 - Mahdi Zein</option><option value="16376|436637|9227489" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" selected>4 - Mohamad Safwan</option><option value="16376|579666|9746433" >77 - Mohammad Fakih</option><option value="16376|481832|9709447" >17 - Rodney Michael</option></select></td><td><input type="subin_min_a_4" name="subEvents[4][min]" maxlength="6" size="2" value="90"  style="width:50px;"></input>
+				  <input type="hidden" name="subEvents[4][in_id]" value="99420788"> <input type="hidden" name="subEvents[4][out_id]" value="99420789">  
+			  </td><td><select name="subEvents[4][out]" size="1" style="width:150px;"><option value=""></option><option value="16376|436765|9709441" style="" data-pid="436765" >21 - Ali El Fadl</option><option value="16376|471542|9709442" style="" data-pid="471542" selected>11 - Ali Kassas</option><option value="16376|223301|9535904" style="display:none;" data-pid="223301" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" style="display:none;" data-pid="7741801" >19 - Hassan Jaafar</option><option value="16376|95439|9709499" style="" data-pid="95439" >20 - Hassan Kourani</option><option value="16376|583696|9433286" style="display:none;" data-pid="583696" >71 - Hussein Siblini</option><option value="16376|89019|9709444" style="" data-pid="89019" >6 - Hussein Zein</option><option value="16376|105921|9739031" style="" data-pid="105921" >23 - Juma Masud</option><option value="16376|56362|6573401" style="" data-pid="56362" >18 - Kassem El Zein</option><option value="16376|170215|9709503" style="" data-pid="170215" >7 - Khalil Bader</option><option value="16376|89020|9709445" style="" data-pid="89020" >5 - Khalil Khamis</option><option value="16376|140519|6389210" style="" data-pid="140519" >10 - Mahdi Zein</option><option value="16376|148300|9728077" style="" data-pid="148300" >9 - Marios Ogkmpoe</option><option value="16376|436637|9227489" style="" data-pid="436637" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" style="display:none;" data-pid="436787" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" style="display:none;" data-pid="579666" >77 - Mohammad Fakih</option><option value="16376|55022|9709446" style="" data-pid="55022" >95 - Mostafa Matar</option><option value="16376|481832|9709447" style="display:none;" data-pid="481832" >17 - Rodney Michael</option><option value="16376|237344|9709448" style="" data-pid="237344" >16 - Shibriko</option><option value="16376|55960|9725603" style="" data-pid="55960" >66 - Teddy Akumu</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[5][in]" size="1"  style="width:140px;"><option value=""></option><option value="16376|223301|9535904" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" >19 - Hassan Jaafar</option><option value="16376|583696|9433286" >71 - Hussein Siblini</option><option value="16376|105921|9739031" >23 - Juma Masud</option><option value="16376|140519|6389210" >10 - Mahdi Zein</option><option value="16376|436637|9227489" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" >77 - Mohammad Fakih</option><option value="16376|481832|9709447" selected>17 - Rodney Michael</option></select></td><td><input type="subin_min_a_5" name="subEvents[5][min]" maxlength="6" size="2" value="57"  style="width:50px;"></input>
+				  <input type="hidden" name="subEvents[5][in_id]" value="99416702"> <input type="hidden" name="subEvents[5][out_id]" value="99416703">  
+			  </td><td><select name="subEvents[5][out]" size="1" style="width:150px;"><option value=""></option><option value="16376|436765|9709441" style="" data-pid="436765" >21 - Ali El Fadl</option><option value="16376|471542|9709442" style="" data-pid="471542" >11 - Ali Kassas</option><option value="16376|223301|9535904" style="display:none;" data-pid="223301" >99 - Antoine Al Douaihy</option><option value="16376|7741801|9734146" style="display:none;" data-pid="7741801" >19 - Hassan Jaafar</option><option value="16376|95439|9709499" style="" data-pid="95439" selected>20 - Hassan Kourani</option><option value="16376|583696|9433286" style="display:none;" data-pid="583696" >71 - Hussein Siblini</option><option value="16376|89019|9709444" style="" data-pid="89019" >6 - Hussein Zein</option><option value="16376|105921|9739031" style="" data-pid="105921" >23 - Juma Masud</option><option value="16376|56362|6573401" style="" data-pid="56362" >18 - Kassem El Zein</option><option value="16376|170215|9709503" style="" data-pid="170215" >7 - Khalil Bader</option><option value="16376|89020|9709445" style="" data-pid="89020" >5 - Khalil Khamis</option><option value="16376|140519|6389210" style="" data-pid="140519" >10 - Mahdi Zein</option><option value="16376|148300|9728077" style="" data-pid="148300" >9 - Marios Ogkmpoe</option><option value="16376|436637|9227489" style="" data-pid="436637" >8 - Mohamad Omar Sadek</option><option value="16376|436787|9284282" style="" data-pid="436787" >4 - Mohamad Safwan</option><option value="16376|579666|9746433" style="display:none;" data-pid="579666" >77 - Mohammad Fakih</option><option value="16376|55022|9709446" style="" data-pid="55022" >95 - Mostafa Matar</option><option value="16376|481832|9709447" style="display:none;" data-pid="481832" >17 - Rodney Michael</option><option value="16376|237344|9709448" style="" data-pid="237344" >16 - Shibriko</option><option value="16376|55960|9725603" style="" data-pid="55960" >66 - Teddy Akumu</option></select></td></tr></table><table style="border: 1px solid #dfdfdf; margin-right:10px; margin-left:10px; float:left;width:46%;margin-top:5px;" cellspacing=0><tr style="font-weight:bold;text-align:left; background-color:#DCDCDC;"><td>Sub-in Player</td><td>Min +</td><td align="center">Sub-out Player</td></tr><tr><td><select class="subSelect" name="subEvents[6][in]" size="1" style="width:140px;"><option value=""></option><option value="16377|436769|9709454" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" >5 - Ali Alakbar Mannaa</option><option value="16377|436683|9753288" >11 - Ali Markabawi</option><option value="16377|223310|9237066" >33 - Andrew Sawaya</option><option value="16377|89026|9215190" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" >10 - Habib Shweikh</option><option value="16377|120684|9709437" selected>9 - Hassan Mehanna</option><option value="16377|56372|9733506" >24 - Maher Sabra</option><option value="16377|65090|9733508" >17 - Mohamad Zein Tahan</option></select></td><td><input type="subin_min_b_1" name="subEvents[6][min]" maxlength="6" size="2" value="82" style="width:50px;">
+				  <input type="hidden" name="subEvents[6][in_id]" value="99420423"><input type="hidden" name="subEvents[6][out_id]" value="99420424"></input>
+			  </td><td><select name="subEvents[6][out]" size="1" style="width:140px;"><option value=""></option><option value="16377|193920|9535925" style="" data-pid="193920" >20 - Abbas Assi</option><option value="16377|436769|9709454" style="display:none;" data-pid="436769" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" style="display:none;" data-pid="440914" >5 - Ali Alakbar Mannaa</option><option value="16377|93303|9535936" style="" data-pid="93303" >1 - Ali Hallal</option><option value="16377|436683|9753288" style="display:none;" data-pid="436683" >11 - Ali Markabawi</option><option value="16377|472904|9737073" style="" data-pid="472904" >21 - Ali Shaitou</option><option value="16377|223310|9237066" style="display:none;" data-pid="223310" >33 - Andrew Sawaya</option><option value="16377|22152|9709451" style="" data-pid="22152" selected>77 - Eze Okeuhie</option><option value="16377|89026|9215190" style="display:none;" data-pid="89026" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" style="display:none;" data-pid="193919" >10 - Habib Shweikh</option><option value="16377|120684|9709437" style="display:none;" data-pid="120684" >9 - Hassan Mehanna</option><option value="16377|89029|9535939" style="" data-pid="89029" >7 - Hussein Haidar</option><option value="16377|170214|9149727" style="" data-pid="170214" >30 - Hussein Sharafeddine</option><option value="16377|140516|6390037" style="" data-pid="140516" >6 - Kassem Hayek</option><option value="16377|56372|9733506" style="display:none;" data-pid="56372" >24 - Maher Sabra</option><option value="16377|65090|9733508" style="display:none;" data-pid="65090" >17 - Mohamad Zein Tahan</option><option value="16377|436336|9540596" style="" data-pid="436336" >3 - Mohammad El Hayek</option><option value="16377|182919|9746414" style="" data-pid="182919" >72 - Nii Noye Narh</option><option value="16377|283640|9746415" style="" data-pid="283640" >25 - Rovy Carter Ahiro</option><option value="16377|7863782|9709457" style="" data-pid="7863782" >19 - Tidiane Camara</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[7][in]" size="1" style="width:140px;"><option value=""></option><option value="16377|436769|9709454" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" >5 - Ali Alakbar Mannaa</option><option value="16377|436683|9753288" >11 - Ali Markabawi</option><option value="16377|223310|9237066" >33 - Andrew Sawaya</option><option value="16377|89026|9215190" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" selected>10 - Habib Shweikh</option><option value="16377|120684|9709437" >9 - Hassan Mehanna</option><option value="16377|56372|9733506" >24 - Maher Sabra</option><option value="16377|65090|9733508" >17 - Mohamad Zein Tahan</option></select></td><td><input type="subin_min_b_2" name="subEvents[7][min]" maxlength="6" size="2" value="75" style="width:50px;">
+				  <input type="hidden" name="subEvents[7][in_id]" value="99420175"><input type="hidden" name="subEvents[7][out_id]" value="99420176"></input>
+			  </td><td><select name="subEvents[7][out]" size="1" style="width:140px;"><option value=""></option><option value="16377|193920|9535925" style="" data-pid="193920" >20 - Abbas Assi</option><option value="16377|436769|9709454" style="display:none;" data-pid="436769" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" style="display:none;" data-pid="440914" >5 - Ali Alakbar Mannaa</option><option value="16377|93303|9535936" style="" data-pid="93303" >1 - Ali Hallal</option><option value="16377|436683|9753288" style="display:none;" data-pid="436683" >11 - Ali Markabawi</option><option value="16377|472904|9737073" style="" data-pid="472904" >21 - Ali Shaitou</option><option value="16377|223310|9237066" style="display:none;" data-pid="223310" >33 - Andrew Sawaya</option><option value="16377|22152|9709451" style="" data-pid="22152" >77 - Eze Okeuhie</option><option value="16377|89026|9215190" style="display:none;" data-pid="89026" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" style="display:none;" data-pid="193919" >10 - Habib Shweikh</option><option value="16377|120684|9709437" style="" data-pid="120684" >9 - Hassan Mehanna</option><option value="16377|89029|9535939" style="" data-pid="89029" >7 - Hussein Haidar</option><option value="16377|170214|9149727" style="" data-pid="170214" >30 - Hussein Sharafeddine</option><option value="16377|140516|6390037" style="" data-pid="140516" >6 - Kassem Hayek</option><option value="16377|56372|9733506" style="display:none;" data-pid="56372" >24 - Maher Sabra</option><option value="16377|65090|9733508" style="display:none;" data-pid="65090" >17 - Mohamad Zein Tahan</option><option value="16377|436336|9540596" style="" data-pid="436336" >3 - Mohammad El Hayek</option><option value="16377|182919|9746414" style="" data-pid="182919" >72 - Nii Noye Narh</option><option value="16377|283640|9746415" style="" data-pid="283640" selected>25 - Rovy Carter Ahiro</option><option value="16377|7863782|9709457" style="" data-pid="7863782" >19 - Tidiane Camara</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[8][in]" size="1" style="width:140px;"><option value=""></option><option value="16377|436769|9709454" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" >5 - Ali Alakbar Mannaa</option><option value="16377|436683|9753288" selected>11 - Ali Markabawi</option><option value="16377|223310|9237066" >33 - Andrew Sawaya</option><option value="16377|89026|9215190" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" >10 - Habib Shweikh</option><option value="16377|120684|9709437" >9 - Hassan Mehanna</option><option value="16377|56372|9733506" >24 - Maher Sabra</option><option value="16377|65090|9733508" >17 - Mohamad Zein Tahan</option></select></td><td><input type="subin_min_b_3" name="subEvents[8][min]" maxlength="6" size="2" value="90+6" style="width:50px;">
+				  <input type="hidden" name="subEvents[8][in_id]" value="99421050"><input type="hidden" name="subEvents[8][out_id]" value="99421051"></input>
+			  </td><td><select name="subEvents[8][out]" size="1" style="width:140px;"><option value=""></option><option value="16377|193920|9535925" style="" data-pid="193920" >20 - Abbas Assi</option><option value="16377|436769|9709454" style="display:none;" data-pid="436769" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" style="display:none;" data-pid="440914" >5 - Ali Alakbar Mannaa</option><option value="16377|93303|9535936" style="" data-pid="93303" >1 - Ali Hallal</option><option value="16377|436683|9753288" style="display:none;" data-pid="436683" >11 - Ali Markabawi</option><option value="16377|472904|9737073" style="" data-pid="472904" >21 - Ali Shaitou</option><option value="16377|223310|9237066" style="display:none;" data-pid="223310" >33 - Andrew Sawaya</option><option value="16377|22152|9709451" style="" data-pid="22152" >77 - Eze Okeuhie</option><option value="16377|89026|9215190" style="display:none;" data-pid="89026" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" style="" data-pid="193919" >10 - Habib Shweikh</option><option value="16377|120684|9709437" style="" data-pid="120684" >9 - Hassan Mehanna</option><option value="16377|89029|9535939" style="" data-pid="89029" >7 - Hussein Haidar</option><option value="16377|170214|9149727" style="" data-pid="170214" >30 - Hussein Sharafeddine</option><option value="16377|140516|6390037" style="" data-pid="140516" >6 - Kassem Hayek</option><option value="16377|56372|9733506" style="display:none;" data-pid="56372" >24 - Maher Sabra</option><option value="16377|65090|9733508" style="display:none;" data-pid="65090" >17 - Mohamad Zein Tahan</option><option value="16377|436336|9540596" style="" data-pid="436336" selected>3 - Mohammad El Hayek</option><option value="16377|182919|9746414" style="" data-pid="182919" >72 - Nii Noye Narh</option><option value="16377|283640|9746415" style="" data-pid="283640" >25 - Rovy Carter Ahiro</option><option value="16377|7863782|9709457" style="" data-pid="7863782" >19 - Tidiane Camara</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[9][in]" size="1" style="width:140px;"><option value=""></option><option value="16377|436769|9709454" selected>13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" >5 - Ali Alakbar Mannaa</option><option value="16377|436683|9753288" >11 - Ali Markabawi</option><option value="16377|223310|9237066" >33 - Andrew Sawaya</option><option value="16377|89026|9215190" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" >10 - Habib Shweikh</option><option value="16377|120684|9709437" >9 - Hassan Mehanna</option><option value="16377|56372|9733506" >24 - Maher Sabra</option><option value="16377|65090|9733508" >17 - Mohamad Zein Tahan</option></select></td><td><input type="subin_min_b_4" name="subEvents[9][min]" maxlength="6" size="2" value="75" style="width:50px;">
+				  <input type="hidden" name="subEvents[9][in_id]" value="99420117"><input type="hidden" name="subEvents[9][out_id]" value="99420118"></input>
+			  </td><td><select name="subEvents[9][out]" size="1" style="width:140px;"><option value=""></option><option value="16377|193920|9535925" style="" data-pid="193920" >20 - Abbas Assi</option><option value="16377|436769|9709454" style="display:none;" data-pid="436769" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" style="display:none;" data-pid="440914" >5 - Ali Alakbar Mannaa</option><option value="16377|93303|9535936" style="" data-pid="93303" selected>1 - Ali Hallal</option><option value="16377|436683|9753288" style="" data-pid="436683" >11 - Ali Markabawi</option><option value="16377|472904|9737073" style="" data-pid="472904" >21 - Ali Shaitou</option><option value="16377|223310|9237066" style="display:none;" data-pid="223310" >33 - Andrew Sawaya</option><option value="16377|22152|9709451" style="" data-pid="22152" >77 - Eze Okeuhie</option><option value="16377|89026|9215190" style="display:none;" data-pid="89026" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" style="" data-pid="193919" >10 - Habib Shweikh</option><option value="16377|120684|9709437" style="" data-pid="120684" >9 - Hassan Mehanna</option><option value="16377|89029|9535939" style="" data-pid="89029" >7 - Hussein Haidar</option><option value="16377|170214|9149727" style="" data-pid="170214" >30 - Hussein Sharafeddine</option><option value="16377|140516|6390037" style="" data-pid="140516" >6 - Kassem Hayek</option><option value="16377|56372|9733506" style="display:none;" data-pid="56372" >24 - Maher Sabra</option><option value="16377|65090|9733508" style="display:none;" data-pid="65090" >17 - Mohamad Zein Tahan</option><option value="16377|436336|9540596" style="" data-pid="436336" >3 - Mohammad El Hayek</option><option value="16377|182919|9746414" style="" data-pid="182919" >72 - Nii Noye Narh</option><option value="16377|283640|9746415" style="" data-pid="283640" >25 - Rovy Carter Ahiro</option><option value="16377|7863782|9709457" style="" data-pid="7863782" >19 - Tidiane Camara</option></select></td></tr><tr><td><select class="subSelect" name="subEvents[10][in]" size="1" style="width:140px;"><option value=""></option><option value="16377|436769|9709454" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" selected>5 - Ali Alakbar Mannaa</option><option value="16377|436683|9753288" >11 - Ali Markabawi</option><option value="16377|223310|9237066" >33 - Andrew Sawaya</option><option value="16377|89026|9215190" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" >10 - Habib Shweikh</option><option value="16377|120684|9709437" >9 - Hassan Mehanna</option><option value="16377|56372|9733506" >24 - Maher Sabra</option><option value="16377|65090|9733508" >17 - Mohamad Zein Tahan</option></select></td><td><input type="subin_min_b_5" name="subEvents[10][min]" maxlength="6" size="2" value="75" style="width:50px;">
+				  <input type="hidden" name="subEvents[10][in_id]" value="99420179"><input type="hidden" name="subEvents[10][out_id]" value="99420180"></input>
+			  </td><td><select name="subEvents[10][out]" size="1" style="width:140px;"><option value=""></option><option value="16377|193920|9535925" style="" data-pid="193920" >20 - Abbas Assi</option><option value="16377|436769|9709454" style="" data-pid="436769" >13 - Abed Al Karim Saleh</option><option value="16377|440914|9708671" style="display:none;" data-pid="440914" >5 - Ali Alakbar Mannaa</option><option value="16377|93303|9535936" style="" data-pid="93303" >1 - Ali Hallal</option><option value="16377|436683|9753288" style="" data-pid="436683" >11 - Ali Markabawi</option><option value="16377|472904|9737073" style="" data-pid="472904" selected>21 - Ali Shaitou</option><option value="16377|223310|9237066" style="display:none;" data-pid="223310" >33 - Andrew Sawaya</option><option value="16377|22152|9709451" style="" data-pid="22152" >77 - Eze Okeuhie</option><option value="16377|89026|9215190" style="display:none;" data-pid="89026" >8 - Ghazi Honeine</option><option value="16377|193919|9709439" style="" data-pid="193919" >10 - Habib Shweikh</option><option value="16377|120684|9709437" style="" data-pid="120684" >9 - Hassan Mehanna</option><option value="16377|89029|9535939" style="" data-pid="89029" >7 - Hussein Haidar</option><option value="16377|170214|9149727" style="" data-pid="170214" >30 - Hussein Sharafeddine</option><option value="16377|140516|6390037" style="" data-pid="140516" >6 - Kassem Hayek</option><option value="16377|56372|9733506" style="display:none;" data-pid="56372" >24 - Maher Sabra</option><option value="16377|65090|9733508" style="display:none;" data-pid="65090" >17 - Mohamad Zein Tahan</option><option value="16377|436336|9540596" style="" data-pid="436336" >3 - Mohammad El Hayek</option><option value="16377|182919|9746414" style="" data-pid="182919" >72 - Nii Noye Narh</option><option value="16377|283640|9746415" style="" data-pid="283640" >25 - Rovy Carter Ahiro</option><option value="16377|7863782|9709457" style="" data-pid="7863782" >19 - Tidiane Camara</option></select></td></tr></table><div class='match-referees-row-1' style="margin-top:5px;" ><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" style="background-color:#339933;font-weight:bold;font-size:16px;"></input></div></form></div><div class='lineups-main-head'>&nbsp;&nbsp;&nbsp;&nbsp;Lineups </div>
+<div id="lineup_container"><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=89020&tp=9709445" onClick="loadXMLDoc(this.href); return false;" style="color:black">Khalil Khamis</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">5</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">1</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">GK</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=93303&tp=9535936" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ali Hallal</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=89019&tp=9709444" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hussein Zein</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">6</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">3</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=436336&tp=9540596" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mohammad El Hayek</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=170215&tp=9709503" onClick="loadXMLDoc(this.href); return false;" style="color:black">Khalil Bader</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">7</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">6</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=140516&tp=6390037" onClick="loadXMLDoc(this.href); return false;" style="color:black">Kassem Hayek</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=148300&tp=9728077" onClick="loadXMLDoc(this.href); return false;" style="color:black">Marios Ogkmpoe</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/144.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">9</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">7</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=89029&tp=9535939" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hussein Haidar</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=471542&tp=9709442" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ali Kassas</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">11</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">19</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/166.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=7863782&tp=9709457" onClick="loadXMLDoc(this.href); return false;" style="color:black">Tidiane Camara</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=237344&tp=9709448" onClick="loadXMLDoc(this.href); return false;" style="color:black">Shibriko</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">16</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">20</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=193920&tp=9535925" onClick="loadXMLDoc(this.href); return false;" style="color:black">Abbas Assi</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=56362&tp=6573401" onClick="loadXMLDoc(this.href); return false;" style="color:black">Kassem El Zein</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">18</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">21</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=472904&tp=9737073" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ali Shaitou</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=95439&tp=9709499" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hassan Kourani</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">20</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">25</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/39.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=283640&tp=9746415" onClick="loadXMLDoc(this.href); return false;" style="color:black">Rovy Carter Ahiro</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=436765&tp=9709441" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ali El Fadl</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">21</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">30</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=170214&tp=9149727" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hussein Sharafeddine</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=55960&tp=9725603" onClick="loadXMLDoc(this.href); return false;" style="color:black">Teddy Akumu</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/105.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">66</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">72</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/146.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=182919&tp=9746414" onClick="loadXMLDoc(this.href); return false;" style="color:black">Nii Noye Narh</a>  </span>
+</div><div class='lineups-main-row-f' >
+<span style="display:table-cell;text-align:right;width:274px;">  <a href="add_event_widget.php?m=3902314&p=55022&tp=9709446" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mostafa Matar</a></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">GK</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">95</a></span>
+<span style="display:table-cell;text-align:left;width:18px;">&nbsp;</span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">77</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/144.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=22152&tp=9709451" onClick="loadXMLDoc(this.href); return false;" style="color:black">Eze Okeuhie</a>  </span>
+</div></div><div class='subson-bench-top-head'>&nbsp;&nbsp;&nbsp;&nbsp;Subs on Bench</div>
+<div id='subs-on-bench-result'><div class="overlay"><img src="ajax-loader.gif"></div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=436787&tp=9284282" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mohamad Safwan</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">4</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">5</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=440914&tp=9708671" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ali Alakbar Mannaa</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=436637&tp=9227489" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mohamad Omar Sadek</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">8</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=89026&tp=9215190&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">8</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=89026&tp=9215190" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ghazi Honeine</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=140519&tp=6389210" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mahdi Zein</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">10</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">9</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=120684&tp=9709437" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hassan Mehanna</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=481832&tp=9709447" onClick="loadXMLDoc(this.href); return false;" style="color:black">Rodney Michael</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/169.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">17</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">10</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=193919&tp=9709439" onClick="loadXMLDoc(this.href); return false;" style="color:black">Habib Shweikh</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=7741801&tp=9734146" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hassan Jaafar</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">19</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=7741801&tp=9734146&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">11</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=436683&tp=9753288" onClick="loadXMLDoc(this.href); return false;" style="color:black">Ali Markabawi</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=105921&tp=9739031" onClick="loadXMLDoc(this.href); return false;" style="color:black">Juma Masud</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/105.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">23</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">13</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">GK</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=436769&tp=9709454" onClick="loadXMLDoc(this.href); return false;" style="color:black">Abed Al Karim Saleh</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=583696&tp=9433286" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hussein Siblini</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">MF</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">71</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=583696&tp=9433286&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=65090&tp=9733508&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">17</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=65090&tp=9733508" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mohamad Zein Tahan</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=579666&tp=9746433" onClick="loadXMLDoc(this.href); return false;" style="color:black">Mohammad Fakih</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">FW</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">77</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=579666&tp=9746433&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=56372&tp=9733506&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">24</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=56372&tp=9733506" onClick="loadXMLDoc(this.href); return false;" style="color:black">Maher Sabra</a>  </span>
+</div><div class='lineups-main-row-f'>
+<span style="display:table-cell;text-align:right;width:274px;"> <a href="add_event_widget.php?m=3902314&p=223301&tp=9535904" onClick="loadXMLDoc(this.href); return false;" style="color:black">Antoine Al Douaihy</a> </span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">GK</span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16376" style="color:black">99</a></span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=223301&tp=9535904&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:left;width:22px;">&nbsp;</span>
+<span style="display:table-cell;text-align:left;width:15px;"><a href="add_event_widget.php?m=3902314&p=223310&tp=9237066&evt=SI" onClick="loadXMLDoc(this.href); return false;" style="color:black"><img src="https://dsg-backend.com/resources/img/icons/events/soc_SI.svg"></a></span>
+<span style="display:table-cell;text-align:center;width:32px;font-weight:bold;background-color:white;"><a href="add_shirtnumbers.php?match_id=3902314&team_id=16377" style="color:black">33</a></span>
+<span style="display:table-cell;text-align:center;width:28px;font-weight:bold;background-image:url('https://dsg-backend.com/resources/img/flags/16x16/112.png');background-repeat:no-repeat;background-color:white;background-position:center;"></span>
+<span style="display:table-cell;text-align:center;width:30px;font-weight:bold">DF</span>
+<span style="display:table-cell;text-align:left;width:274px;"><a href="add_event_widget.php?m=3902314&p=223310&tp=9237066" onClick="loadXMLDoc(this.href); return false;" style="color:black">Andrew Sawaya</a>  </span>
+</div></div><div class="coaches-row-head"><span class="referees-head-title">&nbsp;&nbsp;Coaches</span>
+			<span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;" id='coaches-heading'>
+			<a href="javascript:anzeigen('coaches');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+			</span>
+		  </div><div style="width:100%;float:left;"><div style="display:flex;width:50%;float:left;height:20px;align-items:center;justify-content:flex-end;padding-right:66px;box-sizing:border-box;"><a href="add_event_widget.php?m=3902314&p=133&tp=9709504&coach=1" onClick="loadXMLDoc(this.href); return false;" style="color:black">Radhi Jaïdi</a> 
+			  <img src="https://dsg-backend.com/resources/img/flags/16x16/195.png" style="margin-left:10px;"/></div><div style="display:flex;width:50%;float:left;height:20px;align-items:center;padding-left:62px;box-sizing:border-box;"><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"  style="margin-right:10px;"/>
+			  <a href="add_event_widget.php?m=3902314&p=7830650&tp=9709449&coach=1" onClick="loadXMLDoc(this.href); return false;" style="color:black">Hussein Tahan</a></div></div><div id="coaches"  class="coaches-main-row" style="display:none"><form id='match-coaches-save' action="events_adding.php?match_id=3902314" method="post" onsubmit="MatchCoachesSave(3902314); return false;"><div class="coaches-row-head-row"><input type='hidden' name='coachmatchid' value='3902314' /><div class="overlay"><img src="ajax-loader.gif"></div><span class="coaches-row-head-row-l"><select class="flexselect" name="coach_a" size="1"><option value="" selected></option><option value="133|9709504|16376" selected>Radhi Jaïdi</option></select></span><span class="coaches-row-head-row-r"><select class="flexselect" name="coach_b" size="1"><option value="" selected></option><option value="7830650|9709449|16377" selected>Hussein Tahan</option><option value="246269|9701669|16377" >Ziad El Samad (goalkeeper_coach)</option></select></span></div><div class="coaches-row-foot"><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" style="background-color:#339933;font-weight:bold;font-size:16px; float: left;"></input></div></form></div><div class="coaches-row-head"><span class="referees-head-title">&nbsp;&nbsp;Goalkeepers</span>
+			<span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;" id='goalkeepers-heading'>
+			<a href="javascript:anzeigen('goalkeepers');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+			</span>
+		  </div><div id="gk_list" style="width:100%;float:left;"><div style="display:flex;width:50%;float:left;height:20px;align-items:center;justify-content:flex-end;padding-right:66px;box-sizing:border-box;">Mostafa Matar <img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="margin-left:10px;"/></div><div style="display:flex;width:50%;float:left;height:20px;align-items:center;padding-left:62px;box-sizing:border-box;"><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"  style="margin-right:10px;"/>Ali Hallal</div></div><div id="goalkeepers"  class="coaches-main-row" style="display:none"><form id='match-gk-save' action="events_adding.php?match_id=3902314" method="post" onsubmit="MatchGkSave(3902314); return false;"><div class="coaches-row-head-row"><input type='hidden' name='coachmatchid' value='3902314' /><div class="overlay"><img src="ajax-loader.gif"></div><span class="coaches-row-head-row-l"><select class="flexselect" name="goalkeeper_a" size="1"><option value="" selected></option><option value="99389538|55022" selected>Mostafa Matar</option><option value="99389535|55960" >Teddy Akumu</option><option value="99389531|56362" >Kassem El Zein</option><option value="99389523|89019" >Hussein Zein</option><option value="99389522|89020" >Khalil Khamis</option><option value="99389533|95439" >Hassan Kourani</option><option value="99389526|148300" >Marios Ogkmpoe</option><option value="99389524|170215" >Khalil Bader</option><option value="99389529|237344" >Shibriko</option><option value="99389534|436765" >Ali El Fadl</option><option value="99389528|471542" >Ali Kassas</option></select></span><span class="coaches-row-head-row-r"><select class="flexselect" name="goalkeeper_b" size="1"><option value="" selected></option><option value="99388221|22152" >Eze Okeuhie</option><option value="99388206|89029" >Hussein Haidar</option><option value="99388204|93303" selected>Ali Hallal</option><option value="99388205|140516" >Kassem Hayek</option><option value="99388216|170214" >Hussein Sharafeddine</option><option value="99388211|182919" >Nii Noye Narh</option><option value="99388213|193920" >Abbas Assi</option><option value="99388219|283640" >Rovy Carter Ahiro</option><option value="99388210|436336" >Mohammad El Hayek</option><option value="99388214|472904" >Ali Shaitou</option><option value="99388212|7863782" >Tidiane Camara</option></select></span></div><div class="coaches-row-foot"><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" style="background-color:#339933;font-weight:bold;font-size:16px; float: left;"></input></div></form></div><div class="match-referees-head""><span class="referees-head-title">&nbsp;&nbsp;Match Referees&nbsp;</span><span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;" id='refree-heading'><a href="javascript:anzeigen('referees');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a></span></div><div id="referees" class='match-referees-row' style="position:relative;display:none;"><form id='match-referee-save' action="events_adding.php?match_id=3902314" method="post" onsubmit="MatchRefereesSave(3902314); return false;"><input type='hidden' name='refreematchid' value='3902314' /><div class="overlay"><img src="ajax-loader.gif"></div><div class='match-referees-row-1'><span class='match-referees-span-1'>Main Referee</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Ahmad Alaeddin (LBN) | 440463" name="referee_value[0]" autocomplete="off"></span><input type="hidden" name="referee_type[0]" value="referee_1_id" /><input type="hidden" name="referee_hidden[0]" value="Ahmad Alaeddin (LBN) | 440463" /></span></div><div class='match-referees-row-1'><span class='match-referees-span-1'>1st Assistant</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Ali Fakih (LBN) | 7837545" name="referee_value[1]" autocomplete="off"></span><input type="hidden" name="referee_type[1]" value="referee_2_id" /><input type="hidden" name="referee_hidden[1]" value="Ali Fakih (LBN) | 7837545" /></span></div><div class='match-referees-row-1'><span class='match-referees-span-1'>2nd Assistant</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Tayssir Bader (LBN) | 7863179" name="referee_value[2]" autocomplete="off"></span><input type="hidden" name="referee_type[2]" value="referee_3_id" /><input type="hidden" name="referee_hidden[2]" value="Tayssir Bader (LBN) | 7863179" /></span></div><div class='match-referees-row-1'><span class='match-referees-span-1'>Fourth Official</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Hadi Salame (LBN) | 83090" name="referee_value[3]" autocomplete="off"></span><input type="hidden" name="referee_type[3]" value="referee_4_id" /><input type="hidden" name="referee_hidden[3]" value="Hadi Salame (LBN) | 83090" /></span></div><div class='match-referees-row-1'><span class='match-referees-span-1'>VAR Main</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Wael Haidar (LBN) | 7781410" name="referee_value[4]" autocomplete="off"></span><input type="hidden" name="referee_type[4]" value="video_assistant_referee" /><input type="hidden" name="referee_hidden[4]" value="Wael Haidar (LBN) | 7781410" /></span></div><div class='match-referees-row-1'><span class='match-referees-span-1'>VAR 1st Assistant</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Doumouh Al Bakkar (LBN) | 278464" name="referee_value[5]" autocomplete="off"></span><input type="hidden" name="referee_type[5]" value="video_assistant_referee_2" /><input type="hidden" name="referee_hidden[5]" value="Doumouh Al Bakkar (LBN) | 278464" /></span></div><div class='match-referees-row-1'><span class='match-referees-span-1'>VAR 2nd Assistant</span><span class='match-referees-span-2' style="width:300px;"><span class="eventsadding2-r-midhead-one-1 middle-venue"><input type="text" class="auto-refree ui-autocomplete-input" value="Ayman Hassan (LBN) | 7848580" name="referee_value[6]" autocomplete="off"></span><input type="hidden" name="referee_type[6]" value="video_assistant_referee_3" /><input type="hidden" name="referee_hidden[6]" value="Ayman Hassan (LBN) | 7848580" /></span></div><div class='match-referees-row-1'><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" style="background-color:#339933;font-weight:bold;font-size:16px;"></input></div></form><input id="secondary_sport" type="checkbox" style="position:absolute;right:29px;"></div><div class="lineups-row-head"><span class="referees-head-title">&nbsp;&nbsp;Lineups & Subs on Bench adding&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<u>sorting:</u>&nbsp;&nbsp;&nbsp;<a href="events_adding.php?match_id=3902314">shirtnumber</a>&nbsp;&nbsp;&nbsp;<a href="events_adding.php?match_id=3902314&order=1">player name</a><a id="name_toggle" style="margin-left: 15px;">toggle name</a></span><span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;"><a href="javascript:anzeigen('lineups');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a></span></div><div id="lineups" class="lineups-row-head-f" style="overflow: hidden;display:none;"><span><form method="post"><div class="lineups-row-head-fl"><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[1]" value="16376|465144|9250664|soc_L|"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[1]" value="16376|465144|9250664|soc_SUB|"></input></span><span class="lineups-row-head-l-row3" style="width:25px;"></span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">DF</span><a href="add_event_widget.php?m=3902314&p=465144&tp=9250664" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Houssein Mortada  </span><span class="hidden_onhover">Houssein Mohamad Mortada  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[2]" value="16376|7760756|9017137|soc_L|2"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[2]" value="16376|7760756|9017137|soc_SUB|2"></input></span><span class="lineups-row-head-l-row3" style="width:25px;">2</span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">DF</span><a href="add_event_widget.php?m=3902314&p=7760756&tp=9017137" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Ali Alrida Ismail  </span><span class="hidden_onhover">Ali Alrida Mohamad Ismail  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[3]" value="16376|28070|9709443|soc_L|12"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[3]" value="16376|28070|9709443|soc_SUB|12"></input></span><span class="lineups-row-head-l-row3" style="width:25px;">12</span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">MF</span><a href="add_event_widget.php?m=3902314&p=28070&tp=9709443" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">George Felix Melki  </span><span class="hidden_onhover">George Felix Robert Michel Melki  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[4]" value="16376|579667|9743793|soc_L|15"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[4]" value="16376|579667|9743793|soc_SUB|15"></input></span><span class="lineups-row-head-l-row3" style="width:25px;">15</span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">DF</span><a href="add_event_widget.php?m=3902314&p=579667&tp=9743793" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Wadih Boiridy  </span><span class="hidden_onhover">Wadih Laurent Boiridy  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[5]" value="16376|169872|9743785|soc_L|27"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[5]" value="16376|169872|9743785|soc_SUB|27"></input></span><span class="lineups-row-head-l-row3" style="width:25px;">27</span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/81.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">MF</span><a href="add_event_widget.php?m=3902314&p=169872&tp=9743785" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Bernard Boateng  </span><span class="hidden_onhover">Bernard Benjamin Boateng  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[6]" value="16376|583824|9743802|soc_L|70"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[6]" value="16376|583824|9743802|soc_SUB|70"></input></span><span class="lineups-row-head-l-row3" style="width:25px;">70</span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">MF</span><a href="add_event_widget.php?m=3902314&p=583824&tp=9743802" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Mohammad Noureddine Sadek  </span><span class="hidden_onhover">Mohammad Noureddine Sadek  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[7]" value="16376|7872500|9743757|soc_L|"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[7]" value="16376|7872500|9743757|soc_SUB|"></input></span><span class="lineups-row-head-l-row3" style="width:25px;"></span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">GK</span><a href="add_event_widget.php?m=3902314&p=7872500&tp=9743757" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Emilio Rizk  </span><span class="hidden_onhover">Emilio Nizar Rizk  </span></a>
+				  </span></div><div class="lineups-row-head-l"><span class="lineups-row-head-l-row1" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[8]" value="16376|586505|9562199|soc_L|"></input></span><span class="lineups-row-head-l-row2" style="width:30px;"><input type="radio" class="reradio" name="appearance_a[8]" value="16376|586505|9562199|soc_SUB|"></input></span><span class="lineups-row-head-l-row3" style="width:25px;"></span><span class="lineups-row-head-l-row4" style="width:307px;">&nbsp;&nbsp;
+					<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">GK</span><a href="add_event_widget.php?m=3902314&p=586505&tp=9562199" onClick="loadXMLDoc(this.href); return false;" style="color:black">
+					<span class="onhover">Hassan Haidar  </span><span class="hidden_onhover">Hassan Hussein Haidar  </span></a>
+				  </span></div><input type="hidden" name="player_num_a" value="8"></input></div><div class="lineups-row-head-fr" style="float:right;"><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[1]" value="16377|7954565|9752592|soc_L|2"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[1]" value="16377|7954565|9752592|soc_SUB|2"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">2</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/60.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">DF</span><a href="add_event_widget.php?m=3902314&p=7954565&tp=9752592" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Kouassi Eugène Djê  </span><span class="hidden_onhover">Kouassi Eugène Djê  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[2]" value="16377|7764576|9709460|soc_L|4"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[2]" value="16377|7764576|9709460|soc_SUB|4"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">4</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">DF</span><a href="add_event_widget.php?m=3902314&p=7764576&tp=9709460" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Saad Chweiki  </span><span class="hidden_onhover">Saad Nasser Chweiki  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[3]" value="16377|436476|9271342|soc_L|16"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[3]" value="16377|436476|9271342|soc_SUB|16"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">16</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/149.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">FW</span><a href="add_event_widget.php?m=3902314&p=436476&tp=9271342" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Adnan Salloum  </span><span class="hidden_onhover">Adnan Ahmad Abed Salloum  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[4]" value="16377|561812|9720902|soc_L|23"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[4]" value="16377|561812|9720902|soc_SUB|23"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">23</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">DF</span><a href="add_event_widget.php?m=3902314&p=561812&tp=9720902" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Mohamad Youssef Baalbaki  </span><span class="hidden_onhover">Mohamad Youssef Baalbaki  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[5]" value="16377|8045942|9737090|soc_L|26"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[5]" value="16377|8045942|9737090|soc_SUB|26"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">26</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">MF</span><a href="add_event_widget.php?m=3902314&p=8045942&tp=9737090" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Hussein Dbouk  </span><span class="hidden_onhover">Hussein Ali Dbouk  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[6]" value="16377|579734|9738047|soc_L|40"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[6]" value="16377|579734|9738047|soc_SUB|40"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">40</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">FW</span><a href="add_event_widget.php?m=3902314&p=579734&tp=9738047" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Mohamad Kassas  </span><span class="hidden_onhover">Mohamad Mohamad Kassas  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[7]" value="16377|561815|9737128|soc_L|50"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[7]" value="16377|561815|9737128|soc_SUB|50"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">50</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">MF</span><a href="add_event_widget.php?m=3902314&p=561815&tp=9737128" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Abdallah Dwek  </span><span class="hidden_onhover">Abdallah Mouhamad Dwek  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[8]" value="16377|8061855|9769534|soc_L|95"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[8]" value="16377|8061855|9769534|soc_SUB|95"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">95</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">GK</span><a href="add_event_widget.php?m=3902314&p=8061855&tp=9769534" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Shadi Al Halabi  </span><span class="hidden_onhover">Shadi Dawoud Al Halabi  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[9]" value="16377|512101|9709456|soc_L|99"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[9]" value="16377|512101|9709456|soc_SUB|99"></input></span><span class="lineups-row-head-r-row2" style="width:25px;">99</span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">GK</span><a href="add_event_widget.php?m=3902314&p=512101&tp=9709456" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Hasan Ayoub  </span><span class="hidden_onhover">Hasan Imad Ayoub  </span></a></span></div><div class="lineups-row-head-r"><span class="lineups-row-head-r-row1" style="width:60px;"><input type="radio" class="reradio" name="appearance_b[10]" value="16377|261718|9271350|soc_L|"></input>&nbsp;&nbsp;<input type="radio" class="reradio" name="appearance_b[10]" value="16377|261718|9271350|soc_SUB|"></input></span><span class="lineups-row-head-r-row2" style="width:25px;"></span><span class="lineups-row-head-r-row3" style="width:307px;">&nbsp;&nbsp;<img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align:middle;float:left;">&nbsp;<span style="display:table-cell;text-align:center;width:30px;font-weight:bold;white-space: pre;">GK</span><a href="add_event_widget.php?m=3902314&p=261718&tp=9271350" onClick="loadXMLDoc(this.href); return false;" style="color:black"><span class="onhover">Christian Aoukar  </span><span class="hidden_onhover">Christian Paul Fouad Christian Paul Aoukar  </span></a></span></div><input type="hidden" name="player_num_b" value="10"></input></div><div style="float:left;width:720px;height:10px;"></div><div style="float:left;width:720px;"><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" style="background-color:#339933;font-weight:bold;font-size:16px;"></input></div></form></span></div><div class="coaches-row-head"><span class="referees-head-title">&nbsp;&nbsp;Formations </span><span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;" id='coaches-heading'><a href="javascript:anzeigen('formations');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a></span></div><div id="formations"  class="coaches-main-row" style="display:none"><div style="width:50%;padding:0px 10px;float:left;border-right:2px solid black;box-sizing: border-box;"><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=50">1-3-1-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=34">1-3-4-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=52">1-3-4-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=51">1-4-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=43">2-3-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=53">2-4-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=17">3-1-4-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=30">3-2-1-2-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=21">3-2-1-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=25">3-2-2-2-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=39">3-2-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=54">3-2-3-2 wide</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=41">3-2-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=22">3-3-2-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=23">3-3-2-2 wide</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=24">3-3-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=55">3-3-3-1 deep</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=49">3-3-3-1 wide</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=38">3-4-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=40">3-4-2-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=14">3-4-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=16">3-4-3 Diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=20">3-5-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=18">3-5-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=15">3-5-2 Diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=19">3-5-2 v2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=8">4-1-3-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=29">4-1-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=7">4-1-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=6">4-2-1-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=28">4-2-1-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=26">4-2-2-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=27">4-2-2-1-1-v2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=13">4-2-2-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=5">4-2-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=48">4-2-4-0</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=32">4-3-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=9">4-3-2-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=4">4-3-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=31">4-3-3 flat</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=33">4-4-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=2">4-4-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=3">4-4-2 flat</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=1">4-4-2-diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=12">4-5-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=42">4-5-1 Diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=44">5-1-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=47">5-2-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=45">5-2-2-1 Sweeper</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=11">5-2-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=36">5-3-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=37">5-3-1-1-v2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=35">5-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=10">5-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16376&f=46">5-4-1 Diamond</a></div></div><div style="width:50%;padding:0px 10px;float:left;box-sizing: border-box;"><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=50">1-3-1-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=34">1-3-4-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=52">1-3-4-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=51">1-4-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=43">2-3-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=53">2-4-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=17">3-1-4-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=30">3-2-1-2-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=21">3-2-1-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=25">3-2-2-2-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=39">3-2-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=54">3-2-3-2 wide</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=41">3-2-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=22">3-3-2-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=23">3-3-2-2 wide</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=24">3-3-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=55">3-3-3-1 deep</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=49">3-3-3-1 wide</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=38">3-4-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=40">3-4-2-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=14">3-4-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=16">3-4-3 Diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=20">3-5-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=18">3-5-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=15">3-5-2 Diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=19">3-5-2 v2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=8">4-1-3-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=29">4-1-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=7">4-1-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=6">4-2-1-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=28">4-2-1-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=26">4-2-2-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=27">4-2-2-1-1-v2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=13">4-2-2-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=5">4-2-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=48">4-2-4-0</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=32">4-3-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=9">4-3-2-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=4">4-3-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=31">4-3-3 flat</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=33">4-4-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=2">4-4-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=3">4-4-2 flat</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=1">4-4-2-diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=12">4-5-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=42">4-5-1 Diamond</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=44">5-1-3-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=47">5-2-1-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=45">5-2-2-1 Sweeper</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=11">5-2-3</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=36">5-3-1-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=37">5-3-1-1-v2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=35">5-3-2</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=10">5-4-1</a></div><div style="width:33%;float:left;font-weight:bold;"><a href="add_formations.php?m=3902314&t=16377&f=46">5-4-1 Diamond</a></div></div></div><div class="coaches-row-head"><span class="referees-head-title">&nbsp;&nbsp;Captain </span><span class="referees-head-img" style="width:30px;display:table-cell;background-image:url('https://dsg-backend.com/resources/img/icons/plus_icon2.png');background-repeat:no-repeat;background-position:center;" id='captain-heading'><a href="javascript:anzeigen('captain');">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a></span></div><div id="cap_list" style="width:100%;float:left;"><div style="display:flex;width:50%;float:left;height:20px;align-items:center;justify-content:flex-end;padding-right:66px;box-sizing:border-box;">Kassem El Zein <img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="margin-left:10px;"/></div><div style="display:flex;width:50%;float:left;height:20px;align-items:center;padding-left:62px;box-sizing:border-box;"><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"  style="margin-right:10px;"/>Hussein Sharafeddine</div></div><div id="captain"  class="coaches-main-row" style="display:none"><form id='match-captain-save' action="events_adding.php?match_id=3902314" method="post" onsubmit="MatchcaptainSave(3902314); return false;"><div class="coaches-row-head-row"><input type='hidden' name='captainmatchid' value='3902314' /><input type='hidden' name='team_a' value='16376' /><input type='hidden' name='peopleid_a' value='56362' /><div class="overlay"><img src="ajax-loader.gif"></div><span class="coaches-row-head-row-l"><select class="flexselect" name="captain_a" size="1"><option value="" selected></option><option value="436765|9709441|16376" > Ali El Fadl</option><option value="471542|9709442|16376" > Ali Kassas</option><option value="95439|9709499|16376" > Hassan Kourani</option><option value="89019|9709444|16376" > Hussein Zein</option><option value="56362|6573401|16376" selected> Kassem El Zein</option><option value="170215|9709503|16376" > Khalil Bader</option><option value="89020|9709445|16376" > Khalil Khamis</option><option value="148300|9728077|16376" > Marios Ogkmpoe</option><option value="55022|9709446|16376" > Mostafa Matar</option><option value="237344|9709448|16376" > Shibriko</option><option value="55960|9725603|16376" > Teddy Akumu</option></select></span><input type='hidden' name='team_b' value='16377' /><input type='hidden' name='peopleid_b' value='170214' /><span class="coaches-row-head-row-r"><select class="flexselect" name="captain_b" size="1"><option value="" selected></option><option value="193920|9535925|16377" > Abbas Assi</option><option value="93303|9535936|16377" > Ali Hallal</option><option value="472904|9737073|16377" > Ali Shaitou</option><option value="22152|9709451|16377" > Eze Okeuhie</option><option value="89029|9535939|16377" > Hussein Haidar</option><option value="170214|9149727|16377" selected> Hussein Sharafeddine</option><option value="140516|6390037|16377" > Kassem Hayek</option><option value="436336|9540596|16377" > Mohammad El Hayek</option><option value="182919|9746414|16377" > Nii Noye Narh</option><option value="283640|9746415|16377" > Rovy Carter Ahiro</option><option value="7863782|9709457|16377" > Tidiane Camara</option></select></span></div><div class="coaches-row-foot"><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" style="background-color:#339933;font-weight:bold;font-size:16px; float: left;"></input></div></form></div></div>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css" type="text/css" />
+<script type="text/javascript" src="https://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="events_adding.js"></script>
+<script>
+
+function moveToSub(pid) {
+	$('#lineup_container').html('<img src=\"ajax-loader.gif\" style=\"margin:0px auto;display:block;\"/>');
+	$('#subs-on-bench-result').html('<img src=\"ajax-loader.gif\" style=\"margin:0px auto;display:block;\"/>');
+	$.ajax({
+		url:'events_adding_lineup_ajax.php',
+		dataType: 'json',
+		type: "POST",
+	    data: {'match_id':'3902314', pid: pid},
+		success: function(data){
+			$('#lineup_container').html(data.result);
+			$('#subs-on-bench-result').html(data.result2);
+		}			
+	});
+}
+function loadXMLDoc(url) {
+	var xmlhttp;
+	if (window.XMLHttpRequest) xmlhttp=new XMLHttpRequest();
+
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState==4 && xmlhttp.status==200) {		
+			document.getElementById("3902314").style.display = "block";
+			document.getElementById('3902314').innerHTML=xmlhttp.responseText;
+		}
+	}
+	xmlhttp.open("GET",url,true);
+	xmlhttp.send();
+}
+$(function() {	
+	$('#gsg').on('click', function() {
+		$(this).addClass('rotate');
+		$.post('https://dsg-backend.com/events_adding.php?match_id=3902314', { action: 'gsa_static_generation' }, function() {
+			window.location.href = window.location.href;
+		});
+	});
+	$('.eventsadding2').on('click', '#add_event_save_match_event input[name=event]', function() {
+		var ast_val = $(this).val();
+		
+		if (ast_val == 'soc_G' || ast_val == 'flb_G' || ast_val == 'flb_SHG' || ast_val == 'flb_PG' || ast_val == 'ice_PG' || ast_val == 'ice_G' || ast_val == 'ice_SHG' || ast_val == 'ice_ENG' || ast_val == 'flb_DPS' || ast_val == 'flb_SHEN' || ast_val == 'flb_ENG' || ast_val == 'flb_WG' || ast_val == 'flb_ESH') {
+			$('.ast_event_cont').show();
+		} else if (ast_val == 'rug_SI') {
+			$('.rug_sub_event').show();
+		}
+		else {
+			$('.rug_sub_event').hide();
+			$('.ast_event_cont').hide();
+		}
+	});
+	
+	$('.eventsadding2').on('click', '#add_event_save_match_event input[name=event]', function() {
+		var ast_val = $(this).val();
+		var extra = $(this).data('extra');
+		var rel = $(this).data('rel');
+		var rel2 = $(this).data('rel2');
+		
+		if (rel) {
+			$('.rel_event_1').show();
+		} else {
+			$('.rel_event_1').hide();
+		}
+		
+		if (extra == 'booking_reason') {
+			$('select[name=booking_reason]').show();
+			$('select[name=goal_type]').hide();
+		} else if (extra == 'goal_type') {
+			$('select[name=booking_reason]').hide();
+			$('select[name=goal_type]').show();
+		} else {
+			$('select[name=booking_reason]').hide();
+			$('select[name=goal_type]').hide();
+		}
+		
+		if ($("select[data-type]").length) {		
+			$("select[data-type]").hide();
+		}
+		
+		if ($("select[data-extra-type]").length) {
+			$("select[data-extra-type]").hide();
+		}
+		
+		if ($("select[data-type='"+ast_val+"']").length) {		
+			$("select[data-type='"+ast_val+"']").show();
+		} else if ($("[data-extra-type='"+extra+"']").length) {
+			$("[data-extra-type='"+extra+"']").show();
+		}
+	});
+	
+	$('#injuries').on('click', '.injury_delete', function() {
+		var match = $(this).data('match');
+		var people = $(this).data('people');
+
+		$.ajax({
+			url:'injury_match_delete.php',
+			dataType: 'json',
+			type: "POST",
+			data: {match_id: match, people_id: people},
+			success: function(data){
+				$('#injuries_container').empty();
+				$('#injuries_container').html(data.result);
+			}			
+		});
+	});
+	$('#suspension').on('click', '.susp_delete', function() {
+		var match = $(this).data('match');
+		var people = $(this).data('people');
+
+		$.ajax({
+			url:'susp_match_delete.php',
+			dataType: 'json',
+			type: "POST",
+			data: {match_id: match, people_id: people},
+			success: function(data){
+				$('#suspension').empty();
+				$('#suspension').html(data.result);  
+				$('#susp-heading').empty();
+				$('#susp-heading').html(data.heading); 
+			}			
+		});
+		
+	});
+	
+	setTimeout(function() {
+		$("#card_popup").hide('blind', {}, 500)
+	}, 10000);
+
+	$(".auto").autocomplete({
+		source: "./internal/autosearch_venues.php?sport=soccer",
+		minLength: 2
+	});	
+	/*
+	$(".auto-refree").autocomplete({
+		source: "./internal/autosearch_referees.php?sport=soccer",
+		minLength: 2
+	});	
+	*/
+	$(".auto-refree").autocomplete({	
+		source: function( request, response ) {
+			$.ajax({
+				dataType: "json",
+				type : 'Get',
+				url: "./internal/autosearch_referees.php?sport=soccer",
+				data: {term: request.term, ss: $('#secondary_sport').prop('checked')},
+				success: function( data ) {
+					response( data );
+				}
+			});
+		},
+		minLength: 2
+	});
+	$('.lol_icons,.lol_icons_b').on('click', function() {		
+		var type = $(this).attr('title');
+		var incr;
+		if (type == 'gold' || type == 'gold_b') { incr = 0.1; } else { incr = 1; }		
+		var val_temp = $(this).parent().find('.'+type).val();	
+		var val = parseFloat(val_temp) + incr;
+		var period = $(this).parent().parent().find('.lol_period').val();		
+		var target = $(this).parent().find('.'+type);
+		
+		if (val_temp == '') { val = 0; }
+		
+		$.ajax({
+			url: 'lol_stat_widget.php',
+			dataType: 'json',
+			type: "POST",
+			data: {match_id: 3902314, type: type, val: val, period: period},
+			success: function(data) {
+				if (data.result) {				
+					target.val(val);
+				}
+			}
+		}); 
+		
+	});	
+}); 
+</script>

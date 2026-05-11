@@ -1,0 +1,628 @@
+<head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css" type="text/css" />
+	<script type="text/javascript" src="https://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>
+<script>
+$(function() {
+	$('#gsg').on('click', function() {
+		$(this).addClass('rotate');
+		$.post('https://dsg-backend.com/people_view.php?p=44318', { action: 'gsa_static_generation' }, function() {
+			window.location.href = window.location.href;
+		});
+	});
+	$(".auto_people").autocomplete({
+		source: "./internal/autosearch_people.php?sport=soccer",
+		minLength: 3
+	});	
+	$('#doubles_ajax').on('click', function() {
+		$('#newDoubleBox').toggle();
+	});	
+	
+	$('#fbolstats-upload').on('click', function() {
+		$('#fbolstats-upload-container').slideToggle();
+	});
+	$('.ct-match').on('click', function() {
+		let target = $(this).parent().next('.ct-matches');
+		let id = $(this).data('id');
+		let type = $(this).data('type');
+		
+		if (target.css('display') == 'none') {
+			$.ajax({
+				url: 'https://dsg-backend.com/internal/include/people_view/matches_ajax.php',
+				type: 'post',
+				dataType: 'json',
+				data: {type: type, id: id},
+				success: function (data) {
+					target.html(data.result);
+					target.show();		
+				}
+			});
+		} else {
+			target.empty();
+			target.hide();
+		}
+		
+		
+	});
+	$('.doubleDelete').on('click', function() {
+		var id = $(this).data('id');
+		
+		$.ajax({
+			dataType: "json",
+			type: "POST",
+			data: {type: 'doubleDelete', id: id},
+			success: function(data) {
+				console.log(data);
+				window.location.href = window.location.href;
+			}
+		});
+	});
+	$('#tp_matches').on('click',function(e) {
+		e.preventDefault();
+		if ($(this).children('img.on').css('display') == 'inline') {
+			$(this).children('img.off').css('display','inline');
+			$(this).children('img.on').css('display','none');
+			$('#match_container').empty();
+			$('#match_container').css('display','block');
+			$('#load_gif').css('display','block');
+			
+			$.ajax({
+				url: "p_matches_ajax.php",
+				dataType: "json",
+				type: "POST",
+				data: {pid: 44318, sport: "soccer"},
+				success: function(data) {
+					$('#load_gif').css('display','none');
+					$('#match_container').html(data.result);
+				}
+			});
+		}
+		else {
+			$('#match_container').css('display','none');
+			$('#datalog_load_gif').css('display','none');
+			$(this).children('img.on').css('display','inline');
+			$(this).children('img.off').css('display','none');
+		}
+	});
+	
+	$('#datalog_ajax').on('click',function(e) {
+		e.preventDefault();
+		if ($(this).children('img.datalog_on').css('display') == 'inline') {
+			$(this).children('img.datalog_off').css('display','inline');
+			$(this).children('img.datalog_on').css('display','none');
+			$('#datalog').empty();
+			$('#datalog').css('display','block');
+			$('#datalog_load_gif').css('display','block');
+			
+			$.ajax({
+				url: "people_view_datalog.php",
+				dataType: "json",
+				type: "POST",
+				data: {pid: 44318},
+				success: function(data) {
+					$('#datalog_load_gif').css('display','none');
+					$('#datalog').html(data.result);
+				}
+			});
+		}
+		else {
+			$('#datalog').css('display','none');
+			$('#datalog_load_gif').css('display','none');
+			$(this).children('img.datalog_on').css('display','inline');
+			$(this).children('img.datalog_off').css('display','none');
+		}
+	});
+	
+	$('.box_prof_matches_ajax').on('click',function(e) {
+		e.preventDefault();
+		var type = $(this).data('type');
+		
+		if (type == 1) {
+			var target = $('#box_prof_matches_prof');
+		} else {
+			var target = $('#box_prof_matches_no_prof');
+		}
+		
+		if ($(this).children('img.datalog_on').css('display') == 'inline') {
+			$(this).children('img.datalog_off').css('display','inline');
+			$(this).children('img.datalog_on').css('display','none');
+			$(target).empty();
+			$(target).css('display','block');
+			$(this).children('#datalog_load_gif').css('display','block');
+			
+			$.ajax({
+				url: "people_view_box_matches.php",
+				dataType: "json",
+				type: "POST",
+				data: {pid: 44318, type: type},
+				success: function(data) {
+					$(this).children('#datalog_load_gif').css('display','none');
+					$(target).html(data.result);
+				}
+			});
+		}
+		else {
+			$(target).css('display','none');
+			$(this).children('#datalog_load_gif').css('display','none');
+			$(this).children('img.datalog_on').css('display','inline');
+			$(this).children('img.datalog_off').css('display','none');
+		}
+	});
+	
+	
+});
+</script>
+<style>
+.row-sec.inner-content-m,
+.row-sec.head-inner-two {
+    float: left;
+    margin: 8px 6% 8px 6%;
+    width: 88%;
+}
+.ct-match {
+	cursor: pointer;
+}
+.ct-matches {
+	display: none;
+	padding: 5px;
+	border: 1px solid #b40404;
+}
+.ct-match-row {
+	display: flex;
+	width: 100%;
+	height: 25px;
+	align-items: center;
+}
+.ct-match-c1 {
+	min-width: 110px;
+}
+.ct-match-c2 {
+	display: flex;
+	min-width: 300px;
+	align-items: center;
+	gap: 5px;
+}
+.ct-match-c3 {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+.ct-match-c4 {
+	min-width: 50px;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+.ct-matches-2 {
+	float: left;
+    width: 100%;
+	margin: 8px 6% 8px 6%;
+    width: 88%;
+	font-size: 11px;
+	box-sizing: border-box;
+}
+#fbolstats-upload-container {
+	background-color: #FFFFFF;
+    border: 1px solid #999999;
+    cursor: default;
+    display: none;
+    margin-top: 15px;
+    position: absolute;
+    text-align: left;
+    width: 394px;
+    z-index: 50;
+    padding: 25px 25px 20px;
+	right: 0;
+}
+.rotate {
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.people-links {
+	display: flex;
+    align-items: center;
+    height: 40px;
+}
+.people-links span {
+	display: flex;
+    gap: 5px;
+}
+.people-link-icon {
+	width: 20px;
+}
+</style>
+<div class='row-sec head-inner-two' style="position:relative;"><img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="float:left;margin-top:1px;margin-left:5px;" alt="soccer" title="soccer"/>   <img src="https://dsg-backend.com/resources/img/icons/lock.png" style="float:left;margin-top:1px;margin-left:5px;"/><span class='inner-title'>Hassan Maatouk - Player Details</span><img src="https://dsg-backend.com/resources/img/icons/svg/upload.svg" id="fbolstats-upload" style="height: 16px;cursor: pointer;margin-right: 5px;float: right;"><span class='inner-img'><a href="people_add.php?p=44318"><img src="https://globalsportsarchive.com/images/edit_icon.png"></a></span><span class='inner-img'><a style="width:100px;"href="https://globalsportsarchive.com/people/soccer/hassan-maatouk/44318/" target="_blank"><img src="https://globalsportsarchive.com/images/gsa_logo4.png" style="width:40px;"></a></span><div id="fbolstats-upload-container">	<form method="post" enctype="multipart/form-data">
+        <input type="file" name="image" id="image" required>
+        <input type="submit" name="fbolstats-upload" value="Upload">
+    </form>
+	</div></div><div class='row-sec inner-content-m'><div class='inner-content-ml' style="width: 60%;"><div class='inner-content-mf'><span class='inner-content-lm'>People ID</span><span class='inner-content-rm'>44318</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Firstname</span><span class='inner-content-rm'>Hassan Ali</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Lastname</span><span class='inner-content-rm'>Maatouk</span></div><div class='inner-content-mf'><span class='inner-content-lm'>common_name</span><span class='inner-content-rm'>Hassan Maatouk</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Date of Birth</span><span class='inner-content-rm'>1987-08-10</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Place of Birth</span><span class='inner-content-rm'>Sir El Gharbiyeh</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Country of Birth</span><span class='inner-content-rm'>Lebanon</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Nationality</span><span class='inner-content-rm'>Lebanon</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Position</span><span class='inner-content-rm'>Attacker</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Referee</span><span class='inner-content-rm'>no</span></div><div class='inner-content-mf'><span class='inner-content-lm'>Gender</span><span class='inner-content-rm'>male</span></div></div><div class='inner-content-mr' style="width: 40%;display: flex;gap: 5px;justify-content: center;"><img src="https://dsg-images.com/players/150x150/44318.png" style="border:1px solid #dfdfdf"></div></div><div class='row-sec head-inner-two gapbot'><span class='inner-title'>Hassan Maatouk - Domestic Memberships</span><span class='inner-img'><a href="team_people_add.php?people_id=44318"><img src="https://globalsportsarchive.com/images/add-icon.png" style="padding-top:3px;"></a>&nbsp;<a href="team_people_add_multiple.php?people_id=44318"><img src="https://globalsportsarchive.com/images/m_icon.png" style="padding-top:3px;"></a></span></div><div class='row-sec inner-content-m'><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=9695616"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=9695616"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=33982">Jwaya SC</a></span><span class='content-row inner-content-m3'>yes</span><span class='content-row inner-content-m4' style="width: 15%;">2025-07-26</span><span class='content-row inner-content-m5' style="width: 15%;"></span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=3203976"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=3203976"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=16373">Al Ansar SC</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2019-07-03</span><span class='content-row inner-content-m5' style="width: 15%;">2025-07-20</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=2695494"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=2695494"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=16376">Nejmeh SC</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2017-08-08</span><span class='content-row inner-content-m5' style="width: 15%;">2019-07-03</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=54884"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=54884"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/202.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=1750">Fujairah FC</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2013-07-01</span><span class='content-row inner-content-m5' style="width: 15%;">2017-06-30</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=2695493"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=2695493"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/202.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=1746">Al Shaab CSC</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2012-09-15</span><span class='content-row inner-content-m5' style="width: 15%;">2013-06-30</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=2698207"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=2698207"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/202.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=1747">Emirates CSC</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2012-07-01</span><span class='content-row inner-content-m5' style="width: 15%;">2012-09-15</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=2695491"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=2695491"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/202.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=1754">Ajman Club</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2011-09-29</span><span class='content-row inner-content-m5' style="width: 15%;">2012-06-30</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=2695492"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=2695492"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=16378">Al Ahed SC</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2005-07-01</span><span class='content-row inner-content-m5' style="width: 15%;">2011-09-29</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div></div><div class='row-sec head-inner-two gapbot'><span class='inner-title'>Hassan Maatouk - International Memberships</span><span class='inner-img'><a href="team_people_add.php?people_id=44318"><img src="https://globalsportsarchive.com/images/add-icon.png" style="padding-top:3px;"></a>&nbsp;<a href="team_people_add_multiple.php?people_id=44318"><img src="https://globalsportsarchive.com/images/m_icon.png" style="padding-top:3px;"></a></span></div><div class='row-sec inner-content-m'><span class='wrap'><div class='wrap'><span class='content-row inner-content-m1' style="width: 12%;"><a href="team_people_view.php?tp=130903"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;<a href="team_people_add.php?people_id=44318&tp_people_id=130903"><img src="https://globalsportsarchive.com/images/edit_icon.png" style="vertical-align:middle;"></a>&nbsp;<img src="https://dsg-backend.com/resources/img/icons/sporticons/soccer.png" style="vertical-align:middle;height:14px;">&nbsp;<img src="https://globalsportsarchive.com/images/male.png" style="vertical-align:middle;height:14px;"></span><span class='content-row inner-content-m2'><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png" style="vertical-align: middle;">&nbsp;&nbsp;<a href="team_view.php?t=16452">Lebanon</a></span><span class='content-row inner-content-m3'>no</span><span class='content-row inner-content-m4' style="width: 15%;">2006-01-01</span><span class='content-row inner-content-m5' style="width: 15%;">2024-06-12</span><span class='content-row inner-content-m6'>player</span><span class='content-row inner-content-m6'>Soccer</span></div></div><div class='row-sec head-inner-two gapbot'><span class='inner-title'>Hassan Maatouk - Selection Memberships</span><span class='inner-img'><a href="team_people_add.php?people_id=44318"><img src="https://globalsportsarchive.com/images/add-icon.png" style="padding-top:3px;"></a>&nbsp;<a href="team_people_add_multiple.php?people_id=44318"><img src="https://globalsportsarchive.com/images/m_icon.png" style="padding-top:3px;"></a></span></div><div class='row-sec inner-content-m'></div><div class='row-sec head-inner-two gapbot'><span class='inner-title'>Hassan Maatouk - Transfers</span></div><div class='row-sec inner-content-m'><span class='wrap'></div></div>

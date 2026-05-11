@@ -1,0 +1,516 @@
+head
+	link rel=stylesheet type=textcss href=httpsdsg-backend.commain.css media=screen 
+	script type=textjavascript src=httpscode.jquery.comjquery-1.9.1.min.jsscript
+head
+body
+div class='container'
+ 
+script
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url 'sess.php',
+			type POST,
+			data {sport_s sport},
+			success function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+script
+style
+	#video-popup {
+		display none;
+		position fixed;
+		top 0;
+		left 0;
+		width 100%;
+		height 100%;
+	}
+	#video-popup .video-overlay {
+		width 100%;
+		height 100%;
+		background-color black;
+		opacity 0.5;
+	}
+	#video-popup img {
+		position absolute;
+		width 30px;
+		top calc(50% - 430px);
+		left calc(50% + 610px);
+		cursor pointer;
+	}
+	#video-popup  video {
+		position absolute;
+		top 50%;
+		left 50%;
+		transform translate(-50%, -50%);
+		background-color #232425;
+	}	
+	style
+
+script
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = leftBar=collapsed; path=; expires=Fri, 31 Dec 9999 235959 GMT;
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = leftBar=expanded; path=; expires=Fri, 31 Dec 9999 235959 GMT;
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url 'sess.php',
+			type POST,
+			data {sport_s sport},
+			success function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper  ');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) = 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+script
+style
+@font-face {
+    font-family 'notosans';
+    src url('httpsdsg-images.comfontsNotoSans-Condensed.ttf');
+}
+
+#main-navigation  {
+	 font-family 'notosans';
+}
+#main-navigation {
+	width 75px;
+    height 100vh;
+    position fixed;
+    background-color #2C2C2C;
+    left 0;
+    top 0;
+    z-index 99;
+	transition width 500ms ease-in-out;
+}
+.inner-navigation {
+	display grid;
+    align-content space-between;
+    height 100%;
+	overflow hidden;
+}
+.nav-item {
+	height 65px;
+    display flex;
+    align-items center;
+    padding-left 20px;
+    color white;
+	cursor pointer;
+}
+.nav-expand {
+	border-bottom 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display flex;
+    align-items center;
+    min-width 30px;
+    max-width 30px;
+    justify-content center;
+}
+.nav-icon-wrapper  img {
+	width 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper  img {
+	width 40px;
+}
+.nav-item-label {
+	display none;
+	margin-left 10px;
+}
+.nav-info-extra {
+	margin-left 5px;
+    background-color white;
+    padding 1px 2px;
+    font-size 10px;
+	color black;
+}
+.nie-red {
+	background-color red;
+	color white;
+}
+
+#main-navigation.expanded {
+	width 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform rotate(180deg); 
+}
+.nav-toggle {
+	position absolute;
+    top 0;
+    bottom 0;
+    margin auto;
+    right -15px;
+    width 15px;
+    height 43px;
+    background-color #2c2c2c;
+    display flex;
+    align-items center;
+    justify-content center;
+	cursor pointer;
+}
+.nav-toggle img {
+	transition-duration 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display none;
+	position absolute;
+    z-index 2;
+    top 0;
+    left 100%;
+    background-color #393737;
+    height 100%;
+    overflow auto;
+	min-width 200px;
+}
+.nav-sport,
+.nav-comp {
+    color white;
+    cursor pointer;
+    padding 8px 25px;
+    text-wrap nowrap;
+    font-size 14px;
+	display block;
+}
+.nav-itemhover,
+.nav-sporthover,
+.nav-comphover {
+	background-color #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display flex;
+    align-items center;
+    padding 0 25px;
+	gap 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border none;
+    background-color transparent;
+    height 40px;
+    width 100%;
+    outline-width 0;
+	color white;
+}
+.nav-inner-bottom {
+	background-color #2C2C2C;
+}
+.nav-logo {
+	padding 0 5px;
+    justify-content center;
+}
+.nav-logo img {
+	max-width 60px;
+}
+style
+div id=main-navigation class=collapsed
+	div class=inner-navigation
+		div class=nav-inner-top
+			div class=nav-item nav-expand nav-sport-toggle
+				div class=nav-icon-wrapper
+					!--img src=dsg-images.comiconssporticonsbigsoccer.png--
+					img src=dsg-backend.comresourcesimgsportsvgsoccer.svg
+				div
+				div class=nav-item-labelSoccerdiv
+			div
+			div class=nav-item nav-expand nav-comp-toggle
+				div class=nav-icon-wrapper
+					img src=dsg-backend.comresourcesimgiconscompetition.svg
+				div
+				div class=nav-item-labelCompetitiondiv
+			div
+
+			a class=nav-item href=
+				div class=nav-icon-wrapper	
+					img src=dsg-backend.comresourcesimgiconstasks.svg
+				div
+				div class=nav-item-labelTasksdiv
+							a		
+					
+			
+						a class=nav-item href=people.php
+				div class=nav-icon-wrapper 	
+					img src=dsg-backend.comresourcesimgiconspeople.svg
+				div
+				div class=nav-item-labelPeoplediv
+			a	
+						
+						a class=nav-item href=team.php
+				div class=nav-icon-wrapper	
+					img src=dsg-backend.comresourcesimgiconsteam_default.svg
+				div
+				div class=nav-item-labelTeamsdiv
+			a	
+						
+						a class=nav-item href=live.php
+				div class=nav-icon-wrapper	
+					img src=dsg-backend.comresourcesimgiconslive.svg
+				div
+				div class=nav-item-labelLivediv
+			a	
+						
+						a class=nav-item href=ev_dashboard2.php
+				div class=nav-icon-wrapper	
+					img src=dsg-backend.comresourcesimgiconserror_view_dashboard.svg
+				div
+				div class=nav-item-labelError viewsdiv
+			a
+						
+						
+						
+					div
+		
+		div class=nav-inner-bottom
+		
+			a class=nav-item
+				div class=nav-icon-wrapper	
+					img src=dsg-backend.comresourcesimgiconsaccount.svg
+				div
+				div class=nav-item-labelAccountdiv
+			a
+			a class=nav-item href=logout.php
+				div class=nav-icon-wrapper	
+					img src=dsg-backend.comresourcesimgiconslogout.svg
+				div
+				div class=nav-item-labelLog outdiv
+			a
+			
+			a class=nav-item nav-logo
+				img src=dsg-backend.comresourcesimgdsg-logo-white.png
+			a
+		div
+	div
+	
+	div class=nav-toggle
+		img src=dsg-backend.comresourcesimgiconsnav-right.png
+	div
+	
+	div class=nav-sports
+		div class=nav-search
+			img src=dsg-backend.comresourcesimgiconssearch.png
+			input type=text placeholder=Search...
+		div
+		div class=nav-item-wrapper
+					div class=nav-sport data-id=soccerSoccerdiv
+				div
+	div
+	
+	div class=nav-comps
+		div class=nav-search
+			img src=dsg-backend.comresourcesimgiconssearch.png
+			input type=text placeholder=Search...
+		div
+		div class=nav-item-wrapper
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=223Lebanon -  Lebanese Premier League - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=678Lebanon -  Second Division - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=679Lebanon -  Third Division - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=3443Lebanon -  Fourth Division - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=680Lebanon -  Lebanese Cup - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=681Lebanon -  Lebanese Elite Cup - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=759Lebanon -  Lebanese Challenge Cup - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4336Lebanon -  Lebanese Federation Cup - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=682Lebanon -  Super Cup - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4470Lebanon -  Lebanese U-20 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4850Lebanon -  Lebanese U-18 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=5090Lebanon -  Lebanese U-17 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4471Lebanon -  Lebanese U-16 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4851Lebanon -  Lebanese U-15 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4472Lebanon -  Lebanese U-14 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4852Lebanon -  Lebanese U-13 League - male youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=3045Lebanon -  Women's First Division - femalea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=3093Lebanon -  Lebanese Women's Cup - femalea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=3660Lebanon -  Women's Super Cup - femalea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4734Lebanon -  Lebanese U-19 League - female youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=5397Lebanon -  Lebanese U19 Women's Cup - female youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=4853Lebanon -  Lebanese U-17 League - female youtha
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=396World -  FIFA Friendlies - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=2525World -  FIFA Friendlies - femalea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=2100World -  Arab Games - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=1940World -  Intercontinental Cup - malea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=5135World -  Four Nations International Women's Championship - femalea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=3009World -  Non-FIFA Friendlies - femalea
+					a class=nav-comp data-id=soccer href=client_comps.phpcomp=3014World -  FIFA Youth Friendlies - female youtha
+				div
+	div
+divscript type=textjavascript src=httpscode.jquery.comjquery-1.9.1.min.jsscript
+script type=textjavascript
+	$(document).ready(function() {
+		$(.fade).fadeOut(6000);
+	});
+script
+style
+
+.row-sec.head-inner-two,
+.row-sec.inner-content-m {
+	width 100%;
+	margin-left 0;
+    margin-right 0;
+}
+
+.flex-row {
+	display flex;
+    height 18px;
+    align-items center;
+}
+.img-status {
+	width 12px;
+}
+.fr-col-1 {
+	display flex;
+    align-items center;
+    min-width 20px;
+    justify-content center;
+}
+.fr-col-2 {
+	min-width 70px;
+}
+.fr-col-3 {
+	display flex;
+    align-items center;
+	width 100%;
+}
+.fr-col-3 img {
+	margin-right 5px;
+}
+.fr-col-4 {
+	min-width 130px;
+}
+.start-check {
+	font-weight bold;
+	color #009933;
+}
+.img-lock {
+	height13px;
+}
+.gsa-icon {
+	height 10px;
+	margin-left 10px;
+}
+.social-icon {
+	height 15px;
+    margin-right 5px;
+}
+.col-flex-r {
+	display flex;
+    align-items center;
+    font-size 12px;
+    justify-content flex-end;
+}
+.col-flex-r form {
+	display contents;
+}
+.col-flex-r input {
+	background-color #8fcd7e;
+    border-color green;
+	font-size 11px;
+    margin 3px;
+}
+.flex-header {
+	display flex;
+    align-items center;
+    justify-content space-between;
+}
+.flex-header  div {
+	display flex;
+    height 100%;
+    align-items center;
+	margin-right 5px;
+}
+.flex-header img {
+	margin-left 5px;
+}
+.rotate {
+  animation spin 2s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform rotate(0deg);
+  }
+  to {
+    transform rotate(360deg);
+  }
+}
+style
+div class='row-sec head-inner-two'img src=httpsdsg-backend.comresourcesimgiconssporticons
+soccer.png style=floatleft;margin-top1px;margin-left5px; alt=soccer title=soccerspan class='inner-title' style=padding-left0px;&nbsp;&nbsp;&nbsp;Team Detailsspanspan class='inner-img' style=padding-top0px;&nbsp;spanspan class='inner-img'a style=width100px;href=httpsglobalsportsarchive.comteamsocceradvanced-sports-academy-u1365986 target=_blankimg src=httpsglobalsportsarchive.comimagesgsa_logo4.png style=width40px;margin-left10px;aspandivdiv class='row-sec inner-content-m'div class='team-view inner-content-ml'div class='inner-content-mf'span class='inner-content-lm label-select'Entityspanspan class='inner-content-rm'a href=sport_entity.phpid=16281628aspandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Team IDspanspan class='inner-content-rm'65986spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Areaspanspan class='inner-content-rm'Lebanonspandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Teamnamespanspan class='inner-content-rm'Advanced Sports Academy U13spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Shortnamespanspan class='inner-content-rm'Advanced U13spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'TLAspanspan class='inner-content-rm'ASAspandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Official Namespanspan class='inner-content-rm'spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Typesspanspan class='inner-content-rm'club - male youth - activespandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Adressspanspan class='inner-content-rm'spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'ZIP + Cityspanspan class='inner-content-rm' , spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'URLspanspan class='inner-content-rm'spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Social Mediaspanspan class='inner-content-rm'spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Foundedspanspan class='inner-content-rm'spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Club Colorsspanspan class='inner-content-rm' -  - spandivdiv class='inner-content-mf'span class='inner-content-lm label-select'Nicknamesspanspan class='inner-content-rm' -  - spandivdivdiv class='team-view inner-content-mr'a href=team_old_logos.phpt=65986img src=httpsdsg-images.comsport_entity200x2001628.png style=border1px solid #dfdfdfadivdivdiv class='row-sec head-inner-two flex-header'
+			div
+				span class='inner-title'&nbsp;&nbsp;&nbsp;Current Squad (0)span
+			div
+			div
+				span class='inner-img' style=padding-top0px;
+					div class=col-full col-flex-r div style=  divform method=postinput type=submit name=submit_cc value=Squad Checkformdiv
+					a href=people_edit_multiple.phpt=65986img src=httpsglobalsportsarchive.comimagesedit_icon.png style=vertical-alignmiddle;a
+					 a href=people_add_multiple.phpt=65986img src=httpsglobalsportsarchive.comimagesm_icon.png style=margin-bottom-2px;padding-top2px;a&nbsp;a href=team_people_end_tool.phpt=65986img src=httpsglobalsportsarchive.comimagese_icon.png style=margin-bottom-2px;padding-top2px;a&nbsp;a href=people_add_multiple_historical.phpt=65986img src=httpsglobalsportsarchive.comimagesh_icon.png style=margin-bottom-2px;padding-top2px;a  
+				span
+			div
+	divdiv class='row-sec inner-content-m'divdiv class='row-sec head-inner-two'span class='inner-title'&nbsp;&nbsp;&nbsp;Team Officialsspanspan class='inner-img'a href=# onClick='changeArea(65986);'img src=httpsglobalsportsarchive.comimagesview.png style=vertical-alignmiddle;aspandivdiv class='row-sec inner-content-m' id=tofficialsdivdiv class='row-sec head-inner-two'span class='inner-title'&nbsp;&nbsp;&nbsp;Last 25 Historical Players (Total = 1)spanspan class='inner-img'a href=team_members_old.phpt=65986img src=httpsglobalsportsarchive.comimagesview.png style=vertical-alignmiddle;aspandivdiv class='row-sec inner-content-m'div class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931527img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931527 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931527divdiv class=fr-col-3Daniel El Arabidivdiv class=fr-col-2divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesoccerdaniel-el-arabi7931527 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdiv class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931528img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931528 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931528divdiv class=fr-col-3Ibrahim Farchoukhdivdiv class=fr-col-22010-07-19divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesocceribrahim-farchoukh7931528 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdiv class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931529img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931529 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931529divdiv class=fr-col-3Jad Karimedivdiv class=fr-col-2divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesoccerjad-karime7931529 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdiv class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931530img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931530 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931530divdiv class=fr-col-3Karim El Berjaouidivdiv class=fr-col-22010-01-01divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesoccerkarim-el-berjaoui7931530 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdiv class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931531img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931531 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931531divdiv class=fr-col-3Saad Qlaylatdivdiv class=fr-col-22010-05-17divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesoccersaad-qlaylat7931531 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdiv class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931532img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931532 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931532divdiv class=fr-col-3Youssef Hijazidivdiv class=fr-col-22010-06-21divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesocceryoussef-hijazi7931532 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdiv class=flex-rowdiv class=fr-col-1img src=httpsglobalsportsarchive.comimagesred_light.png class=img-statusdivdiv class=fr-col-1a href=people_view.phpp=7931533img src=httpsglobalsportsarchive.comimagesview.pngadivdiv class=fr-col-1a href=people_add.phpp=7931533 style=margin-right5px;img src=httpsglobalsportsarchive.comimagesedit_icon.pngadivdiv class=fr-col-27931533divdiv class=fr-col-3Youssef Noureddinedivdiv class=fr-col-22010-07-31divdiv class=fr-col-3img src=httpsdsg-backend.comresourcesimgflags16x16112.pngLebanondivdiv class=fr-col-4divdiv class=fr-col-2 2024-07-31divdiv class=fr-col-1diva href=httpsglobalsportsarchive.compeoplesocceryoussef-noureddine7931533 target=_blankimg class=gsa-icon src=httpsglobalsportsarchive.comimagesgsa_logo4.pngadivdivscript type=textjavascript
+function changeArea(team){
+	$.ajax({
+		url 'teamview_coach_widget.php',
+		type 'POST',
+		dataType 'json',
+		data {teamid team},
+		success function (data) {
+			$(#tofficials).html(data.result);
+		}
+	});	
+}
+$(function(){
+	$('#gsg').on('click', function() {
+		$(this).addClass('rotate');
+		$.post('httpsdsg-backend.comteam_view.phpt=65986', { action 'gsa_static_generation' }, function() {
+			window.location.href = window.location.href;
+		});
+	});
+});
+script

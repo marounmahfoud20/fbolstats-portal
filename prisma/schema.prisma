@@ -5,53 +5,378 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL") // <-- This allows migrations to bypass the pooler!
 }
 
+// ----------------------------------------------------
+// 1. LEAGUE (The top level competition)
+// ----------------------------------------------------
 model League {
-  id        String   @id @default(uuid())
-  name      String   // e.g., "Lebanese First Division"
-  type      String   // e.g., "Men", "Women", "Youth"
-  matches   Match[]
+  id              Int      @id @default(autoincrement())
+  competitionName String
+  type            String   // e.g., "Men", "Women", "Youth Boys"
+  footballType    String   @default("club") // club | national
+  seasons         Season[] // A league has many seasons
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
-model Team {
-  id          String   @id @default(uuid())
-  name        String   // e.g., "Al Ansar"
-  homeMatches Match[]  @relation("HomeTeam")
-  awayMatches Match[]  @relation("AwayTeam")
-  players     Player[]
+model LeagueCategory {
+  id           Int      @id @default(autoincrement())
+  name         String
+  footballType String   @default("club") // club | national
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, footballType])
 }
 
-model Player {
-  id        String       @id @default(uuid())
-  name      String
-  teamId    String?
-  team      Team?        @relation(fields: [teamId], references: [id])
-  events    MatchEvent[]
+model AdminAccount {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
+// ----------------------------------------------------
+// 2. SEASON (A specific year of a League)
+// ----------------------------------------------------
+model Season {
+  id              Int      @id @default(autoincrement())
+  name            String   // e.g., "2025/2026"
+  startDate       String?  // e.g., "2025-09-01"
+  endDate         String?  // e.g., "2026-06-30"
+  
+  leagueId        Int
+  league          League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  
+  groups          Group[]  // A season can have multiple groups (e.g., Group A, Group B, or just one "Regular Season" group)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isFinished      Boolean  @default(false)
+  
+  teams           SeasonTeam[] // Added reverse relation for participating teams
+}
+
+// ----------------------------------------------------
+// 3. GROUP (A division or stage within a Season)
+// ----------------------------------------------------
+model Group {
+  id              Int      @id @default(autoincrement())
+  name            String   // e.g., "Regular Season" or "Group A"
+  
+  seasonId        Int
+  season          Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  
+  matches         Match[]  // A group contains many matches
+  teams           GroupTeam[] // Added reverse relation for teams in this group
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 4. MATCH (An individual fixture)
+// ----------------------------------------------------
 model Match {
-  id          String       @id @default(uuid())
-  leagueId    String
-  league      League       @relation(fields: [leagueId], references: [id])
-  homeTeamId  String
-  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeamId  String
-  awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  homeScore   Int          @default(0)
-  awayScore   Int          @default(0)
-  status      String       @default("Scheduled") // Scheduled, Live, FT
-  matchDate   DateTime
-  events      MatchEvent[]
+  id              Int      @id @default(autoincrement())
+  date            String?  // e.g., "2025-09-19"
+  time            String?  // e.g., "14:30"
+  
+  // Storing simple string names for now based on your UI
+  teamA           String   
+  teamB           String   
+  
+  venue           String?
+  status          String   @default("Fixture") // Fixture, Played, Postponed, etc.
+  
+  groupId         Int
+  group           Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  appearances     MatchAppearance[] // Added reverse relation
+  meta            MatchMeta?
+  events          MatchEvent[]
+  shirts          MatchShirtNumber[]
+}
+
+// ----------------------------------------------------
+// 5. TEAM (Global team directory)
+// ----------------------------------------------------
+model Team {
+  id              Int      @id @default(autoincrement())
+  name            String
+  shortName       String?
+  tla             String?
+  officialName    String?
+  area            String?
+  country         String?
+  type            String?  @default("club")
+  gender          String?  @default("both")
+  status          String?  @default("active")
+  address         String?
+  latitude        String?
+  longitude       String?
+  city            String?
+  url             String?
+  facebookUrl     String?
+  instagramUrl    String?
+  twitterUrl      String?
+  founded         String?
+  clubColors      String?
+  nicknames       String?
+  logo            String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  people          Person[]
+  memberships     Membership[] // Added reverse relation for Memberships
+  appearances     MatchAppearance[] // Added reverse relation
+  matchEvents     MatchEvent[]
+  seasons         SeasonTeam[] // Added reverse relation for participating seasons
+  groups          GroupTeam[] // Added reverse relation for participating rounds
+  logos           TeamLogoHistory[]
+  clubEntityId    Int?
+  clubEntity      ClubEntity? @relation(fields: [clubEntityId], references: [id], onDelete: SetNull)
+  teamCategory    String?
+}
+
+model ClubEntity {
+  id              Int      @id @default(autoincrement())
+  name            String
+  shortName       String?
+  tla             String?
+  officialName    String?
+  area            String?
+  country         String?
+  type            String?  @default("club")
+  status          String?  @default("active")
+  address         String?
+  latitude        String?
+  longitude       String?
+  city            String?
+  url             String?
+  facebookUrl     String?
+  instagramUrl    String?
+  twitterUrl      String?
+  founded         String?
+  clubColors      String?
+  nicknames       String?
+  logo            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  teams           Team[]
+  logos           ClubEntityLogoHistory[]
+}
+
+model ClubEntityLogoHistory {
+  id          Int      @id @default(autoincrement())
+  clubEntityId Int
+  clubEntity   ClubEntity @relation(fields: [clubEntityId], references: [id], onDelete: Cascade)
+  logoPath     String
+  status       String   @default("active")
+  startDate    String?
+  endDate      String?
+  isCurrent    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TeamLogoHistory {
+  id          Int      @id @default(autoincrement())
+  teamId       Int
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  logoPath     String
+  status       String   @default("active")
+  startDate    String?
+  endDate      String?
+  isCurrent    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 6. PERSON (Players, Coaches, Referees, etc)
+// ----------------------------------------------------
+model Person {
+  id              Int      @id @default(autoincrement())
+  firstName       String?
+  lastName        String?
+  matchName       String?
+  commonName      String?
+  dob             String?
+  status          String   @default("active")
+  dateOfDeath     String?
+  placeOfBirth    String?
+  countryOfBirth  String?
+  nationality     String?
+  gender          String?
+  position        String?
+  detailedPos1    String?
+  detailedPos2    String?
+  detailedPos3    String?
+  isReferee       String?  @default("no")
+  strongFoot      String?
+  height          String?
+  weight          String?
+  nickname        String?
+  birthYear       String?
+  mappingSource   String?
+  image           String?
+
+  teamId          Int?
+  team            Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  teamStartDate   String?
+  teamEndDate     String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  memberships     Membership[] // Added reverse relation for Memberships
+  appearances     MatchAppearance[] // Added reverse relation
+  matchEvents     MatchEvent[]
+  assistedEvents  MatchEvent[]      @relation("MatchEventAssist")
+  shirts          MatchShirtNumber[]
+}
+
+// ----------------------------------------------------
+// 7. MEMBERSHIP (Historical & Active Roles)
+// ----------------------------------------------------
+model Membership {
+  id          Int      @id @default(autoincrement())
+  role        String   // "Player", "coach", "physiotherapist", etc.
+  startDate   String?
+  endDate     String?
+  isActive    Boolean  @default(true)
+
+  personId    Int
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  teamId      Int
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 8. MATCH APPEARANCE (Lineups, Subs, Referees)
+// ----------------------------------------------------
+model MatchAppearance {
+  id          Int      @id @default(autoincrement())
+  role        String   // "Starter", "Substitute", "Main Referee", "VAR", etc.
+  
+  matchId     Int
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  
+  personId    Int
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  
+  teamId      Int?     // Nullable because Referees don't belong to a team in this match
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ----------------------------------------------------
+// 9. SEASON TEAM (Participating teams & future standings)
+// ----------------------------------------------------
+model SeasonTeam {
+  id          Int      @id @default(autoincrement())
+  
+  seasonId    Int
+  season      Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  
+  teamId      Int
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([seasonId, teamId]) // Prevents adding the exact same team to the same season twice
+}
+
+// ----------------------------------------------------
+// 10. GROUP TEAM (Teams participating in a specific Round/Group)
+// ----------------------------------------------------
+model GroupTeam {
+  id          Int      @id @default(autoincrement())
+  
+  groupId     Int
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  teamId      Int
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([groupId, teamId]) // Prevents adding the same team to a round twice
+}
+
+model MatchMeta {
+  id          Int      @id @default(autoincrement())
+  matchId      Int      @unique
+  match        Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  spectators   String?
+  ftA          String?
+  ftB          String?
+  htA          String?
+  htB          String?
+  etA          String?
+  etB          String?
+  pkA          String?
+  pkB          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model MatchEvent {
-  id        String  @id @default(uuid())
-  matchId   String
-  match     Match   @relation(fields: [matchId], references: [id])
-  playerId  String? // Optional for "Ghost Goals" in historical data
-  player    Player? @relation(fields: [playerId], references: [id])
-  eventType String  // e.g., "Goal", "Yellow Card", "Red Card"
-  minute    Int
+  id          Int      @id @default(autoincrement())
+  matchId      Int
+  match        Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  personId     Int
+  person       Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  assistPersonId Int?
+  assistPerson   Person?   @relation("MatchEventAssist", fields: [assistPersonId], references: [id], onDelete: SetNull)
+  teamId       Int?
+  team         Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  eventType    String
+  minute       String?
+  extraTime    String?
+  goalType     String?
+  bookingReason String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model MatchShirtNumber {
+  id          Int      @id @default(autoincrement())
+  matchId      Int
+  match        Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  personId     Int
+  person       Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  number       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([matchId, personId])
+}
+
+model Venue {
+  id        Int      @id @default(autoincrement())
+  name      String
+  city      String?
+  country   String?
+  address   String?
+  capacity  Int?
+  surface   String?
+  status    String?  @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

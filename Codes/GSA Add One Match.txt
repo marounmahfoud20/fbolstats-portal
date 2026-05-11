@@ -1,0 +1,443 @@
+<head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/themes/base/minified/jquery-ui.min.css" type="text/css" />
+<style>
+.section {
+	width: 100%;
+	margin-bottom: 15px;
+}
+.section > * {
+	box-sizing: border-box;
+}
+.section > form {
+	padding-left: 10px;
+}
+#match-info {
+	width: 100%;
+}
+#autowinner-f {
+	display:none;
+	padding-left: 10px;
+}
+#datalog {
+	padding-left: 10px;
+	font-size: 11px;
+}
+.subheader {
+	width: 100%; 
+	text-align: left;
+	border: 1px solid #B40404;
+	background-color: #E6E6E6;
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+	font-weight: bold;
+	color: #B40404;
+	margin-bottom: 10px;
+	padding-left: 10px;
+}
+.ps-col {
+	width: 25px;
+	height: 20px;
+	text-align: center;
+	font-size: 13.3px;
+	margin-right: 5px;
+	float: left;
+}
+.bold {
+	font-weight: bold;
+}
+</style>
+<div class="section"><div class="subheader">Add/Edit Match</div><form method="post"><table id="match-info" cellspacing=0><tr><td><b>Date:</b></td>
+<td><input type="text" name="day" maxlength="2" size="2" value="" style="width:25px;text-align:center;"></input>&nbsp;<input type="text" name="month" maxlength="2" size="2" value="" style="width:25px;text-align:center;"></input>&nbsp;<input type="text" name="year" maxlength="4" size="4" value="" style="width:50px;text-align:center;"></input></td></tr><tr><td><b>Time:</b></td>
+<td><input type="text" name="hour" maxlength="4" size="4" value="" style="width:25px;text-align:center;"></input>&nbsp;<input type="text" name="minute" maxlength="4" size="4" value="" style="width:25px;text-align:center;"></input></td></tr><tr><td><b>Team A:</b></td>
+<td><select name="teama" size="1"><option value=""></option><option value="16378" >Al Ahed SC</option><option value="16373" >Al Ansar SC</option><option value="16384" >Al Mabarrah SC</option><option value="33980" >Al Riyadi Al Abbasiyah Club</option><option value="22911" >Bourj SC</option><option value="16386" >CS Sagesse</option><option value="33982" >Jwaya SC</option><option value="16376" >Nejmeh SC</option><option value="16375" >Racing Club Bayrūt</option><option value="16377" >Safa SC</option><option value="16381" >Shabab Al Sahel SC</option><option value="16374" >Tadamon SC Sour</option></select></td></tr><tr><td><b>Team B:</b></td>
+<td><select name="teamb" size="1"><option value=""></option><option value="16378" >Al Ahed SC</option><option value="16373" >Al Ansar SC</option><option value="16384" >Al Mabarrah SC</option><option value="33980" >Al Riyadi Al Abbasiyah Club</option><option value="22911" >Bourj SC</option><option value="16386" >CS Sagesse</option><option value="33982" >Jwaya SC</option><option value="16376" >Nejmeh SC</option><option value="16375" >Racing Club Bayrūt</option><option value="16377" >Safa SC</option><option value="16381" >Shabab Al Sahel SC</option><option value="16374" >Tadamon SC Sour</option></select></td></tr><tr><td><b>Final Period:</b></td>
+<td><input type="radio" name="finalperiod" value="soc_p2s" checked>90 Min</input>&nbsp;&nbsp;
+				  <input type="radio" name="finalperiod" value="soc_ets" >120 Min</input>&nbsp;&nbsp;
+				  <input type="radio" name="finalperiod" value="soc_pen" >Penalties</input></td></tr><tr><td><b>Venue Type:</b></td>
+<td><input type="radio" name="venuetype" value="home_away" checked>home/away</input>&nbsp;&nbsp;<input type="radio" name="venuetype" value="neutral" >neutral venue</input></td></tr><tr><td><b>Venue:</b></td><td><input type="text" name="venue" class="venue" value="" style="width:300px;"></input></td></tr><tr><td><b>Attendance:</b></td><td><input type="text" name="attendance" maxlength="5" size="8" value=""></input></td><tr><tr><td><b>Score:</b></td><td><input class='matchtoday_row' type="text" name="scorea" maxlength="2" size="1" value="" class="number" style="width:30px;height:20px;text-align:center;font-size:13.3px;margin-right:5px;"/><input class='matchtoday_row' type="text" name="scoreb" maxlength="2" size="1" value="" class="number" style="width:30px;height:20px;text-align:center;font-size:13.3px;"/></td></tr><tr><td></td><td><div class="ps-col bold"/>p1s</div><div class="ps-col bold"/>p2s</div><div class="ps-col bold"/>ets</div><div class="ps-col bold"/>pen</div></td></tr><tr><td><b>Period Scores - Team A:</b></td><td><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_p1s][0]" maxlength="2" size="1" value="" class="number"/><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_p2s][0]" maxlength="2" size="1" value="" class="number"/><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_ets][0]" maxlength="2" size="1" value="" class="number"/><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_pen][0]" maxlength="2" size="1" value="" class="number"/></td></tr><tr><td><b>Period Scores - Team B:</b></td><td><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_p1s][1]" maxlength="2" size="1" value="" class="number"/><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_p2s][1]" maxlength="2" size="1" value="" class="number"/><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_ets][1]" maxlength="2" size="1" value="" class="number"/><input class='matchtoday_row ps-col' type="text" name="periodScores[soc_pen][1]" maxlength="2" size="1" value="" class="number"/></td></tr><tr><td><b>Status:</b></td><td><select name="status" size="1" style="width:200px;" required><option value="Awarded" >Awarded</option><option value="Break" >Break</option><option value="Bye" >Bye</option><option value="Cancelled" >Cancelled</option><option value="Dinner" >Dinner</option><option value="Disqualified" >Disqualified</option><option value="Double Retire" >Double Retire</option><option value="Draw" >Draw</option><option value="Fixture" >Fixture</option><option value="Knockout" >Knockout</option><option value="Lunch" >Lunch</option><option value="No Contest" >No Contest</option><option value="No Result" >No Result</option><option value="Played" >Played</option><option value="Playing" >Playing</option><option value="Postponed" >Postponed</option><option value="Retired" >Retired</option><option value="Stumps" >Stumps</option><option value="Submission" >Submission</option><option value="Suspended" >Suspended</option><option value="Tea" >Tea</option><option value="Tech Knockout" >Tech Knockout</option><option value="bad light" >bad light</option><option value="between Innings" >between Innings</option><option value="crowd trouble" >crowd trouble</option><option value="drinks" >drinks</option><option value="floodlight failure" >floodlight failure</option><option value="pitch condition" >pitch condition</option><option value="rain delay" >rain delay</option><option value="start delay" >start delay</option><option value="super over" >super over</option></select></td></tr><tr><td><b>Winner:</b></td><td><select name="winner" size="1" style="width:200px;" required><option value="yet unknown">Yet Unknown</option><option value="team_A" >Team A</option><option value="team_B" >Team B</option><option value="draw">Draw</option></select></td></tr><tr><td><b>Match Type:</b></td><td><input type="text" name="match_type" maxlength="150" size="30" value=""></input></td><tr><tr><td colspan="2">&nbsp;</td></tr><tr><td colspan="2"><input type="hidden" name="abgeschickt" value="1"></input><input type="Submit" value="Save" /></td></tr></table></form><form method="post"></div></form><input id="hidden_match_id" type="hidden" value=""><input id="hidden_sport" type="hidden" value="soccer"></body></html><script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.10.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="./js/match_add.js"></script>

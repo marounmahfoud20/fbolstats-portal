@@ -1,0 +1,1608 @@
+<head>
+	<link rel="stylesheet" type="text/css" href="https://dsg-backend.com/main.css" media="screen" >
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<div class='container'>
+ 
+<script>
+
+    function saveSession(sport) 
+    {
+        $.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+		
+    }
+
+</script>
+<style>
+	#video-popup {
+		display: none;
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#video-popup .video-overlay {
+		width: 100%;
+		height: 100%;
+		background-color: black;
+		opacity: 0.5;
+	}
+	#video-popup img {
+		position: absolute;
+		width: 30px;
+		top: calc(50% - 430px);
+		left: calc(50% + 610px);
+		cursor: pointer;
+	}
+	#video-popup > video {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: #232425;
+	}	
+	</style>
+
+<script>
+$(function() {
+	$('body').addClass('collapsed');
+	$('.nav-toggle').on('click', function() {
+		if ($('#main-navigation').hasClass('expanded')) {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=collapsed; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		} else {
+			$('#main-navigation').toggleClass('expanded');
+			$('body').toggleClass('expanded');
+			document.cookie = "leftBar=expanded; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+		}
+	});
+	$('.nav-comp-toggle').on('click', function() {
+		$('.nav-sports').hide();
+		$('.nav-comps').animate({width: 'toggle'});
+	});
+	$('.nav-sport-toggle').on('click', function() {
+		$('.nav-comps').hide();
+		$('.nav-sports').animate({width: 'toggle'});
+	});
+	$('.nav-sport').on('click', function() {
+		var sport = $(this).data('id');
+		$.ajax({
+			url: 'sess.php',
+			type: "POST",
+			data: {sport_s: sport},
+			success: function() {
+				window.location.reload(true);
+			}
+		});
+	});
+	
+	$('.nav-search input').on('input', function() {
+		var val = $(this).val().toLowerCase();
+		var items = $(this).parent().parent().find('.nav-item-wrapper > *');
+		
+		if (val != '') {
+			items.hide();
+			
+			items.each(function(el) {
+				if ($(this).text().toLowerCase().indexOf(val) >= 0) {
+					$(this).show();
+				}
+			});
+		} else {
+			items.show();
+		}
+	});
+});
+
+</script>
+<style>
+@font-face {
+    font-family: 'notosans';
+    src: url('https://dsg-images.com/fonts/NotoSans-Condensed.ttf');
+}
+
+#main-navigation * {
+	 font-family: 'notosans';
+}
+#main-navigation {
+	width: 75px;
+    height: 100vh;
+    position: fixed;
+    background-color: #2C2C2C;
+    left: 0;
+    top: 0;
+    z-index: 99;
+	transition: width 500ms ease-in-out;
+}
+.inner-navigation {
+	display: grid;
+    align-content: space-between;
+    height: 100%;
+	overflow: hidden;
+}
+.nav-item {
+	height: 65px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: white;
+	cursor: pointer;
+}
+.nav-expand {
+	border-bottom: 1px solid #4C4C4C;
+}
+.nav-icon-wrapper {
+	display: flex;
+    align-items: center;
+    min-width: 30px;
+    max-width: 30px;
+    justify-content: center;
+}
+.nav-icon-wrapper > img {
+	width: 20px;
+}
+.nav-sport-toggle .nav-icon-wrapper > img {
+	width: 40px;
+}
+.nav-item-label {
+	display: none;
+	margin-left: 10px;
+}
+.nav-info-extra {
+	margin-left: 5px;
+    background-color: white;
+    padding: 1px 2px;
+    font-size: 10px;
+	color: black;
+}
+.nie-red {
+	background-color: red;
+	color: white;
+}
+
+#main-navigation.expanded {
+	width: 200px;
+}
+#main-navigation.expanded .nav-item-label {
+	display: block;
+}
+#main-navigation.expanded .nav-toggle img {
+	transform: rotate(180deg); 
+}
+.nav-toggle {
+	position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: -15px;
+    width: 15px;
+    height: 43px;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	cursor: pointer;
+}
+.nav-toggle img {
+	transition-duration: 500ms;
+}
+.nav-sports,
+.nav-comps {
+	display: none;
+	position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 100%;
+    background-color: #393737;
+    height: 100%;
+    overflow: auto;
+	min-width: 200px;
+}
+.nav-sport,
+.nav-comp {
+    color: white;
+    cursor: pointer;
+    padding: 8px 25px;
+    text-wrap: nowrap;
+    font-size: 14px;
+	display: block;
+}
+.nav-item:hover,
+.nav-sport:hover,
+.nav-comp:hover {
+	background-color: #4C4C4C;
+}
+.nav-search,
+.nav-sport-search {
+	display: flex;
+    align-items: center;
+    padding: 0 25px;
+	gap: 5px;
+}
+.nav-search img,
+.nav-sport-search img {
+	width: 14px;
+}
+.nav-search input,
+.nav-sport-search input {
+	border: none;
+    background-color: transparent;
+    height: 40px;
+    width: 100%;
+    outline-width: 0;
+	color: white;
+}
+.nav-inner-bottom {
+	background-color: #2C2C2C;
+}
+.nav-logo {
+	padding: 0 5px;
+    justify-content: center;
+}
+.nav-logo img {
+	max-width: 60px;
+}
+</style>
+<div id="main-navigation" class="collapsed">
+	<div class="inner-navigation">
+		<div class="nav-inner-top">
+			<div class="nav-item nav-expand nav-sport-toggle">
+				<div class="nav-icon-wrapper">
+					<!--<img src="//dsg-images.com/icons/sporticons/big/soccer.png">-->
+					<img src="//dsg-backend.com/resources/img/sport/svg/soccer.svg">
+				</div>
+				<div class="nav-item-label">Soccer</div>
+			</div>
+			<div class="nav-item nav-expand nav-comp-toggle">
+				<div class="nav-icon-wrapper">
+					<img src="//dsg-backend.com/resources/img/icons/competition.svg">
+				</div>
+				<div class="nav-item-label">Competition</div>
+			</div>
+
+			<a class="nav-item" href="/">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/tasks.svg">
+				</div>
+				<div class="nav-item-label">Tasks</div>
+							</a>		
+					
+			
+						<a class="nav-item" href="people.php">
+				<div class="nav-icon-wrapper" >	
+					<img src="//dsg-backend.com/resources/img/icons/people.svg">
+				</div>
+				<div class="nav-item-label">People</div>
+			</a>	
+						
+						<a class="nav-item" href="team.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/team_default.svg">
+				</div>
+				<div class="nav-item-label">Teams</div>
+			</a>	
+						
+						<a class="nav-item" href="live.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/live.svg">
+				</div>
+				<div class="nav-item-label">Live</div>
+			</a>	
+						
+						<a class="nav-item" href="ev_dashboard2.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/error_view_dashboard.svg">
+				</div>
+				<div class="nav-item-label">Error views</div>
+			</a>
+						
+						
+						
+					</div>
+		
+		<div class="nav-inner-bottom">
+		
+			<a class="nav-item">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/account.svg">
+				</div>
+				<div class="nav-item-label">Account</div>
+			</a>
+			<a class="nav-item" href="logout.php">
+				<div class="nav-icon-wrapper">	
+					<img src="//dsg-backend.com/resources/img/icons/logout.svg">
+				</div>
+				<div class="nav-item-label">Log out</div>
+			</a>
+			
+			<a class="nav-item nav-logo">
+				<img src="//dsg-backend.com/resources/img/dsg-logo-white.png">
+			</a>
+		</div>
+	</div>
+	
+	<div class="nav-toggle">
+		<img src="//dsg-backend.com/resources/img/icons/nav-right.png">
+	</div>
+	
+	<div class="nav-sports">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<div class="nav-sport" data-id="soccer">Soccer</div>
+				</div>
+	</div>
+	
+	<div class="nav-comps">
+		<div class="nav-search">
+			<img src="//dsg-backend.com/resources/img/icons/search.png">
+			<input type="text" placeholder="Search...">
+		</div>
+		<div class="nav-item-wrapper">
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=223">Lebanon -  Lebanese Premier League - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=678">Lebanon -  Second Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=679">Lebanon -  Third Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3443">Lebanon -  Fourth Division - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=680">Lebanon -  Lebanese Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=681">Lebanon -  Lebanese Elite Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=759">Lebanon -  Lebanese Challenge Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4336">Lebanon -  Lebanese Federation Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=682">Lebanon -  Super Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4470">Lebanon -  Lebanese U-20 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4850">Lebanon -  Lebanese U-18 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5090">Lebanon -  Lebanese U-17 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4471">Lebanon -  Lebanese U-16 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4851">Lebanon -  Lebanese U-15 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4472">Lebanon -  Lebanese U-14 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4852">Lebanon -  Lebanese U-13 League - male youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3045">Lebanon -  Women's First Division - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3093">Lebanon -  Lebanese Women's Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3660">Lebanon -  Women's Super Cup - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4734">Lebanon -  Lebanese U-19 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5397">Lebanon -  Lebanese U19 Women's Cup - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=4853">Lebanon -  Lebanese U-17 League - female youth</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=396">World -  FIFA Friendlies - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2525">World -  FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=2100">World -  Arab Games - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=1940">World -  Intercontinental Cup - male</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=5135">World -  Four Nations International Women's Championship - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3009">World -  Non-FIFA Friendlies - female</a>
+					<a class="nav-comp" data-id="soccer" href="client_comps.php?comp=3014">World -  FIFA Youth Friendlies - female youth</a>
+				</div>
+	</div>
+</div><div class='row head-inner'><span class='inner-title'>Team Search</span></div><div class='row inner-content'><form action="team.php" method="post"><div class='inner-content-r'><span class='label-l'>Team ID</span><span class='label-r'><input type="text" name="teamid" value=""  maxlength="6" style="width:50px;"></input></span></div><div class='inner-content-r'><span class='label-l'>Club Name</span><span class='label-r'><input type="text" name="clubname" value=""  maxlength="50" style="width:200px;"></input></span></div><div class='inner-content-r'><span class='label-l'>Area</span><span class='label-r'><select name="area" size="1"><option value="" selected></option><option value="8">Afghanistan</option><option value="306">Åland Islands</option><option value="9">Albania</option><option value="290">Alderney</option><option value="10">Algeria</option><option value="11">American Samoa</option><option value="12">Andorra</option><option value="13">Angola</option><option value="14">Anguilla</option><option value="15">Antigua and Barbuda</option><option value="287">Arameans Suryoye</option><option value="16">Argentina</option><option value="17">Armenia</option><option value="18">Aruba</option><option value="19">Australia</option><option value="20">Austria</option><option value="21">Azerbaijan</option><option value="22">Bahamas</option><option value="23">Bahrain</option><option value="24">Bangladesh</option><option value="25">Barbados</option><option value="26">Belarus</option><option value="27">Belgium</option><option value="28">Belize</option><option value="29">Benin</option><option value="30">Bermuda</option><option value="31">Bhutan</option><option value="32">Bolivia</option><option value="260">Bonaire</option><option value="33">Bosnia and Herzegovina</option><option value="34">Botswana</option><option value="35">Brazil</option><option value="36">British Virgin Islands</option><option value="37">Brunei Darussalam</option><option value="38">Bulgaria</option><option value="39">Burkina Faso</option><option value="40">Burundi</option><option value="44">Cabo Verde</option><option value="41">Cambodia</option><option value="42">Cameroon</option><option value="43">Canada</option><option value="315">Catalonia</option><option value="45">Cayman Islands</option><option value="46">Central African Republic</option><option value="47">Chad</option><option value="48">Chile</option><option value="49">China PR</option><option value="50">Chinese Taipei</option><option value="292">CIS</option><option value="51">Colombia</option><option value="232">Comoros</option><option value="52">Congo</option><option value="54">Cook Islands</option><option value="294">Corsica</option><option value="55">Costa Rica</option><option value="60">Côte d’Ivoire</option><option value="291">Crimea</option><option value="56">Croatia</option><option value="310">Croatia-Slavonia</option><option value="57">Cuba</option><option value="139">Curaçao</option><option value="58">Cyprus</option><option value="59">Czechia</option><option value="264">Czechoslovakia</option><option value="281">Darfur</option><option value="61">Denmark</option><option value="62">Djibouti</option><option value="63">Dominica</option><option value="64">Dominican Republic</option><option value="53">DR Congo</option><option value="65">Ecuador</option><option value="66">Egypt</option><option value="67">El Salvador</option><option value="68">England</option><option value="69">Equatorial Guinea</option><option value="70">Eritrea</option><option value="71">Estonia</option><option value="183">Eswatini</option><option value="72">Ethiopia</option><option value="304">Falkland Islands</option><option value="73">Faroe Islands</option><option value="74">Fiji</option><option value="75">Finland</option><option value="76">France</option><option value="231">French Guiana</option><option value="77">Gabon</option><option value="78">Gambia</option><option value="263">GDR</option><option value="79">Georgia</option><option value="80">Germany</option><option value="81">Ghana</option><option value="226">Gibraltar</option><option value="269">Gozo</option><option value="250">Great Britain</option><option value="82">Greece</option><option value="271">Greenland</option><option value="83">Grenada</option><option value="227">Guadeloupe</option><option value="84">Guam</option><option value="85">Guatemala</option><option value="254">Guernsey</option><option value="86">Guinea</option><option value="87">Guinea-Bissau</option><option value="88">Guyana</option><option value="89">Haiti</option><option value="90">Honduras</option><option value="91">Hong Kong SAR</option><option value="92">Hungary</option><option value="93">Iceland</option><option value="94">India</option><option value="296">Individual Neutral Athlete</option><option value="95">Indonesia</option><option value="96">IR Iran</option><option value="97">Iraq</option><option value="236">Isle of Man</option><option value="99">Israel</option><option value="100">Italy</option><option value="101">Jamaica</option><option value="102">Japan</option><option value="235">Jersey</option><option value="103">Jordan</option><option value="104">Kazakhstan</option><option value="105">Kenya</option><option value="252">Kiribati</option><option value="106">Korea DPR</option><option value="107">Korea Republic</option><option value="249">Kosovo</option><option value="276">Kurdistan</option><option value="108">Kuwait</option><option value="109">Kyrgyz Republic</option><option value="110">Lao PDR</option><option value="111">Latvia</option><option value="112">Lebanon</option><option value="113">Lesotho</option><option value="114">Liberia</option><option value="115">Libya</option><option value="116">Liechtenstein</option><option value="117">Lithuania</option><option value="118">Luxembourg</option><option value="119">Macau</option><option value="121">Madagascar</option><option value="122">Malawi</option><option value="123">Malaysia</option><option value="124">Maldives</option><option value="125">Mali</option><option value="126">Malta</option><option value="266">Marshall Islands</option><option value="229">Martinique</option><option value="127">Mauritania</option><option value="128">Mauritius</option><option value="255">Mayotte</option><option value="129">Mexico</option><option value="267">Micronesia</option><option value="130">Moldova</option><option value="253">Monaco</option><option value="131">Mongolia</option><option value="225">Montenegro</option><option value="132">Montserrat</option><option value="133">Morocco</option><option value="134">Mozambique</option><option value="135">Myanmar</option><option value="136">Namibia</option><option value="258">Nauru</option><option value="137">Nepal</option><option value="138">Netherlands</option><option value="312">Neutral Athletes A</option><option value="313">Neutral Athletes B</option><option value="314">Neutral Independent Athletes</option><option value="308">Neutral Paralympic Athletes</option><option value="140">New Caledonia</option><option value="141">New Zealand</option><option value="275">NF-Board</option><option value="142">Nicaragua</option><option value="143">Niger</option><option value="144">Nigeria</option><option value="257">Niue</option><option value="302">Norfolk Island</option><option value="120">North Macedonia</option><option value="145">Northern Ireland</option><option value="251">Northern Mariana Islands</option><option value="146">Norway</option><option value="278">Occitania</option><option value="301">Olympic Athlete from Russia</option><option value="147">Oman</option><option value="311">Ottoman State</option><option value="283">Padania</option><option value="148">Pakistan</option><option value="234">Palau</option><option value="149">Palestine</option><option value="150">Panama</option><option value="151">Papua New Guinea</option><option value="152">Paraguay</option><option value="153">Peru</option><option value="154">Philippines</option><option value="155">Poland</option><option value="156">Portugal</option><option value="277">Provence</option><option value="157">Puerto Rico</option><option value="158">Qatar</option><option value="280">Raetia</option><option value="298">Refugee Olympic Team</option><option value="307">Refugee Paralympic Team</option><option value="98">Republic of Ireland</option><option value="223">Réunion</option><option value="159">Romania</option><option value="160">Russia</option><option value="297">Russian Olympic Committee</option><option value="300">Russian Parlympic Committee</option><option value="161">Rwanda</option><option value="305">Saarland</option><option value="228">Saint Martin</option><option value="289">Saint Pierre and Miquelon</option><option value="162">Samoa</option><option value="163">San Marino</option><option value="187">São Tomé e Príncipe</option><option value="288">Sápmi</option><option value="164">Saudi Arabia</option><option value="165">Scotland</option><option value="166">Senegal</option><option value="224">Serbia</option><option value="167">Serbia and Montenegro</option><option value="168">Seychelles</option><option value="261">SFR Yugoslavia</option><option value="272">Shetland</option><option value="169">Sierra Leone</option><option value="170">Singapore</option><option value="259">Sint Eustatius</option><option value="230">Sint Maarten</option><option value="171">Slovakia</option><option value="172">Slovenia</option><option value="173">Solomon Islands</option><option value="174">Somalia</option><option value="265">Somaliland</option><option value="175">South Africa</option><option value="256">South Sudan</option><option value="285">Southern Cameroon</option><option value="262">Soviet Union</option><option value="176">Spain</option><option value="177">Sri Lanka</option><option value="274">St. Helena</option><option value="178">St. Kitts and Nevis</option><option value="179">St. Lucia</option><option value="180">St. Vincent and the Grenadines</option><option value="181">Sudan</option><option value="182">Suriname</option><option value="184">Sweden</option><option value="185">Switzerland</option><option value="186">Syria</option><option value="188">Tahiti</option><option value="189">Tajikistan</option><option value="279">Tamil Eelam</option><option value="190">Tanzania</option><option value="191">Thailand</option><option value="221">Timor-Leste</option><option value="192">Togo</option><option value="303">Tokelau</option><option value="193">Tonga</option><option value="270">TR Northern Cyprus</option><option value="194">Trinidad and Tobago</option><option value="195">Tunisia</option><option value="196">Türkiye</option><option value="197">Turkmenistan</option><option value="198">Turks and Caicos Islands</option><option value="233">Tuvalu</option><option value="284">Two Sicilies</option><option value="200">Uganda</option><option value="201">Ukraine</option><option value="202">United Arab Emirates</option><option value="309">United Arab Republic</option><option value="203">United States</option><option value="204">Uruguay</option><option value="199">US Virgin Islands</option><option value="205">Uzbekistan</option><option value="206">Vanuatu</option><option value="268">Vatican City</option><option value="207">Venezuela</option><option value="208">Vietnam</option><option value="209">Wales</option><option value="295">Wallis and Futuna</option><option value="282">West Indies</option><option value="273">Western Sahara</option><option value="210">Yemen</option><option value="211">Zambia</option><option value="220">Zanzibar</option><option value="212">Zimbabwe</option></select></span></div><div class='inner-content-r'><span class='label-l'>Type</span><span class='label-r'><input type="radio" name="teamtype" value="club" checked>Club Team&nbsp;&nbsp;<input type="radio" name="teamtype" value="national">National Team&nbsp;&nbsp;<input type="radio" name="teamtype" value="selection">Selection</span></div><div class='inner-content-r'><span class='label-l'>Type</span><span class='label-r'><input type="radio" name="status" value="active" checked>Active&nbsp;&nbsp;<input type="radio" name="status" value="defunct">Defunct</span></div><div class='inner-content-r'><span class='label-l'>Gender</span><span class='label-r'><input type="radio" name="team_gender" value="male">Male&nbsp;&nbsp;<input type="radio" name="team_gender" value="female">Female&nbsp;&nbsp;<input type="radio" name="team_gender" value="both" checked>Both</span></div><input type="hidden" name="abgeschickt" value="1"></input><div class='inner-content-r content_submit'><input type="Submit" value="Submit"></input></div></form></div><div class='row head-inner'><span class='inner-title'>Search Result (limit = 100 entries)</span></div><div class='row inner-content gaptop'><table id="team_container"><tr>
+				<td><a href="team_view.php?t=65986"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65986</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Advanced Sports Academy U13</td>
+				<td>Advanced U13</td>
+				<td>ASA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71783"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71783</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Advanced Sports Academy U14</td>
+				<td>Advanced U14</td>
+				<td>ASA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=65977"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65977</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Advanced Sports Academy U15</td>
+				<td>Advanced U15</td>
+				<td>ASA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71771"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71771</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Advanced Sports Academy U16</td>
+				<td>Advanced U16</td>
+				<td>ASA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73870"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73870</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Advanced Sports Academy U17</td>
+				<td>Advanced U17</td>
+				<td>ASA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=16378"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>16378</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC</td>
+				<td>Ahed</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70898"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70898</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC</td>
+				<td>Ahed</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=65985"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65985</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U13</td>
+				<td>Ahed U13</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63112"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63112</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U14</td>
+				<td>Ahed U14</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70909"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70909</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U15</td>
+				<td>Ahed U15</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63097"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63097</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U16</td>
+				<td>Ahed U16</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70897"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70897</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U17</td>
+				<td>Ahed U17</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=65956"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65956</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U18</td>
+				<td>Ahed U18</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63082"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63082</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahed SC U20</td>
+				<td>Ahed U20</td>
+				<td>AHD</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22571"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22571</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Borj Rahal</td>
+				<td>Ahli Bj Rahal</td>
+				<td>ABR</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Borj Rahal</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22558"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22558</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Nabaṭīya</td>
+				<td>Ahli Nabaṭīya</td>
+				<td>AHN</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73999"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73999</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Nabaṭīya U14</td>
+				<td>Nabaṭīya U14</td>
+				<td>AHN</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63089"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63089</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Nabaṭīya U16</td>
+				<td>Nabaṭīya U16</td>
+				<td>AHN</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63075"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63075</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Nabaṭīya U20</td>
+				<td>Nabaṭīya U20</td>
+				<td>AHN</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=33986"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>33986</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Sarba</td>
+				<td>Ahli Sarba</td>
+				<td>AHS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Sarba</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=16382"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>16382</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ahli SC Ṣaydā</td>
+				<td>Ahli Ṣaydā</td>
+				<td>AHS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṣaydā</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=16379"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>16379</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley</td>
+				<td>Akhaa Ahli</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=49857"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>49857</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley</td>
+				<td>Akhaa Ahli</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>'Ālayh</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63109"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63109</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley U14</td>
+				<td>Akhaa Ahli U14</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63094"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63094</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley U16</td>
+				<td>Akhaa Ahli U16</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73869"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73869</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley U17</td>
+				<td>Akhaa Ahli U17</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=66003"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>66003</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley U17</td>
+				<td>Akhaa Ahli U17</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=64292"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>64292</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley U19</td>
+				<td>Akhaa Ahli U19</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>'Ālayh</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63085"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63085</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Akhaa Al Ahli SC Aley U20</td>
+				<td>Akhaa Ahli U20</td>
+				<td>AKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22566"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22566</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Amal SC Maaraka</td>
+				<td>Amal Maaraka</td>
+				<td>AMM</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Maarake</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22559"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22559</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Amal SC Ṭarābulus</td>
+				<td></td>
+				<td></td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=16373"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>16373</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ansar SC</td>
+				<td>Al Ansar</td>
+				<td>ANS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63095"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63095</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ansar SC U16</td>
+				<td>Al Ansar U16</td>
+				<td>ANS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73867"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73867</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ansar SC U17</td>
+				<td>Al Ansar U17</td>
+				<td>ANS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=65966"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65966</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ansar SC U18</td>
+				<td>Al Ansar U18</td>
+				<td>ANS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63081"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63081</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ansar SC U20</td>
+				<td>Al Ansar U20</td>
+				<td>ANS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22568"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22568</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Fajr SC</td>
+				<td>Al Fajr SC</td>
+				<td>FJR</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Arabsalim</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22564"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22564</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Hilal SC Haret Al Naameh</td>
+				<td>Hilal Haret</td>
+				<td>HIL</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Haret Al Naameh</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=65105"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65105</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Hurr Al Ameli Club</td>
+				<td>Al Hurr Ameli</td>
+				<td>HUR</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Machghara</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=12144"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>12144</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ijtimaii SC</td>
+				<td>Al Ijtimaii</td>
+				<td>IJT</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=33996"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>33996</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Irshad SC Chhim</td>
+				<td>Irshad Chhim</td>
+				<td>IRC</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71761"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71761</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Irshad SC Chhim U16</td>
+				<td>Irshad U16</td>
+				<td>IRC</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22573"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22573</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ittihad SC Haret Al Naameh</td>
+				<td>Al Ittihad</td>
+				<td>ITT</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Haret Al Naameh</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=72955"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>72955</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Ittihad SC Haret Al Naameh U20</td>
+				<td>Al Ittihad U20</td>
+				<td>ITT</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Haret Al Naameh</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22563"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22563</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Jabal SC</td>
+				<td>Al Jabal</td>
+				<td>JAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Majdelbaana</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=61110"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>61110</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Jabal SC</td>
+				<td>Al Jabal</td>
+				<td>JAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Majdelbaana</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=66007"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>66007</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Jabal SC Hasbaya</td>
+				<td>Jabal Hasbaya</td>
+				<td>JAH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Hasbaya</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=66008"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>66008</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Jabal SC Hasbaya U17</td>
+				<td>Jabal Hasbaya</td>
+				<td>JAH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Hasbaya</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71841"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71841</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Jabal SC Hasbaya U19</td>
+				<td>Al Jabal U19</td>
+				<td>JAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70087"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70087</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Jaish SC</td>
+				<td>Al Jaish</td>
+				<td>JAI</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22570"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22570</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Jalil Qana Club</td>
+				<td>Al Jalil Qana</td>
+				<td>JAQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Qānā</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=16384"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>16384</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Mabarrah SC</td>
+				<td>Al Mabarrah</td>
+				<td>MAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bayrūt</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70908"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70908</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Mabarrah SC U15</td>
+				<td>Mabarrah U15</td>
+				<td>MAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71770"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71770</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Mabarrah SC U16</td>
+				<td>Mabarrah U16</td>
+				<td>MAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=74013"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>74013</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Mabarrah SC U18</td>
+				<td>Mabarrah U18</td>
+				<td>MAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=48868"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>48868</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Mahabbe SC Tripoli</td>
+				<td>Al Mahabbe</td>
+				<td>MAH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=65114"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>65114</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Mawadda SC Tripoli</td>
+				<td>Al Mawadda</td>
+				<td>MAW</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73306"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73306</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Mawadda SC Tripoli</td>
+				<td>Al Mawadda</td>
+				<td>MAW</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71840"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71840</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Mawadda SC Tripoli U19</td>
+				<td>Mawadda U19</td>
+				<td>MAW</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=36856"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>36856</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Nahda SC Ain Baal</td>
+				<td>Nahda Ain Baal</td>
+				<td>NAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ain Baal</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=12142"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>12142</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Nahda SC Bar Elias</td>
+				<td>Bar Elias</td>
+				<td>NAH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=74012"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>74012</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Nahda SC Bar Elias U18</td>
+				<td>Bar Elias U18</td>
+				<td>NAH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=52975"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>52975</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Nahda SC Bayrūt</td>
+				<td>Nahda Bayrūt</td>
+				<td>NBA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bayrūt</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=12140"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>12140</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Nasser Club</td>
+				<td>Al Nasser</td>
+				<td>NAS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bar Ilyas</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=36857"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>36857</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Nojoom SC</td>
+				<td>Al Nojoom</td>
+				<td>NOJ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bayrūt</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22565"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22565</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Okhwa Al Kharayeb Club</td>
+				<td>Okhwa Kharayeb</td>
+				<td>OKH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=49650"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>49650</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Raya SC</td>
+				<td>Al Raya</td>
+				<td>RAY</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bourj El-Barajneh</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=12136"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>12136</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Rayyan SC</td>
+				<td>Al Rayyan</td>
+				<td>RAY</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Sarafand</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=52641"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>52641</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Rissala SC Toura</td>
+				<td>Al Rissala</td>
+				<td>RIS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=74000"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>74000</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Rissala SC Toura U14</td>
+				<td>Al Rissala U14</td>
+				<td>RIS</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22557"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22557</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Riyada wa Al Adab Club</td>
+				<td>Riyada wa Adab</td>
+				<td>RWA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=33980"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>33980</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Riyadi Al Abbasiyah Club</td>
+				<td>Al Abbasiyah</td>
+				<td>ABB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73998"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73998</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Riyadi Al Abbasiyah Club U14</td>
+				<td>Abbasiyah U14</td>
+				<td>ABB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73859"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73859</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Riyadi Al Abbasiyah Club U15</td>
+				<td>Abbasiyah U15</td>
+				<td>ABB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63072"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63072</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Riyadi Al Abbasiyah Club U20</td>
+				<td>Abbasiyah U20</td>
+				<td>ABB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71807"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71807</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sabil SC U14</td>
+				<td>Al Sabil U14</td>
+				<td>SAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=73863"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>73863</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sabil SC U15</td>
+				<td>Al Sabil U15</td>
+				<td>SAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=74005"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>74005</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sabil SC U16</td>
+				<td>Al Sabil U16</td>
+				<td>SAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=50064"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>50064</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Sakafi SC Chhim</td>
+				<td>Sakafi Chhim</td>
+				<td>SAK</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Chhim</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22572"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22572</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Shabab Club Tripoli</td>
+				<td>Shabab Tripoli</td>
+				<td>SHT</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71755"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71755</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Shabab Club Tripoli U18</td>
+				<td>Shabab U18</td>
+				<td>SHA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=72958"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>72958</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Shabab Club Tripoli U20</td>
+				<td>Shabab U20</td>
+				<td>SHA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Ṭarābulus</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22569"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22569</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Shabab SC Houmine Et Tahta</td>
+				<td>Shabab Houmine</td>
+				<td>SHH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Houmine Et Tahta</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=12138"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>12138</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Shabeba Al Mazraah</td>
+				<td>Shab. Mazraah</td>
+				<td>SHM</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bayrūt</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63108"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63108</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Shabeba Al Mazraah U14</td>
+				<td>Shab. Mazraah</td>
+				<td>SHM</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=12139"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>12139</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sharq SC</td>
+				<td>Al Sharq</td>
+				<td>SRQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71785"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71785</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sharq SC U14</td>
+				<td>Al Sharq U14</td>
+				<td>SRQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70913"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70913</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sharq SC U15</td>
+				<td>Al Sharq U15</td>
+				<td>SRQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=74009"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>74009</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Sharq SC U16</td>
+				<td>Al Sharq U16</td>
+				<td>SRQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=50065"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>50065</td>
+				<td><img src="https://globalsportsarchive.com/images/female.png" style="padding-right:0px;"></td>
+				<td>Al Taadod SC Mazraat El Chouf</td>
+				<td>Ta'adod Club</td>
+				<td>TCM</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Mazraat El Chouf</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=50070"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>50070</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Taadod SC Mazraat El Chouf</td>
+				<td>Ta'adod Club</td>
+				<td>TCM</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Mazraat El Chouf</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22560"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22560</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Tadamon SC Bayrūt</td>
+				<td>Tadamon Bayrūt</td>
+				<td>TAB</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bayrūt</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=33983"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>33983</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Taqadum Club Aanqoun</td>
+				<td>Al Taqadum</td>
+				<td>TAQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Aanqoun</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=63087"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>63087</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Taqadum Club Aanqoun U16</td>
+				<td>Al Taqadum U16</td>
+				<td>TAQ</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=33990"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>33990</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Wehda Club El Marj</td>
+				<td>Wehda Marj</td>
+				<td>WEH</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>El Marj</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=55934"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>55934</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Wehda Saadnayel Club</td>
+				<td>Wehda Saadn.</td>
+				<td>WSA</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=22561"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>22561</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>Al Zamalek Club</td>
+				<td>Al Zamalek</td>
+				<td>ZAM</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td>Bayrūt</td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=71778"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>71778</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>AM14 U14</td>
+				<td>AM14 U14</td>
+				<td>A14</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=70911"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>70911</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>AM14 U15</td>
+				<td>AM14 U15</td>
+				<td>A14</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr><tr>
+				<td><a href="team_view.php?t=74007"><img src="https://globalsportsarchive.com/images/view.png" style="vertical-align:middle;"></a>&nbsp;</td>
+				<td>74007</td>
+				<td><img src="https://globalsportsarchive.com/images/male.png" style="padding-right:0px;"></td>
+				<td>AM14 U16</td>
+				<td>AM14 U16</td>
+				<td>A14</td>
+				<td><img src="https://dsg-backend.com/resources/img/flags/16x16/112.png"><div style="margin-top:2px;">Lebanon</div></td>
+				<td></td>
+				<td>active</td>
+				<td>club</td>
+				<td>Soccer</td>
+			  </tr></table><div style="width:100%;float:left;text-align:center;"><button class="paginate prev" style="margin-right:10px;">Prev</button><button class="paginate next">Next</button><input type="hidden" id="curpage" value="1"></div></div><script>
+$('.paginate').on('click', function() {
+	var curpage = $('#curpage').val();
+	if ($(this).hasClass('prev')) {
+		curpage = curpage < 2 ? 1 : parseInt(curpage) - 1;
+	}
+	else if ($(this).hasClass('next')) {
+		curpage = parseInt(curpage) + 1;
+	}
+	
+	$.ajax({
+		url: 'team_ajax.php',
+		dataType: 'json',
+		type: 'post',
+		data: {page: curpage, clubname: '', area: '112', teamtype: 'club', teamid: '', status: 'active', team_gender: '', sport: 'soccer'},
+		success: function(data) {
+			$('#curpage').val(curpage);
+			$('#team_container').html(data.res);
+		}
+	});
+	
+	console.log(curpage);
+});
+</script>
