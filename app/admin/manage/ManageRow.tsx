@@ -7,7 +7,7 @@ type ManageLeague = {
   id: number;
   competitionName: string;
   type: string;
-  footballType: "club" | "national";
+  footballType: string;
 };
 
 export default function ManageRow({ league }: { league: ManageLeague }) {

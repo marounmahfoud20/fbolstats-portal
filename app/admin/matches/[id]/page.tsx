@@ -49,7 +49,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
 
   const genderIcon = match.group.season.league.type.includes("Women") || match.group.season.league.type.includes("Girls") ? "F" : "M";
   const [teamAData, teamBData, refereePeople, venues] = await Promise.all([
-    prisma.team.findUnique({
+    prisma.team.findFirst({
       where: { name: match.teamA },
       include: {
         memberships: {
@@ -57,7 +57,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
         },
       },
     }),
-    prisma.team.findUnique({
+    prisma.team.findFirst({
       where: { name: match.teamB },
       include: {
         memberships: {

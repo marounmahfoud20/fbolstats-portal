@@ -30,9 +30,9 @@ export default function AddressMapPicker({
   const mapRef = useRef<HTMLDivElement | null>(null);
   const osmMapRef = useRef<unknown>(null);
   const osmMarkerRef = useRef<unknown>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
-  const mapObjRef = useRef<google.maps.Map | null>(null);
-  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+  const markerRef = useRef<any>(null);
+  const mapObjRef = useRef<any>(null);
+  const geocoderRef = useRef<any>(null);
   const [suggestions, setSuggestions] = useState<Array<{
     display: string;
     address: string;
@@ -58,7 +58,7 @@ export default function AddressMapPicker({
 
   const initGoogleMap = useCallback(() => {
     if (!mapRef.current) return;
-    const w = window as Window & { google?: typeof google };
+    const w = window as Window & { google?: any };
     if (!w.google?.maps) return;
     if (mapObjRef.current) return;
 
@@ -77,21 +77,21 @@ export default function AddressMapPicker({
     markerRef.current = marker;
     geocoderRef.current = geocoder;
 
-    map.addListener("click", (e: google.maps.MapMouseEvent) => {
+    map.addListener("click", (e: any) => {
       if (!e.latLng || !geocoderRef.current || !markerRef.current) return;
       markerRef.current.setPosition(e.latLng);
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       setLastClickedPoint({ lat, lon: lng });
-      geocoderRef.current.geocode({ location: { lat, lng } }, (results, status) => {
+      geocoderRef.current.geocode({ location: { lat, lng } }, (results: any[], status: string) => {
         if (status !== "OK" || !results || results.length === 0) return;
         const best = results[0];
         const addr = best.formatted_address || "";
         const city =
-          best.address_components.find((c) => c.types.includes("locality"))?.long_name ||
-          best.address_components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name ||
+          best.address_components.find((c: any) => c.types.includes("locality"))?.long_name ||
+          best.address_components.find((c: any) => c.types.includes("administrative_area_level_2"))?.long_name ||
           "";
-        const country = best.address_components.find((c) => c.types.includes("country"))?.long_name || "";
+        const country = best.address_components.find((c: any) => c.types.includes("country"))?.long_name || "";
         setSelectedPoint({ address: addr, city, country, lat: String(lat), lon: String(lng) });
         setSearch(toFieldValue(addr, city));
       });
@@ -100,7 +100,7 @@ export default function AddressMapPicker({
 
   useEffect(() => {
     if (!publicGoogleKey) return;
-    const w = window as Window & { google?: typeof google };
+    const w = window as Window & { google?: any };
     if (w.google?.maps) {
       initGoogleMap();
       return;
@@ -345,15 +345,15 @@ export default function AddressMapPicker({
   function reverseGeocodeAndApply(lat: number, lon: number) {
     const geocoder = geocoderRef.current;
     if (!geocoder) return false;
-    geocoder.geocode({ location: { lat, lng: lon } }, (results, status) => {
+    geocoder.geocode({ location: { lat, lng: lon } }, (results: any[], status: string) => {
       if (status !== "OK" || !results || results.length === 0) return;
       const best = results[0];
       const addr = best.formatted_address || "";
       const city =
-        best.address_components.find((c) => c.types.includes("locality"))?.long_name ||
-        best.address_components.find((c) => c.types.includes("administrative_area_level_2"))?.long_name ||
+        best.address_components.find((c: any) => c.types.includes("locality"))?.long_name ||
+        best.address_components.find((c: any) => c.types.includes("administrative_area_level_2"))?.long_name ||
         "";
-      const country = best.address_components.find((c) => c.types.includes("country"))?.long_name || "";
+      const country = best.address_components.find((c: any) => c.types.includes("country"))?.long_name || "";
       setSelectedPoint({ address: addr, city, country, lat: String(lat), lon: String(lon) });
       const fieldValue = toFieldValue(addr, city);
       setSearch(fieldValue);

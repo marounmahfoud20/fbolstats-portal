@@ -17,7 +17,7 @@ export default async function EditLineupsPage({ params }: { params: Promise<{ id
 
   if (!match) notFound();
 
-  const teamA = await prisma.team.findUnique({
+  const teamA = await prisma.team.findFirst({
     where: { name: match.teamA },
     include: {
       memberships: {
@@ -27,7 +27,7 @@ export default async function EditLineupsPage({ params }: { params: Promise<{ id
     }
   });
 
-  const teamB = await prisma.team.findUnique({
+  const teamB = await prisma.team.findFirst({
     where: { name: match.teamB },
     include: {
       memberships: {
