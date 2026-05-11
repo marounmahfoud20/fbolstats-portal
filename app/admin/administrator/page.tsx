@@ -1,5 +1,8 @@
 import prisma from "@/lib/prisma";
 import { createAdminAccount, deleteAdminAccount, updateAdminAccount } from "@/lib/actions";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { getAdminUserFromCookies, isGodAdmin } from "@/lib/adminAuth";
 
 type AdminAccountRow = {
   id: number;
@@ -10,6 +13,12 @@ type AdminAccountRow = {
 };
 
 export default async function AdministratorPage() {
+  const cookieStore = await cookies();
+  const adminUser = getAdminUserFromCookies(cookieStore);
+  if (!isGodAdmin(adminUser)) {
+    redirect("/admin");
+  }
+
   let accounts: AdminAccountRow[] = [];
   try {
     accounts = await prisma.$queryRaw<AdminAccountRow[]>`

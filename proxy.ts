@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { scryptSync, timingSafeEqual } from 'crypto';
+import { createAdminSessionValue, getAdminSessionCookieName, readAdminUserFromSessionValue } from '@/lib/adminAuth';
 
 function parseBasicAuth(header: string | null): { user: string; pwd: string } | null {
   if (!header) return null;
@@ -65,7 +66,9 @@ async function verifyAdminAccountCredentials(username: string, password: string)
 export async function proxy(req: NextRequest) {
   const hostname = (req.headers.get('host') || '').toLowerCase().split(':')[0];
   const pathname = req.nextUrl.pathname;
-  const hasBackendSession = req.cookies.get('backend_admin_auth')?.value === '1';
+  const sessionCookieName = getAdminSessionCookieName();
+  const sessionUser = readAdminUserFromSessionValue(req.cookies.get(sessionCookieName)?.value);
+  const hasBackendSession = !!sessionUser;
 
   // Only protect the backend subdomain
   if (hostname === 'backend.fbolstats.com') {
@@ -86,13 +89,16 @@ export async function proxy(req: NextRequest) {
       try {
         if (await verifyAdminAccountCredentials(user, pwd)) {
           const res = NextResponse.next();
-          res.cookies.set('backend_admin_auth', '1', {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 12, // 12 hours
-          });
+          const sessionValue = createAdminSessionValue(user);
+          if (sessionValue) {
+            res.cookies.set(sessionCookieName, sessionValue, {
+              httpOnly: true,
+              secure: true,
+              sameSite: 'lax',
+              path: '/',
+              maxAge: 60 * 60 * 12, // 12 hours
+            });
+          }
           return res;
         }
       } catch {
@@ -104,13 +110,16 @@ export async function proxy(req: NextRequest) {
       const validPwd = process.env.ADMIN_PASSWORD;
       if (validUser && validPwd && user === validUser && pwd === validPwd) {
         const res = NextResponse.next();
-        res.cookies.set('backend_admin_auth', '1', {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 60 * 60 * 12, // 12 hours
-        });
+        const sessionValue = createAdminSessionValue(user);
+        if (sessionValue) {
+          res.cookies.set(sessionCookieName, sessionValue, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 12, // 12 hours
+          });
+        }
         return res;
       }
     }

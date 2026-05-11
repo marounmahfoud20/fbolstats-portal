@@ -3,9 +3,11 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { getAdminUserFromCookies, isGodAdmin } from "@/lib/adminAuth";
 
 function parseCoordinates(input?: string | null): { latitude: string | null; longitude: string | null } {
   const text = (input || "").trim();
@@ -72,6 +74,14 @@ async function ensureAdminAccountTable() {
     CREATE UNIQUE INDEX IF NOT EXISTS "AdminAccount_username_key"
       ON "AdminAccount" ("username")
   `);
+}
+
+async function ensureGodAdminPermission() {
+  const cookieStore = await cookies();
+  const adminUser = getAdminUserFromCookies(cookieStore);
+  if (!isGodAdmin(adminUser)) {
+    throw new Error("Forbidden");
+  }
 }
 
 export async function createLeague(formData: FormData) {
@@ -154,6 +164,7 @@ export async function deleteCompetitionCategory(formData: FormData) {
 }
 
 export async function createAdminAccount(formData: FormData) {
+  await ensureGodAdminPermission();
   await ensureAdminAccountTable();
   const username = ((formData.get("username") as string) || "").trim().toLowerCase();
   const password = ((formData.get("password") as string) || "").trim();
@@ -170,6 +181,7 @@ export async function createAdminAccount(formData: FormData) {
 }
 
 export async function updateAdminAccount(formData: FormData) {
+  await ensureGodAdminPermission();
   await ensureAdminAccountTable();
   const id = Number.parseInt((formData.get("id") as string) || "", 10);
   const username = ((formData.get("username") as string) || "").trim().toLowerCase();
@@ -201,6 +213,7 @@ export async function updateAdminAccount(formData: FormData) {
 }
 
 export async function deleteAdminAccount(formData: FormData) {
+  await ensureGodAdminPermission();
   await ensureAdminAccountTable();
   const id = Number.parseInt((formData.get("id") as string) || "", 10);
   if (!Number.isFinite(id)) return;
