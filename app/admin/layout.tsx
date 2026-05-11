@@ -1,7 +1,11 @@
 import prisma from "@/lib/prisma";
+import { connection } from "next/server";
 import Sidebar from "./Sidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Ensure admin routes render at request time (not build time) before DB access.
+  await connection();
+
   // Fetch leagues for the sidebar dropdown, sorted alphabetically.
   // If the database is temporarily unreachable, keep the admin UI usable.
   let leagues: Array<{ id: number; competitionName: string; type: string; footballType: string }> = [];
