@@ -65,9 +65,14 @@ async function verifyAdminAccountCredentials(username: string, password: string)
 export async function proxy(req: NextRequest) {
   const hostname = (req.headers.get('host') || '').toLowerCase().split(':')[0];
   const pathname = req.nextUrl.pathname;
+  const hasBackendSession = req.cookies.get('backend_admin_auth')?.value === '1';
 
   // Only protect the backend subdomain
   if (hostname === 'backend.fbolstats.com') {
+    if (hasBackendSession) {
+      return NextResponse.next();
+    }
+
     // Prevent recursion for internal auth verification route.
     if (pathname.startsWith('/api/admin-auth')) {
       return NextResponse.next();
@@ -80,7 +85,15 @@ export async function proxy(req: NextRequest) {
       // DB-backed admin auth (preferred)
       try {
         if (await verifyAdminAccountCredentials(user, pwd)) {
-          return NextResponse.next();
+          const res = NextResponse.next();
+          res.cookies.set('backend_admin_auth', '1', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 12, // 12 hours
+          });
+          return res;
         }
       } catch {
         // Fall back to env-based auth below if DB check fails.
@@ -90,7 +103,15 @@ export async function proxy(req: NextRequest) {
       const validUser = process.env.ADMIN_USERNAME;
       const validPwd = process.env.ADMIN_PASSWORD;
       if (validUser && validPwd && user === validUser && pwd === validPwd) {
-        return NextResponse.next();
+        const res = NextResponse.next();
+        res.cookies.set('backend_admin_auth', '1', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 12, // 12 hours
+        });
+        return res;
       }
     }
 
