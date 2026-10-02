@@ -1,5 +1,26 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Local database (Docker)
+
+`docker-compose.yml` runs Postgres 16 locally in a container named `fbolstats-db`. Create a `.env` with:
+
+```
+DATABASE_URL="postgresql://fbolstats:fbolstats@localhost:5432/fbolstats"
+DIRECT_URL="postgresql://fbolstats:fbolstats@localhost:5432/fbolstats"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="choose-a-password"
+```
+
+Then start the database and load a data dump (ask the team for `fbolstats_db.sql`; it isn't committed):
+
+```
+docker compose up -d --wait
+docker cp fbolstats_db.sql fbolstats-db:/tmp/fbolstats_db.sql
+docker exec fbolstats-db psql -U fbolstats -d fbolstats -v ON_ERROR_STOP=1 -q -f /tmp/fbolstats_db.sql
+```
+
+To start with an empty database instead, run `npx prisma db push` after `docker compose up`.
+
 ## Getting Started
 
 First, run the development server:
