@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { saveGroupName, saveMatchCore, saveMatchEventEntry, saveMatchMeta, saveMatchReferees } from "@/lib/match-actions";
+import { useMemo, useRef, useState } from "react";
+import { saveGroupName, saveMatchCore, saveMatchEventEntry, saveMatchMeta, saveMatchReferees, saveMatchSubstitution } from "@/lib/match-actions";
 import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
 import { combineGoalAndAssistEvents } from "@/lib/goal-assist-events";
+import { matchTime, playersOnField } from "@/lib/substitutions";
 
 type Person = {
   id: number;
@@ -109,15 +110,12 @@ function posShort(position: string | null) {
 }
 
 function minuteValue(minute: string | null, extraTime: string | null) {
-  const m = Number.parseInt(minute || "", 10);
-  const e = Number.parseInt(extraTime || "", 10);
-  const base = Number.isFinite(m) ? m : 0;
-  const extra = Number.isFinite(e) ? e : 0;
-  return Math.max(0, base + extra);
+  const time = matchTime(minute || "", extraTime || "");
+  return time ? time[0] * 1000 + time[1] : 0;
 }
 
 function eventHalf(minute: string | null, extraTime: string | null): "1st" | "2nd" {
-  return minuteValue(minute, extraTime) >= 46 ? "2nd" : "1st";
+  return (matchTime(minute || "", extraTime || "")?.[0] || 0) >= 46 ? "2nd" : "1st";
 }
 
 export default function MatchDetailsEditor({
@@ -166,6 +164,8 @@ export default function MatchDetailsEditor({
     extraTime: string | null;
     goalType: string | null;
     bookingReason: string | null;
+    substitutionId: string | null;
+    substitutionReason: string | null;
     playerName: string;
     assistPlayerName: string | null;
     teamName: string | null;
@@ -195,6 +195,106 @@ export default function MatchDetailsEditor({
   const [goalType, setGoalType] = useState<string>("");
   const [bookingReason, setBookingReason] = useState<string>("");
   const [eventRows, setEventRows] = useState(initialEvents);
+  const [substitution, setSubstitution] = useState<{
+    incoming: Appearance;
+    substitutionId?: string;
+    outgoingPersonId: string;
+    minute: string;
+    extraTime: string;
+    reason: string;
+  } | null>(null);
+  const [savingSubstitution, setSavingSubstitution] = useState(false);
+  const [substitutionError, setSubstitutionError] = useState("");
+  const substitutionForm = useRef<HTMLDivElement>(null);
+
+  const openSubstitution = (incoming: Appearance) => {
+    const entry = eventRows.find((event) => event.personId === incoming.person.id && event.teamId === incoming.teamId && event.eventType === "sub_in" && event.substitutionId);
+    const outgoing = entry && eventRows.find((event) => event.substitutionId === entry.substitutionId && event.eventType === "sub_out");
+    setSelectedPlayer(null);
+    setEditingEventId(null);
+    setSubstitutionError("");
+    setSubstitution({
+      incoming,
+      substitutionId: entry?.substitutionId || undefined,
+      outgoingPersonId: outgoing ? String(outgoing.personId) : "",
+      minute: entry?.minute || "",
+      extraTime: entry?.extraTime || "",
+      reason: entry?.substitutionReason || "",
+    });
+    requestAnimationFrame(() => substitutionForm.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  };
+
+  const replacementOptions = useMemo(() => {
+    if (!substitution || substitution.incoming.teamId === null) return [];
+    const onField = playersOnField(
+      appearances.map((a) => ({ personId: a.person.id, teamId: a.teamId, role: a.role })),
+      eventRows,
+      substitution.incoming.teamId,
+      matchTime(substitution.minute, substitution.extraTime) || [0, 0],
+      substitution.substitutionId,
+    );
+    return appearances
+      .filter((a) => a.teamId === substitution.incoming.teamId && ["Starter", "Substitute"].includes(a.role) && onField.has(a.person.id) && a.person.id !== substitution.incoming.person.id)
+      .sort((a, b) => displayName(a.person).localeCompare(displayName(b.person)));
+  }, [substitution, appearances, eventRows]);
+
+  const persistSubstitution = async () => {
+    if (!substitution || substitution.incoming.teamId === null || savingSubstitution) return;
+    if (!replacementOptions.some((a) => String(a.person.id) === substitution.outgoingPersonId)) {
+      setSubstitutionError("Choose the player being replaced at that minute.");
+      return;
+    }
+    setSavingSubstitution(true);
+    setSubstitutionError("");
+    try {
+      const result = await saveMatchSubstitution(match.id, {
+        substitutionId: substitution.substitutionId,
+        teamId: substitution.incoming.teamId,
+        incomingPersonId: substitution.incoming.person.id,
+        outgoingPersonId: Number(substitution.outgoingPersonId),
+        minute: substitution.minute,
+        extraTime: substitution.extraTime,
+        reason: substitution.reason,
+      });
+      if (!result.ok) { setSubstitutionError(result.error); return; }
+      setEventRows((previous) => [...previous.filter((event) => !result.events.some((saved) => saved.id === event.id)), ...result.events]);
+      setSubstitution(null);
+    } catch {
+      setSubstitutionError("Could not save the substitution. Please try again.");
+    } finally {
+      setSavingSubstitution(false);
+    }
+  };
+
+  const editEvent = (event: (typeof eventRows)[number]) => {
+    if (event.substitutionId) {
+      const incomingEvent = eventRows.find((entry) => entry.substitutionId === event.substitutionId && entry.eventType === "sub_in");
+      const incoming = appearances.find((a) => a.person.id === incomingEvent?.personId && a.teamId === event.teamId && a.role === "Substitute");
+      if (incoming) { openSubstitution(incoming); return; }
+    }
+    setSubstitution(null);
+    const appearance = appearances.find((a) => a.person.id === event.personId && a.teamId === event.teamId);
+    setSelectedPlayer({ id: event.personId, name: event.playerName, teamName: event.teamName || "", teamId: appearance?.teamId ?? null });
+    setEditingEventId(event.id);
+    setSelectedEvent(event.eventType as PlayerEventType);
+    setEventMinute(event.minute || "");
+    setEventExtraTime(event.extraTime || "");
+    setAssistPersonId(event.assistPersonId ? String(event.assistPersonId) : "");
+    setGoalType(event.goalType || "");
+    setBookingReason(event.bookingReason || "");
+  };
+
+  const selectEventPlayer = (appearance: Appearance) => {
+    setSubstitution(null);
+    setEditingEventId(null);
+    setSelectedPlayer({ id: appearance.person.id, name: displayName(appearance.person), teamName: appearance.teamName || "", teamId: appearance.teamId });
+    setSelectedEvent("goal");
+    setEventMinute("");
+    setEventExtraTime("");
+    setAssistPersonId("");
+    setGoalType("");
+    setBookingReason("");
+  };
 
   const lineups = useMemo(() => {
     const teamAAppearances = appearances.filter((a) => a.teamName === match.teamA);
@@ -344,6 +444,8 @@ export default function MatchDetailsEditor({
         extraTime: eventExtraTime || null,
         goalType: supportsGoalType ? goalType || null : null,
         bookingReason: supportsBookingReason ? bookingReason || null : null,
+        substitutionId: null,
+        substitutionReason: null,
         playerName: selectedPlayer.name,
         assistPlayerName: assistName,
         teamName: selectedPlayer.teamName,
@@ -361,13 +463,19 @@ export default function MatchDetailsEditor({
   };
 
   const sortedEventRows = useMemo(
-    () => combineGoalAndAssistEvents(eventRows).sort((a, b) => minuteValue(b.minute, b.extraTime) - minuteValue(a.minute, a.extraTime)),
+    () => combineGoalAndAssistEvents(eventRows)
+      .filter((event) => !(event.eventType === "sub_out" && event.substitutionId && eventRows.some((entry) => entry.substitutionId === event.substitutionId && entry.eventType === "sub_in")))
+      .sort((a, b) => minuteValue(b.minute, b.extraTime) - minuteValue(a.minute, a.extraTime)),
     [eventRows]
   );
   const secondHalfEvents = useMemo(() => sortedEventRows.filter((e) => eventHalf(e.minute, e.extraTime) === "2nd"), [sortedEventRows]);
   const firstHalfEvents = useMemo(() => sortedEventRows.filter((e) => eventHalf(e.minute, e.extraTime) === "1st"), [sortedEventRows]);
 
   const renderEventPlayerText = (ev: (typeof eventRows)[number]) => {
+    if (ev.substitutionId) {
+      const outgoing = eventRows.find((event) => event.substitutionId === ev.substitutionId && event.eventType === "sub_out");
+      return <span><span className="text-green-700">↑ {ev.playerName}</span>{outgoing && <span className="ml-2 text-red-700">↓ {outgoing.playerName}</span>}{ev.substitutionReason && <span className="ml-2 text-slate-600">({ev.substitutionReason})</span>}</span>;
+    }
     if (ev.assistPlayerName && (ev.eventType === "goal" || ev.eventType === "penalty_goal" || ev.eventType === "own_goal")) {
       return (
         <>
@@ -393,6 +501,17 @@ export default function MatchDetailsEditor({
       />
     );
   };
+
+  const renderSubstitutionArrow = (appearance: Appearance) => (
+    <button
+      type="button"
+      onClick={() => openSubstitution(appearance)}
+      disabled={savingSubstitution}
+      aria-label={`Record substitution for ${displayName(appearance.person)}`}
+      title={`Add or edit substitution for ${displayName(appearance.person)}`}
+      className="inline-flex h-7 w-5 shrink-0 items-center justify-center rounded border border-green-600 bg-green-50 text-lg font-bold text-green-800 hover:bg-green-100 focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-60"
+    >↑</button>
+  );
 
   return (
     <div className="mx-auto max-w-[1500px] bg-gradient-to-b from-white to-slate-50 rounded-xl border border-slate-200 shadow-sm p-3">
@@ -464,6 +583,42 @@ export default function MatchDetailsEditor({
             <div className="flex-1 flex items-center justify-center gap-2 font-bold text-[24px] px-2"><span>{match.teamB}</span>{match.teamBLogo ? <img src={match.teamBLogo} alt={match.teamB} className="w-9 h-9 object-contain" /> : null}</div>
           </div>
 
+          {substitution ? (
+            <div ref={substitutionForm} className="rounded-md border border-[#c50000] bg-white shadow-sm">
+              <h2 className="rounded-t-md border-b border-[#c50000] bg-green-50 px-3 py-2 text-lg font-bold">
+                {substitution.substitutionId ? "Edit Substitution" : "Add Substitution"} — {substitution.incoming.teamName}
+              </h2>
+              <form className="flex flex-wrap items-end gap-3 p-3" onSubmit={(event) => { event.preventDefault(); void persistSubstitution(); }}>
+                <div className="w-full font-bold text-green-800">↑ Player on: {displayName(substitution.incoming.person)}</div>
+                <label className="flex flex-col gap-1 font-bold">
+                  Minute
+                  <input autoFocus required inputMode="numeric" placeholder="65 or 90+3" value={substitution.minute} onChange={(event) => setSubstitution({ ...substitution, minute: event.target.value })} className="h-8 w-28 border border-gray-400 px-2 font-normal" />
+                </label>
+                <label className="flex flex-col gap-1 font-bold">
+                  Added time
+                  <input inputMode="numeric" placeholder="0" maxLength={3} value={substitution.extraTime} onChange={(event) => setSubstitution({ ...substitution, extraTime: event.target.value })} className="h-8 w-20 border border-gray-400 px-2 font-normal" />
+                </label>
+                <label className="flex min-w-52 flex-1 flex-col gap-1 font-bold">
+                  Player off
+                  <select required value={replacementOptions.some((a) => String(a.person.id) === substitution.outgoingPersonId) ? substitution.outgoingPersonId : ""} onChange={(event) => setSubstitution({ ...substitution, outgoingPersonId: event.target.value })} className="h-8 border border-gray-400 bg-white px-2 font-normal">
+                    <option value="">Choose player being replaced</option>
+                    {replacementOptions.map((appearance) => <option key={appearance.id} value={appearance.person.id}>{initialShirts[appearance.person.id] ? `#${initialShirts[appearance.person.id]} ` : ""}{displayName(appearance.person)}</option>)}
+                  </select>
+                </label>
+                <label className="flex min-w-44 flex-1 flex-col gap-1 font-bold">
+                  Reason
+                  <input required list="substitution-reasons" maxLength={300} placeholder="Choose or type a reason" value={substitution.reason} onChange={(event) => setSubstitution({ ...substitution, reason: event.target.value })} className="h-8 border border-gray-400 px-2 font-normal" />
+                </label>
+                <datalist id="substitution-reasons">
+                  {["Tactical", "Injury", "Fatigue", "Other"].map((reason) => <option key={reason} value={reason} />)}
+                </datalist>
+                <button type="submit" disabled={savingSubstitution} className="h-8 rounded bg-green-700 px-3 font-bold text-white disabled:opacity-60">{savingSubstitution ? "Saving..." : "Save Substitution"}</button>
+                <button type="button" disabled={savingSubstitution} onClick={() => setSubstitution(null)} className="h-8 rounded border border-gray-400 px-3 disabled:opacity-60">Cancel</button>
+                {substitutionError && <p role="alert" className="w-full text-red-700">{substitutionError}</p>}
+              </form>
+            </div>
+          ) : null}
+
           {selectedPlayer ? (
             <div className="border border-[#c50000] bg-white rounded-md overflow-hidden">
               <div className="bg-[#dbeafe] border-b border-[#c50000] text-[20px] font-bold px-3 py-1">Add/Edit Match Event</div>
@@ -531,22 +686,7 @@ export default function MatchDetailsEditor({
                         <button
                           type="button"
                           className="text-center font-bold text-gray-800 hover:underline"
-                          onClick={() => {
-                            const p = appearances.find((a) => a.person.id === ev.personId && a.teamName === ev.teamName);
-                            setSelectedPlayer({
-                              id: ev.personId,
-                              name: ev.playerName,
-                              teamName: ev.teamName || "",
-                              teamId: p?.teamId ?? null,
-                            });
-                            setEditingEventId(ev.id);
-                            setSelectedEvent(ev.eventType as PlayerEventType);
-                            setEventMinute(ev.minute || "");
-                            setEventExtraTime(ev.extraTime || "");
-                            setAssistPersonId(ev.assistPersonId ? String(ev.assistPersonId) : "");
-                            setGoalType(ev.goalType || "");
-                            setBookingReason(ev.bookingReason || "");
-                          }}
+                          onClick={() => editEvent(ev)}
                         >
                           {`${ev.minute || "0"}${ev.extraTime ? `+${ev.extraTime}` : ""}'`}
                         </button>
@@ -566,22 +706,7 @@ export default function MatchDetailsEditor({
                         <button
                           type="button"
                           className="text-center font-bold text-gray-800 hover:underline"
-                          onClick={() => {
-                            const p = appearances.find((a) => a.person.id === ev.personId && a.teamName === ev.teamName);
-                            setSelectedPlayer({
-                              id: ev.personId,
-                              name: ev.playerName,
-                              teamName: ev.teamName || "",
-                              teamId: p?.teamId ?? null,
-                            });
-                            setEditingEventId(ev.id);
-                            setSelectedEvent(ev.eventType as PlayerEventType);
-                            setEventMinute(ev.minute || "");
-                            setEventExtraTime(ev.extraTime || "");
-                            setAssistPersonId(ev.assistPersonId ? String(ev.assistPersonId) : "");
-                            setGoalType(ev.goalType || "");
-                            setBookingReason(ev.bookingReason || "");
-                          }}
+                          onClick={() => editEvent(ev)}
                         >
                           {`${ev.minute || "0"}${ev.extraTime ? `+${ev.extraTime}` : ""}'`}
                         </button>
@@ -608,9 +733,9 @@ export default function MatchDetailsEditor({
                 const leftFlag = left ? nationalityFlag(left.person.nationality) : "";
                 const rightFlag = right ? nationalityFlag(right.person.nationality) : "";
                 return (
-                  <div key={`starter-${i}`} className="grid grid-cols-[274px_30px_28px_32px_18px_32px_28px_30px_274px] items-center leading-6">
+                  <div key={`starter-${i}`} className="grid grid-cols-[250px_30px_28px_56px_18px_56px_28px_30px_250px] items-center leading-6">
                     <span className="text-right">
-                      {left ? <button type="button" onClick={() => setSelectedPlayer({ id: left.person.id, name: leftName, teamName: left.teamName || "", teamId: left.teamId })} className="hover:underline">{leftName}</button> : "\u00A0"}
+                      {left ? <button type="button" disabled={savingSubstitution} onClick={() => selectEventPlayer(left)} className="hover:underline">{leftName}</button> : "\u00A0"}
                     </span>
                     <span className="text-center font-bold">{leftPos || "\u00A0"}</span>
                     <span className="text-center">{leftFlag || "\u00A0"}</span>
@@ -620,7 +745,7 @@ export default function MatchDetailsEditor({
                     <span className="text-center">{rightFlag || "\u00A0"}</span>
                     <span className="text-center font-bold">{rightPos || "\u00A0"}</span>
                     <span className="text-left">
-                      {right ? <button type="button" onClick={() => setSelectedPlayer({ id: right.person.id, name: rightName, teamName: right.teamName || "", teamId: right.teamId })} className="hover:underline">{rightName}</button> : "\u00A0"}
+                      {right ? <button type="button" disabled={savingSubstitution} onClick={() => selectEventPlayer(right)} className="hover:underline">{rightName}</button> : "\u00A0"}
                     </span>
                   </div>
                 );
@@ -636,19 +761,19 @@ export default function MatchDetailsEditor({
                 const leftFlag = left ? nationalityFlag(left.person.nationality) : "";
                 const rightFlag = right ? nationalityFlag(right.person.nationality) : "";
                 return (
-                  <div key={`sub-${i}`} className="grid grid-cols-[274px_30px_28px_32px_18px_32px_28px_30px_274px] items-center leading-6 bg-gray-50">
+                  <div key={`sub-${i}`} className="grid grid-cols-[250px_30px_28px_56px_18px_56px_28px_30px_250px] items-center leading-6 bg-gray-50">
                     <span className="text-right">
-                      {left ? <button type="button" onClick={() => setSelectedPlayer({ id: left.person.id, name: leftName, teamName: left.teamName || "", teamId: left.teamId })} className="hover:underline">{leftName}</button> : "\u00A0"}
+                      {left ? <button type="button" disabled={savingSubstitution} onClick={() => selectEventPlayer(left)} className="hover:underline">{leftName}</button> : "\u00A0"}
                     </span>
                     <span className="text-center font-bold">{leftPos || "\u00A0"}</span>
                     <span className="text-center">{leftFlag || "\u00A0"}</span>
-                    <span className="text-center font-bold">{left ? renderShirtCell(left.person.id) : "\u00A0"}</span>
+                    <span className="inline-flex items-center gap-1">{left ? <><span className="w-8 shrink-0">{renderShirtCell(left.person.id)}</span>{renderSubstitutionArrow(left)}</> : "\u00A0"}</span>
                     <span className="text-left">&nbsp;</span>
-                    <span className="text-center font-bold">{right ? renderShirtCell(right.person.id) : "\u00A0"}</span>
+                    <span className="inline-flex items-center gap-1">{right ? <><span className="w-8 shrink-0">{renderShirtCell(right.person.id)}</span>{renderSubstitutionArrow(right)}</> : "\u00A0"}</span>
                     <span className="text-center">{rightFlag || "\u00A0"}</span>
                     <span className="text-center font-bold">{rightPos || "\u00A0"}</span>
                     <span className="text-left">
-                      {right ? <button type="button" onClick={() => setSelectedPlayer({ id: right.person.id, name: rightName, teamName: right.teamName || "", teamId: right.teamId })} className="hover:underline">{rightName}</button> : "\u00A0"}
+                      {right ? <button type="button" disabled={savingSubstitution} onClick={() => selectEventPlayer(right)} className="hover:underline">{rightName}</button> : "\u00A0"}
                     </span>
                   </div>
                 );

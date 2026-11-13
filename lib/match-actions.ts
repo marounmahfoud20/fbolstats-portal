@@ -2,6 +2,75 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
+import { getAdminUserFromCookies } from "@/lib/adminAuth";
+import { isSubstitutionIn, matchTime, playersOnField } from "@/lib/substitutions";
+
+class SubstitutionValidationError extends Error {}
+
+export async function saveMatchSubstitution(matchId: number, payload: {
+  substitutionId?: string;
+  teamId: number;
+  incomingPersonId: number;
+  outgoingPersonId: number;
+  minute: string;
+  extraTime: string;
+  reason: string;
+}) {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false as const, error: "Please sign in to save substitutions." };
+  const time = matchTime(payload.minute, payload.extraTime);
+  const reason = payload.reason.trim();
+  if (!time) return { ok: false as const, error: "Enter a valid minute, such as 65 or 90+3." };
+  if (!reason || reason.length > 300) return { ok: false as const, error: "Enter a substitution reason (up to 300 characters)." };
+  if (![matchId, payload.teamId, payload.incomingPersonId, payload.outgoingPersonId].every((id) => Number.isSafeInteger(id) && id > 0)) {
+    return { ok: false as const, error: "Choose both players for the substitution." };
+  }
+  try {
+    const events = await prisma.$transaction(async (tx) => {
+      const appearances = await tx.matchAppearance.findMany({ where: { matchId, teamId: payload.teamId } });
+      const existing = await tx.matchEvent.findMany({ where: { matchId, teamId: payload.teamId } });
+      const pair = payload.substitutionId ? existing.filter((event) => event.substitutionId === payload.substitutionId) : [];
+      if (payload.substitutionId && (pair.length !== 2 || !pair.some((event) => event.eventType === "sub_in") || !pair.some((event) => event.eventType === "sub_out"))) {
+        throw new SubstitutionValidationError("This substitution no longer exists. Reload the match and try again.");
+      }
+      const incoming = appearances.find((a) => a.personId === payload.incomingPersonId && a.role.toLowerCase() === "substitute");
+      const outgoing = appearances.find((a) => a.personId === payload.outgoingPersonId && ["starter", "substitute"].includes(a.role.toLowerCase()));
+      if (!incoming || !outgoing || incoming.personId === outgoing.personId) {
+        throw new SubstitutionValidationError("Choose a substitute and a different player from the same team.");
+      }
+      if (existing.some((event) => event.personId === incoming.personId && isSubstitutionIn(event.eventType) && (!payload.substitutionId || event.substitutionId !== payload.substitutionId))) {
+        throw new SubstitutionValidationError("This substitute already has a substitution recorded.");
+      }
+      const onField = playersOnField(appearances, existing, payload.teamId, time, payload.substitutionId);
+      if (!onField.has(outgoing.personId) || onField.has(incoming.personId)) {
+        throw new SubstitutionValidationError("Choose a player who is on the field at that minute.");
+      }
+      const substitutionId = payload.substitutionId || randomUUID();
+      const common = { matchId, teamId: payload.teamId, substitutionId, substitutionReason: reason, minute: String(time[0]), extraTime: time[1] ? String(time[1]) : null };
+      const saved = [];
+      for (const [eventType, personId] of [["sub_out", outgoing.personId], ["sub_in", incoming.personId]] as const) {
+        const previous = pair.find((event) => event.eventType === eventType);
+        const data = { ...common, eventType, personId };
+        saved.push(previous
+          ? await tx.matchEvent.update({ where: { id: previous.id }, data, include: { person: true, team: true } })
+          : await tx.matchEvent.create({ data, include: { person: true, team: true } }));
+      }
+      return saved.map((event) => ({
+        id: event.id, personId: event.personId, teamId: event.teamId, eventType: event.eventType,
+        minute: event.minute, extraTime: event.extraTime, substitutionId: event.substitutionId,
+        substitutionReason: event.substitutionReason, goalType: event.goalType, bookingReason: event.bookingReason,
+        assistPersonId: null, assistPlayerName: null,
+        playerName: event.person.commonName || `${event.person.firstName || ""} ${event.person.lastName || ""}`.trim() || `Player ${event.personId}`,
+        teamName: event.team?.name || null,
+      }));
+    }, { isolationLevel: "Serializable", maxWait: 10000, timeout: 15000 });
+    revalidatePath(`/admin/matches/${matchId}`);
+    return { ok: true as const, events };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof SubstitutionValidationError ? error.message : "Could not save the substitution. Please try again." };
+  }
+}
 
 export async function saveMatchLineups(matchId: number, appearances: { personId: number, teamId: number, role: string }[]) {
   // Delete all existing appearances for this match that are NOT Referees

@@ -150,6 +150,8 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
           extraTime: string | null;
           goalType?: string | null;
           bookingReason?: string | null;
+          substitutionId: string | null;
+          substitutionReason: string | null;
           person: { id: number; firstName: string | null; lastName: string | null; commonName: string | null };
           assistPerson?: { id: number; firstName: string | null; lastName: string | null; commonName: string | null } | null;
           team: { name: string } | null;
@@ -166,6 +168,8 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
             : null,
           goalType: e.goalType ?? null,
           bookingReason: e.bookingReason ?? null,
+          substitutionId: e.substitutionId,
+          substitutionReason: e.substitutionReason,
           playerName: e.person.commonName || `${e.person.firstName || ""} ${e.person.lastName || ""}`.trim() || `Player ${e.personId}`,
           teamName: e.team?.name || null,
         }))}

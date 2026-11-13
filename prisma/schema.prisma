@@ -351,8 +351,12 @@ model MatchEvent {
   extraTime    String?
   goalType     String?
   bookingReason String?
+  substitutionId String?
+  substitutionReason String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@unique([substitutionId, eventType])
 }
 
 model MatchShirtNumber {
