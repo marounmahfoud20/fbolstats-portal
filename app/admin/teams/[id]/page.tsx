@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
+import TeamStatTable from '@/components/TeamStatTable';
+import { getTeamStats } from '@/lib/team-stats';
 
 // 🚨 Forces Next.js to NEVER cache this page. It will always fetch fresh data.
 export const dynamic = 'force-dynamic';
@@ -36,10 +38,28 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
   // 🚨 ADDED: A debug log so we can see exactly what the server finds in your terminal
   console.log(`DEBUG: Found ${team.memberships.length} memberships for Team ID: ${team.id}`);
 
-  // SMART FILTERING
-  const activePlayers = team.memberships.filter(m => m.isActive && m.role.toLowerCase() === 'player');
-  const historicalPlayers = team.memberships.filter(m => !m.isActive && m.role.toLowerCase() === 'player').slice(0, 25);
-  const activeOfficials = team.memberships.filter(m => m.isActive && m.role.toLowerCase() !== 'player');
+  const nameCollator = new Intl.Collator('en', { sensitivity: 'base' });
+  const compareNames = (a: typeof team.memberships[number], b: typeof team.memberships[number]) =>
+    nameCollator.compare(
+      `${a.person.firstName ?? ''} ${a.person.lastName ?? ''}`.trim(),
+      `${b.person.firstName ?? ''} ${b.person.lastName ?? ''}`.trim(),
+    );
+
+  const activePlayers = team.memberships
+    .filter(m => m.isActive && m.role.toLowerCase() === 'player')
+    .sort(compareNames);
+  const historicalPlayers = team.memberships
+    .filter(m => !m.isActive && m.role.toLowerCase() === 'player')
+    .slice(0, 25)
+    .sort(compareNames);
+  const activeOfficials = team.memberships
+    .filter(m => m.isActive && m.role.toLowerCase() !== 'player')
+    .sort(compareNames);
+  const [appearanceLeaders, goalLeaders, assistLeaders] = await Promise.all([
+    getTeamStats(team.id, 'appearances'),
+    getTeamStats(team.id, 'goals'),
+    getTeamStats(team.id, 'assists'),
+  ]);
 
   return (
     <div className="p-6">
@@ -89,6 +109,13 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
             {team.logo ? <img src={team.logo} alt="Team Logo" className="max-w-full max-h-full object-contain" /> : "No Logo Uploaded"}
           </div>
         </div>
+      </div>
+
+      {/* All-time player leaders */}
+      <div className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <TeamStatTable teamId={team.id} kind="appearances" rows={appearanceLeaders} preview />
+        <TeamStatTable teamId={team.id} kind="goals" rows={goalLeaders} preview />
+        <TeamStatTable teamId={team.id} kind="assists" rows={assistLeaders} preview />
       </div>
 
       {/* Current Squad Section */}
@@ -196,8 +223,10 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                 </div>
                 <div className="w-20 font-mono text-gray-500">{person.id}</div>
                 <div className="flex-1 font-semibold">{person.firstName} {person.lastName}</div>
-                <div className="w-32 text-gray-500 text-right pr-4">
-                  {membership.startDate?.substring(0, 4)} - {membership.endDate?.substring(0, 4) || 'Present'}
+                <div className="w-64 shrink-0 text-gray-500 text-right pr-4">
+                  <span title="Joined">{membership.startDate || 'Unknown'}</span>
+                  {' – '}
+                  <span title="Left">{membership.endDate || 'Unknown'}</span>
                 </div>
               </div>
             );

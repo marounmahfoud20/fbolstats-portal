@@ -3,14 +3,33 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import MatchDetailsEditor from "./MatchDetailsEditor";
 import EditLineupForm from "./edit-lineups/EditLineupForm";
+import { isDatabaseConnectionError, retryDatabaseRead } from "@/lib/database-read";
 
 export default async function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  try {
+    return await renderMatchDetails({ params });
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) throw error;
+    const { id } = await params;
+    return (
+      <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-6 text-amber-900">
+        <h1 className="text-lg font-bold">Match temporarily unavailable</h1>
+        <p className="mt-2">The database connection failed while loading this match. Please try again.</p>
+        <a href={`/admin/matches/${encodeURIComponent(id)}`} className="mt-4 inline-block rounded-lg bg-blue-800 px-4 py-2 font-semibold text-white">
+          Retry loading match
+        </a>
+      </div>
+    );
+  }
+}
+
+async function renderMatchDetails({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const matchId = parseInt(resolvedParams.id);
 
   if (isNaN(matchId)) notFound();
 
-  const match = await prisma.match.findUnique({
+  const match = await retryDatabaseRead(() => prisma.match.findUnique({
     where: { id: matchId },
     include: {
       group: {
@@ -32,12 +51,13 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
       events: {
         include: {
           person: true,
+          assistPerson: true,
           team: true,
         },
       },
       shirts: true,
     },
-  });
+  }));
 
   if (!match) {
     return (
@@ -49,23 +69,23 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
 
   const genderIcon = match.group.season.league.type.includes("Women") || match.group.season.league.type.includes("Girls") ? "F" : "M";
   const [teamAData, teamBData, refereePeople, venues] = await Promise.all([
-    prisma.team.findFirst({
+    retryDatabaseRead(() => prisma.team.findFirst({
       where: { name: match.teamA },
       include: {
         memberships: {
           include: { person: true },
         },
       },
-    }),
-    prisma.team.findFirst({
+    })),
+    retryDatabaseRead(() => prisma.team.findFirst({
       where: { name: match.teamB },
       include: {
         memberships: {
           include: { person: true },
         },
       },
-    }),
-    prisma.person.findMany({
+    })),
+    retryDatabaseRead(() => prisma.person.findMany({
       where: { isReferee: "yes" },
       select: {
         id: true,
@@ -74,12 +94,12 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
         commonName: true,
       },
       orderBy: [{ commonName: "asc" }, { lastName: "asc" }],
-    }),
-    prisma.venue.findMany({
+    })),
+    retryDatabaseRead(() => prisma.venue.findMany({
       where: { status: "active" },
       select: { name: true },
       orderBy: { name: "asc" },
-    }),
+    })),
   ]);
 
   return (
@@ -127,6 +147,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
           goalType?: string | null;
           bookingReason?: string | null;
           person: { id: number; firstName: string | null; lastName: string | null; commonName: string | null };
+          assistPerson?: { id: number; firstName: string | null; lastName: string | null; commonName: string | null } | null;
           team: { name: string } | null;
         }) => ({
           id: e.id,
@@ -136,7 +157,9 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
           minute: e.minute,
           extraTime: e.extraTime,
           assistPersonId: e.assistPersonId ?? null,
-          assistPlayerName: null,
+          assistPlayerName: e.assistPerson
+            ? e.assistPerson.commonName || `${e.assistPerson.firstName || ""} ${e.assistPerson.lastName || ""}`.trim() || `Player ${e.assistPerson.id}`
+            : null,
           goalType: e.goalType ?? null,
           bookingReason: e.bookingReason ?? null,
           playerName: e.person.commonName || `${e.person.firstName || ""} ${e.person.lastName || ""}`.trim() || `Player ${e.personId}`,
@@ -169,6 +192,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
         <EditLineupForm
           matchId={matchId}
           matchDate={match.date}
+          initialShirts={Object.fromEntries(match.shirts.map((shirt) => [shirt.personId, shirt.number || ""]))}
           teamA={teamAData}
           teamB={teamBData}
           existingAppearances={match.appearances.map((a) => ({

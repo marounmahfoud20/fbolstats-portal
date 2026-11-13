@@ -2,6 +2,7 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { updateSeasonSettings } from "@/lib/actions";
+import { nationalTeamSection } from "@/lib/national-competitions";
 
 export default async function SeasonSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -14,17 +15,18 @@ export default async function SeasonSettingsPage({ params }: { params: Promise<{
   });
 
   if (!season) notFound();
+  const editionLabel = nationalTeamSection(season.league) ? "Edition" : "Season";
 
   return (
     <div className="min-h-screen bg-white p-6 font-sans text-xs">
       <div className="w-[980px] mx-auto mb-4">
         <Link href={`/admin/seasons/${season.id}`} className="text-[#f4a01c] text-sm font-bold hover:underline">
-          ← Back to Season
+          ← Back to {editionLabel}
         </Link>
       </div>
 
       <div className="w-[980px] mx-auto border border-[#040f4f] bg-[#f2f2f2] rounded-t-lg px-3 py-2 font-bold text-[#040f4f]">
-        {season.league.competitionName} - Season Settings
+        {season.league.competitionName} - {editionLabel} Settings
       </div>
 
       <form action={updateSeasonSettings} className="w-[980px] mx-auto border-x border-b border-[#040f4f] bg-white p-4">
@@ -34,7 +36,7 @@ export default async function SeasonSettingsPage({ params }: { params: Promise<{
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-[#f2f2f2] text-[#040f4f] border border-[#040f4f]">
-              <th className="border border-[#040f4f] p-2 text-left">Season Title</th>
+              <th className="border border-[#040f4f] p-2 text-left">{editionLabel} Title</th>
               <th className="border border-[#040f4f] p-2 text-left">Start Date</th>
               <th className="border border-[#040f4f] p-2 text-left">End Date</th>
               <th className="border border-[#040f4f] p-2 text-left">Competition Title</th>

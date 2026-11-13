@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import RetroSeasonHub from "./RetroSeasonHub";
 import Link from "next/link";
+import { nationalTeamSection, nationalCompetitionHref } from "@/lib/national-competitions";
 
 export default async function SeasonDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -27,11 +28,14 @@ export default async function SeasonDetailsPage({ params }: { params: Promise<{ 
     );
   }
 
+  const section = nationalTeamSection(season.league);
+  const competitionHref = section ? nationalCompetitionHref(section, season.leagueId) : `/admin/leagues/${season.leagueId}`;
+
   return (
     <div className="min-h-screen bg-white">
       <div className="w-[980px] mx-auto pt-6 pb-2">
         <Link
-          href={`/admin/leagues/${season.leagueId}`}
+          href={competitionHref}
           className="text-[#f4a01c] text-sm font-bold hover:underline inline-flex items-center"
         >
           ← Back to {season.league.competitionName}

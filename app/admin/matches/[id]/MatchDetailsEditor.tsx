@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { saveGroupName, saveMatchCore, saveMatchEventEntry, saveMatchMeta, saveMatchReferees, saveMatchShirtNumber } from "@/lib/match-actions";
+import { saveGroupName, saveMatchCore, saveMatchEventEntry, saveMatchMeta, saveMatchReferees } from "@/lib/match-actions";
+import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
+import { combineGoalAndAssistEvents } from "@/lib/goal-assist-events";
 
 type Person = {
   id: number;
@@ -20,7 +22,7 @@ type SelectedPlayer = {
   teamId: number | null;
 };
 
-type PlayerEventType = "goal" | "own_goal" | "penalty_goal" | "penalty_missed" | "yellow_card" | "second_yellow" | "red_card";
+type PlayerEventType = "goal" | "own_goal" | "penalty_goal" | "penalty_missed" | "yellow_card" | "second_yellow" | "red_card" | "assist" | "sub_in" | "sub_out";
 
 const EVENT_OPTIONS: { key: PlayerEventType; iconSrc: string; title: string }[] = [
   { key: "goal", iconSrc: "/Goal.png", title: "Goal" },
@@ -30,6 +32,9 @@ const EVENT_OPTIONS: { key: PlayerEventType; iconSrc: string; title: string }[] 
   { key: "yellow_card", iconSrc: "/Yellow_card_icon.svg.png", title: "Yellow Card" },
   { key: "second_yellow", iconSrc: "/Yellow to Red.png", title: "Second Yellow Card" },
   { key: "red_card", iconSrc: "/Red_card.svg.png", title: "Red Card" },
+  { key: "assist", iconSrc: "/Assist.png", title: "Assist" },
+  { key: "sub_in", iconSrc: "/subin.png", title: "Substitution In" },
+  { key: "sub_out", iconSrc: "/subout.png", title: "Substitution Out" },
 ];
 
 const GOAL_TYPES = ["Right Foot", "Left Foot", "Head", "Corner", "Free Kick", "Other"] as const;
@@ -181,8 +186,6 @@ export default function MatchDetailsEditor({
     pkB: initialMeta?.pkB || "",
   });
 
-  const [shirtNumbers, setShirtNumbers] = useState<Record<number, string>>(initialShirts || {});
-  const [editingShirt, setEditingShirt] = useState<number | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<SelectedPlayer | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<PlayerEventType>((initialEvents[0]?.eventType as PlayerEventType) || "goal");
   const [eventMinute, setEventMinute] = useState("");
@@ -357,12 +360,8 @@ export default function MatchDetailsEditor({
     setSelectedPlayer(null);
   };
 
-  const persistShirts = (next: Record<number, string>) => {
-    setShirtNumbers(next);
-  };
-
   const sortedEventRows = useMemo(
-    () => [...eventRows].sort((a, b) => minuteValue(b.minute, b.extraTime) - minuteValue(a.minute, a.extraTime)),
+    () => combineGoalAndAssistEvents(eventRows).sort((a, b) => minuteValue(b.minute, b.extraTime) - minuteValue(a.minute, a.extraTime)),
     [eventRows]
   );
   const secondHalfEvents = useMemo(() => sortedEventRows.filter((e) => eventHalf(e.minute, e.extraTime) === "2nd"), [sortedEventRows]);
@@ -370,39 +369,28 @@ export default function MatchDetailsEditor({
 
   const renderEventPlayerText = (ev: (typeof eventRows)[number]) => {
     if (ev.assistPlayerName && (ev.eventType === "goal" || ev.eventType === "penalty_goal" || ev.eventType === "own_goal")) {
-      return `${ev.playerName}  |  ${ev.assistPlayerName}`;
+      return (
+        <>
+          {ev.playerName}
+          <span className="ml-2 inline-flex items-center gap-1 text-slate-600">
+            <img src="/Assist.png" alt="Assist" className="h-4 w-4" />
+            {ev.assistPlayerName}
+          </span>
+        </>
+      );
     }
     return ev.playerName;
   };
 
   const renderShirtCell = (personId: number) => {
-    if (editingShirt === personId) {
-      return (
-        <input
-          autoFocus
-          maxLength={3}
-          value={shirtNumbers[personId] || ""}
-          onChange={(e) => persistShirts({ ...shirtNumbers, [personId]: e.target.value })}
-          onBlur={() => {
-            void saveMatchShirtNumber(match.id, personId, shirtNumbers[personId] || "");
-            setEditingShirt(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const value = shirtNumbers[personId] || "";
-              void saveMatchShirtNumber(match.id, personId, value);
-              setEditingShirt(null);
-            }
-          }}
-          className="w-8 text-center font-bold bg-white border border-blue-500"
-        />
-      );
-    }
+    const person = appearances.find((appearance) => appearance.person.id === personId)?.person;
     return (
-      <button type="button" className="w-8 text-center font-bold bg-white border border-gray-300" onClick={() => setEditingShirt(personId)} title="Click to edit shirt number">
-        {shirtNumbers[personId] || ""}
-      </button>
+      <MatchShirtNumberEditor
+        matchId={match.id}
+        personId={personId}
+        playerName={person ? displayName(person) : `Player ${personId}`}
+        number={initialShirts[personId] || ""}
+      />
     );
   };
 
@@ -460,9 +448,11 @@ export default function MatchDetailsEditor({
                   <span className="w-10 font-bold">{k}</span>
                   <input value={scores[`${k.toLowerCase()}A` as keyof typeof scores]} onChange={(e) => setScores((p) => ({ ...p, [`${k.toLowerCase()}A`]: e.target.value }))} className="border border-gray-400 px-1 h-6 w-12 text-center" placeholder="A" />
                   <input value={scores[`${k.toLowerCase()}B` as keyof typeof scores]} onChange={(e) => setScores((p) => ({ ...p, [`${k.toLowerCase()}B`]: e.target.value }))} className="border border-gray-400 px-1 h-6 w-12 text-center" placeholder="B" />
-                  <button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button>
                 </div>
               ))}
+              <button type="submit" disabled={saving === "scores"} className="self-end h-6 px-3 border border-gray-500 bg-[#efefef] text-[11px] font-bold disabled:cursor-wait disabled:opacity-60">
+                {saving === "scores" ? "Saving..." : "Save"}
+              </button>
             </form>
           </div>
         </div>

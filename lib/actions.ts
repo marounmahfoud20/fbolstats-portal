@@ -8,6 +8,12 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { getAdminUserFromCookies, isGodAdmin } from "@/lib/adminAuth";
+import { createMembershipIfMissing } from "@/lib/memberships";
+
+function revalidateNationalCompetitionPages() {
+  revalidatePath("/admin/national-teams/[gender]", "page");
+  revalidatePath("/admin/national-teams/[gender]/competitions/[id]", "page");
+}
 
 function parseCoordinates(input?: string | null): { latitude: string | null; longitude: string | null } {
   const text = (input || "").trim();
@@ -189,6 +195,11 @@ export async function updateAdminAccount(formData: FormData) {
   const isActive = (formData.get("isActive") as string) === "yes";
   if (!Number.isFinite(id) || !username) return;
 
+  const existing = await prisma.$queryRaw<Array<{ username: string }>>`
+    SELECT "username" FROM "AdminAccount" WHERE "id" = ${id} LIMIT 1
+  `;
+  if (existing[0]?.username.toLowerCase() === "maroun") return;
+
   if (password) {
     const passwordHash = hashAdminPassword(password);
     await prisma.$executeRaw`
@@ -218,8 +229,19 @@ export async function deleteAdminAccount(formData: FormData) {
   const id = Number.parseInt((formData.get("id") as string) || "", 10);
   if (!Number.isFinite(id)) return;
 
+  const target = await prisma.$queryRaw<Array<{ username: string }>>`
+    SELECT "username" FROM "AdminAccount" WHERE "id" = ${id} LIMIT 1
+  `;
+  if (target[0]?.username.toLowerCase() === "maroun") return;
+
   await prisma.$executeRaw`DELETE FROM "AdminAccount" WHERE "id" = ${id}`;
   revalidatePath("/admin/administrator");
+}
+
+export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.delete("fbolstats_session");
+  redirect("/login");
 }
 
 export async function verifyAdminAccountCredentials(username: string, password: string): Promise<boolean> {
@@ -357,6 +379,7 @@ export async function createSeason(formData: FormData) {
   });
 
   revalidatePath(`/admin/leagues/${leagueId}`);
+  revalidateNationalCompetitionPages();
   redirect(`/admin/leagues/${leagueId}`);
 }
 
@@ -379,6 +402,7 @@ export async function bulkUpdateSeasons(formData: FormData) {
   }
 
   revalidatePath(`/admin/leagues/${leagueId}`);
+  revalidateNationalCompetitionPages();
   redirect(`/admin/leagues/${leagueId}`);
 }
 
@@ -1090,25 +1114,23 @@ export async function addMembership(formData: FormData) {
   const startDay = formData.get("startDay") as string;
   const startMonth = formData.get("startMonth") as string;
   const startYear = formData.get("startYear") as string;
-  const startDate = startYear && startMonth && startDay ? `${startYear}-${startMonth}-${startDay}` : null;
+  const startDate = startYear && startMonth && startDay ? `${startYear}-${startMonth.padStart(2, '0')}-${startDay.padStart(2, '0')}` : null;
 
   // Format End Date
   const endDay = formData.get("endDay") as string;
   const endMonth = formData.get("endMonth") as string;
   const endYear = formData.get("endYear") as string;
-  const endDate = endYear && endMonth && endDay ? `${endYear}-${endMonth}-${endDay}` : null;
+  const endDate = endYear && endMonth && endDay ? `${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}` : null;
 
   if (!teamId || !personId) return;
 
-  await prisma.membership.create({
-    data: {
-      personId,
-      teamId,
-      role,
-      startDate,
-      endDate,
-      isActive: active
-    }
+  await createMembershipIfMissing({
+    personId,
+    teamId,
+    role,
+    startDate,
+    endDate,
+    isActive: active
   });
 
   // ADDED: Clear the cache for BOTH the Person and the Team so they both update instantly!
@@ -1125,6 +1147,8 @@ export async function bulkUpdateMemberships(formData: FormData) {
 
   for (const idStr of membershipIds) {
     const id = parseInt(idStr as string);
+    const teamId = parseInt((formData.get(`teamId_${id}`) as string) || "", 10);
+    if (!Number.isFinite(id) || !Number.isFinite(teamId) || !Number.isFinite(personIdNum)) continue;
     const role = formData.get(`role_${id}`) as string;
     const active = formData.get(`active_${id}`) === "yes";
 
@@ -1140,10 +1164,17 @@ export async function bulkUpdateMemberships(formData: FormData) {
     const eYear = formData.get(`endYear_${id}`) as string;
     const endDate = (eDay && eMonth && eYear) ? `${eYear}-${eMonth.padStart(2, '0')}-${eDay.padStart(2, '0')}` : null;
 
+    const previousMembership = await prisma.membership.findFirst({
+      where: { id, personId: personIdNum },
+      select: { teamId: true },
+    });
+    if (previousMembership) touchedTeamIds.add(previousMembership.teamId);
+
     // Update the database record
-    await prisma.membership.update({
-      where: { id },
+    await prisma.membership.updateMany({
+      where: { id, personId: personIdNum },
       data: {
+        teamId,
         role,
         isActive: active,
         startDate,
@@ -1151,11 +1182,8 @@ export async function bulkUpdateMemberships(formData: FormData) {
       }
     });
 
-    // Also clear the cache for the specific team this membership belongs to!
-    const membership = await prisma.membership.findUnique({ where: { id } });
-    if (membership?.teamId) {
-      touchedTeamIds.add(membership.teamId);
-    }
+    // Refresh the page for the team's assignment before and after the edit.
+    touchedTeamIds.add(teamId);
   }
 
   const newRowCount = parseInt((formData.get("newRowCount") as string) || "0", 10);
@@ -1181,15 +1209,13 @@ export async function bulkUpdateMemberships(formData: FormData) {
       ? `${eYear}-${eMonth.padStart(2, "0")}-${eDay.padStart(2, "0")}`
       : null;
 
-    await prisma.membership.create({
-      data: {
-        personId: personIdNum,
-        teamId,
-        role,
-        startDate,
-        endDate,
-        isActive: active,
-      },
+    await createMembershipIfMissing({
+      personId: personIdNum,
+      teamId,
+      role,
+      startDate,
+      endDate,
+      isActive: active,
     });
 
     touchedTeamIds.add(teamId);
@@ -1549,5 +1575,6 @@ export async function updateSeasonSettings(formData: FormData) {
   revalidatePath(`/admin/seasons/${seasonId}`);
   revalidatePath(`/admin/seasons/${seasonId}/settings`);
   revalidatePath(`/admin/leagues/${leagueId}`);
+  revalidateNationalCompetitionPages();
   redirect(`/admin/seasons/${seasonId}`);
 }

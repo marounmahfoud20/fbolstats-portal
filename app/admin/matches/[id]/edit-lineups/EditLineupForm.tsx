@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveMatchLineups } from "@/lib/match-actions";
+import { isMembershipActiveOnDate } from "@/lib/membership-eligibility";
+import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
 
 type Person = { id: number; firstName: string | null; lastName: string | null; commonName: string | null; position: string | null };
-type Membership = { id: number; role: string; startDate: string | null; endDate: string | null; person: Person };
+type Membership = { id: number; role: string; startDate: string | null; endDate: string | null; isActive: boolean; person: Person };
 type TeamData = { id: number; name: string; memberships: Membership[] } | null;
 type ExistingApp = { personId: number; teamId: number | null; role: string };
 type LineupRole = "Starter" | "Substitute" | "";
@@ -15,13 +17,15 @@ export default function EditLineupForm({
   matchDate,
   teamA, 
   teamB, 
-  existingAppearances 
+  existingAppearances,
+  initialShirts,
 }: {
   matchId: number;
   matchDate: string | null;
   teamA: TeamData;
   teamB: TeamData;
   existingAppearances: ExistingApp[];
+  initialShirts: Record<number, string>;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -92,13 +96,9 @@ export default function EditLineupForm({
     });
   };
 
-  const isMembershipEligible = (startDate: string | null, endDate: string | null) => {
-    if (!matchDate) return true;
-    const matchTs = Date.parse(matchDate);
-    if (Number.isNaN(matchTs)) return true;
-    const startTs = startDate ? Date.parse(startDate) : Number.NEGATIVE_INFINITY;
-    const endTs = endDate ? Date.parse(endDate) : Number.POSITIVE_INFINITY;
-    return matchTs >= startTs && matchTs <= endTs;
+  const handleAddStaff = (teamId: number, membership: Membership) => {
+    const key = `${teamId}-${membership.person.id}`;
+    setStaffSelections((prev) => ({ ...prev, [key]: membership.role || "Coach" }));
   };
 
   const getEligiblePlayers = (team: TeamData) => {
@@ -106,7 +106,7 @@ export default function EditLineupForm({
     const deduped = new Map<number, Person>();
     for (const m of team.memberships) {
       if (m.role.toLowerCase() !== "player") continue;
-      if (!isMembershipEligible(m.startDate, m.endDate)) continue;
+      if (!isMembershipActiveOnDate(m, matchDate)) continue;
       if (!deduped.has(m.person.id)) deduped.set(m.person.id, m.person);
     }
     return Array.from(deduped.values()).sort((a, b) => {
@@ -134,11 +134,15 @@ export default function EditLineupForm({
     }
 
     for (const [teamId, personId] of Object.entries(captainByTeam)) {
-      if (personId) appearances.push({ teamId: parseInt(teamId, 10), personId: parseInt(personId, 10), role: "Captain" });
+      if (personId) {
+        appearances.push({ teamId: parseInt(teamId, 10), personId: parseInt(personId, 10), role: "Captain" });
+      }
     }
 
     for (const [teamId, personId] of Object.entries(goalkeeperByTeam)) {
-      if (personId) appearances.push({ teamId: parseInt(teamId, 10), personId: parseInt(personId, 10), role: "Goalkeeper" });
+      if (personId) {
+        appearances.push({ teamId: parseInt(teamId, 10), personId: parseInt(personId, 10), role: "Goalkeeper" });
+      }
     }
 
     await saveMatchLineups(matchId, appearances);
@@ -148,26 +152,71 @@ export default function EditLineupForm({
 
   const renderTeamSection = (team: TeamData, eligiblePlayers: Person[]) => {
     if (!team) return <div className="text-gray-400">Team not found in DB</div>;
-    const coaches = team.memberships.filter(m => m.role.toLowerCase() !== "player").map(m => m.person);
+    const startingPlayers = eligiblePlayers.filter((player) => lineupSelections[`${team.id}-${player.id}`] === "Starter");
+    const retainedAssignmentOption = (personId: string | undefined) => {
+      if (!personId || startingPlayers.some((player) => String(player.id) === personId)) return null;
+      const person = team.memberships.find((membership) => String(membership.person.id) === personId)?.person;
+      const name = person?.commonName || `${person?.firstName || ""} ${person?.lastName || ""}`.trim() || `Person ${personId}`;
+      return <option value={personId} hidden disabled>{name}</option>;
+    };
+    const staffByPerson = new Map<number, Membership>();
+    for (const membership of team.memberships) {
+      if (membership.role.toLowerCase() === "player" || !isMembershipActiveOnDate(membership, matchDate)) continue;
+      if (!staffByPerson.has(membership.person.id)) staffByPerson.set(membership.person.id, membership);
+    }
+    const staffCandidates = Array.from(staffByPerson.values());
+    const coachCandidates = staffCandidates
+      .filter(({ role }) => role.toLowerCase().includes("coach"))
+      .sort((a, b) => {
+        const nameA = a.person.commonName || `${a.person.firstName || ""} ${a.person.lastName || ""}`.trim();
+        const nameB = b.person.commonName || `${b.person.firstName || ""} ${b.person.lastName || ""}`.trim();
+        return nameA.localeCompare(nameB);
+      });
+    const selectedStaff = Object.entries(staffSelections)
+      .filter(([key, role]) => key.startsWith(`${team.id}-`) && !!role)
+      .map(([key, role]) => ({ personId: Number(key.slice(`${team.id}-`.length)), role }))
+      .flatMap((selection) => {
+        const membership = staffByPerson.get(selection.personId);
+        return membership ? [{ ...selection, membership }] : [];
+      });
 
     return (
       <div className="flex-1 bg-[#030b3a] border border-[#f4a01c]/50 p-4 rounded">
         <h2 className="text-[#f4a01c] font-bold text-lg mb-4">{team.name}</h2>
 
         <h3 className="font-bold bg-[#dfdfdf] text-[#040f4f] px-2 py-1 mb-2 rounded-sm mt-4">Coaches / Staff</h3>
-        {coaches.length === 0 && <p className="text-gray-400 italic">No active staff found.</p>}
+        <select
+          value=""
+          onChange={(e) => {
+            const membership = coachCandidates.find((candidate) => String(candidate.person.id) === e.target.value);
+            if (membership) handleAddStaff(team.id, membership);
+          }}
+          className="w-full bg-white text-black text-xs p-2 border border-gray-400 mb-2"
+          aria-label={`Select an active coach for ${team.name}`}
+        >
+          <option value="">Select an active coach...</option>
+          {coachCandidates.map((membership) => {
+            const name = membership.person.commonName || `${membership.person.firstName || ""} ${membership.person.lastName || ""}`.trim() || `Person ${membership.person.id}`;
+            return (
+              <option key={membership.person.id} value={membership.person.id}>
+                {name} ({membership.role})
+              </option>
+            );
+          })}
+        </select>
+        {staffCandidates.length === 0 && <p className="text-gray-400 italic">No active staff found.</p>}
+        {staffCandidates.length > 0 && coachCandidates.length === 0 && <p className="text-gray-400 italic">No active coaches for this match date.</p>}
         <div className="flex flex-col gap-1">
-          {coaches.map(c => {
-            const key = `${team.id}-${c.id}`;
-            const currentRole = staffSelections[key] || "None";
-            const roleName = team.memberships.find(m => m.person.id === c.id)?.role || "Staff";
+          {selectedStaff.map(({ personId, role: currentRole, membership }) => {
+            const c = membership.person;
+            const roleName = membership.role || "Staff";
             return (
               <div key={c.id} className="flex items-center justify-between border-b border-[#f4a01c]/20 pb-1">
-                <span className="flex-1 px-2 truncate">{c.commonName || `${c.firstName} ${c.lastName}`} ({roleName})</span>
+                <span className="flex-1 px-2 truncate">{c.commonName || `${c.firstName || ""} ${c.lastName || ""}`.trim()} ({roleName})</span>
                 <select 
                   className="bg-white text-black text-xs p-1 border border-gray-400 w-24"
                   value={currentRole}
-                  onChange={(e) => handleStaffRoleChange(team.id, c.id, e.target.value)}
+                  onChange={(e) => handleStaffRoleChange(team.id, personId, e.target.value)}
                 >
                   <option value="None">None</option>
                   <option value={roleName}>{roleName}</option>
@@ -188,7 +237,8 @@ export default function EditLineupForm({
               onChange={(e) => setCaptainByTeam((prev) => ({ ...prev, [team.id]: e.target.value }))}
             >
               <option value="">None</option>
-              {eligiblePlayers.map((p) => (
+              {retainedAssignmentOption(captainByTeam[team.id])}
+              {startingPlayers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.commonName || `${p.firstName || ""} ${p.lastName || ""}`}
                 </option>
@@ -204,7 +254,8 @@ export default function EditLineupForm({
               onChange={(e) => setGoalkeeperByTeam((prev) => ({ ...prev, [team.id]: e.target.value }))}
             >
               <option value="">None</option>
-              {eligiblePlayers.map((p) => (
+              {retainedAssignmentOption(goalkeeperByTeam[team.id])}
+              {startingPlayers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.commonName || `${p.firstName || ""} ${p.lastName || ""}`}
                 </option>
@@ -253,7 +304,14 @@ export default function EditLineupForm({
                     onChange={() => handleLineupRoleChange(team.id, p.id, "Substitute")}
                   />
                 </label>
-                <span className="text-center font-bold bg-gray-50 border border-gray-200 mx-1">-</span>
+                <span className="mx-1">
+                  <MatchShirtNumberEditor
+                    matchId={matchId}
+                    personId={p.id}
+                    playerName={p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim() || `Player ${p.id}`}
+                    number={initialShirts[p.id] || ""}
+                  />
+                </span>
                 <span className="truncate">{p.commonName || `${p.firstName || ""} ${p.lastName || ""}`}</span>
               </div>
             );

@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { bulkUpdateMemberships } from '@/lib/actions';
 import Link from 'next/link';
+import SaveMembershipsButton from './SaveMembershipsButton';
 
 // Helper function to chop the database "YYYY-MM-DD" string into pieces for the input boxes
 const splitDate = (dateStr?: string | null) => {
@@ -86,9 +87,14 @@ export default async function EditAllMembershipsPage(props: { params: Promise<{ 
                       {/* Hidden ID to tell the backend which membership this row belongs to */}
                       <input type="hidden" name="membershipId" value={m.id} />
 
-                      <td className="p-2 font-bold">
-                        {m.team?.name || "Unknown Team"}
-                        <span className="block text-xs font-normal text-gray-500 capitalize">{m.team?.gender || "Both"} • {m.team?.type || "Club"}</span>
+                      <td className="p-2">
+                        <select name={`teamId_${m.id}`} defaultValue={m.teamId} className="border border-[#040f4f] p-1.5 outline-none focus:ring-1 focus:ring-[#f4a01c] w-full bg-white">
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.gender || "both"} · {t.type || "club"})
+                            </option>
+                          ))}
+                        </select>
                       </td>
 
                       <td className="p-2">
@@ -189,9 +195,7 @@ export default async function EditAllMembershipsPage(props: { params: Promise<{ 
             </table>
 
             <div className="pt-4 border-t border-[#040f4f] flex justify-end">
-              <button type="submit" className="bg-[#f4a01c] border border-[#040f4f] text-[#040f4f] font-bold px-8 py-2 hover:bg-[#040f4f] hover:text-[#f4a01c] transition-colors">
-                Save All Changes
-              </button>
+              <SaveMembershipsButton />
             </div>
           </form>
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { nationalTeamSection } from "@/lib/national-competitions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -26,6 +27,7 @@ export default async function SeasonPlayerDetailsMonitorPage(props: { params: Pr
     },
   });
   if (!season) notFound();
+  const editionLabel = nationalTeamSection(season.league) ? "Edition" : "Season";
 
   const seasonTeamIds = season.teams.map((st) => st.teamId);
 
@@ -68,7 +70,7 @@ export default async function SeasonPlayerDetailsMonitorPage(props: { params: Pr
         </div>
 
         <div className="mb-3 border border-[#040f4f] bg-[#f2f2f2] p-2 font-bold text-[#040f4f]">
-          Season Players ({players.length})
+          {editionLabel} Players ({players.length})
         </div>
 
         <div className="overflow-x-auto border border-[#040f4f] bg-white">
@@ -94,7 +96,7 @@ export default async function SeasonPlayerDetailsMonitorPage(props: { params: Pr
               {players.length === 0 ? (
                 <tr>
                   <td colSpan={13} className="p-8 text-center text-sm font-semibold text-gray-500">
-                    No season players found.
+                    No {editionLabel.toLowerCase()} players found.
                   </td>
                 </tr>
               ) : (

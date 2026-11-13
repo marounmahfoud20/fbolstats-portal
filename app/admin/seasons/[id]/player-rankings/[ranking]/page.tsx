@@ -33,6 +33,11 @@ type Row = {
 };
 
 const COUNTRY_TO_CODE: Record<string, string> = {
+  armenia: "AM",
+  bahrain: "BH",
+  bulgaria: "BG",
+  croatia: "HR",
+  "czech republic": "CZ",
   lebanon: "LB",
   syria: "SY",
   iraq: "IQ",
@@ -42,6 +47,9 @@ const COUNTRY_TO_CODE: Record<string, string> = {
   saudi: "SA",
   egypt: "EG",
   morocco: "MA",
+  "mandatory palestine": "PS",
+  montenegro: "ME",
+  netherlands: "NL",
   algeria: "DZ",
   tunisia: "TN",
   france: "FR",
@@ -49,11 +57,17 @@ const COUNTRY_TO_CODE: Record<string, string> = {
   spain: "ES",
   italy: "IT",
   portugal: "PT",
+  romania: "RO",
   brazil: "BR",
   argentina: "AR",
   nigeria: "NG",
   ghana: "GH",
+  senegal: "SN",
   kenya: "KE",
+  serbia: "RS",
+  "sierra leone": "SL",
+  turkmenistan: "TM",
+  "united kingdom": "GB",
 };
 
 function fullName(person: { id: number; commonName: string | null; firstName: string | null; lastName: string | null }) {

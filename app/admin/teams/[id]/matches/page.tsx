@@ -45,7 +45,22 @@ export default async function TeamMatchesPage(props: { params: Promise<{ id: str
     INNER JOIN "Group" g ON g."id" = m."groupId"
     INNER JOIN "Season" s ON s."id" = g."seasonId"
     INNER JOIN "League" l ON l."id" = s."leagueId"
-    WHERE m."teamA" = ${team.name} OR m."teamB" = ${team.name}
+    WHERE EXISTS (
+      SELECT 1
+      FROM "GroupTeam" gt
+      WHERE gt."groupId" = g."id"
+        AND gt."teamId" = ${team.id}
+    )
+      AND (
+        m."teamA" = ${team.name}
+        OR m."teamB" = ${team.name}
+        OR EXISTS (
+          SELECT 1
+          FROM "MatchAppearance" ma
+          WHERE ma."matchId" = m."id"
+            AND ma."teamId" = ${team.id}
+        )
+      )
     ORDER BY m."date" DESC NULLS LAST, m."time" DESC NULLS LAST, m."id" DESC
   `;
 
@@ -108,9 +123,9 @@ export default async function TeamMatchesPage(props: { params: Promise<{ id: str
                     <td className="px-2">{m.date || "-"}</td>
                     <td className="hidden px-2 md:table-cell">{m.time || "-"}</td>
                     <td className="px-2">
-                      <span className={m.teamA === team.name ? "font-bold text-[#040f4f]" : ""}>{m.teamA}</span>
+                      <span className={m.teamA === team.name || m.teamA === `${team.name} Women` ? "font-bold text-[#040f4f]" : ""}>{m.teamA}</span>
                       <span className="px-2 text-[10px] font-bold text-[#f4a01c]">VS</span>
-                      <span className={m.teamB === team.name ? "font-bold text-[#040f4f]" : ""}>{m.teamB}</span>
+                      <span className={m.teamB === team.name || m.teamB === `${team.name} Women` ? "font-bold text-[#040f4f]" : ""}>{m.teamB}</span>
                     </td>
                     <td className="hidden max-w-[160px] truncate px-2 lg:table-cell" title={m.venue || ""}>{m.venue || "-"}</td>
                     <td className="hidden px-2 md:table-cell">

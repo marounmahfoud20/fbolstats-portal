@@ -3,10 +3,11 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export default async function RoundTeamsPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { id: string; seasonId: string; groupId: string };
+  params: Promise<{ id: string; seasonId: string; groupId: string }>;
 }) {
+  const params = await paramsPromise;
   const teams = await prisma.team.findMany({ orderBy: { name: "asc" } });
 
   return (

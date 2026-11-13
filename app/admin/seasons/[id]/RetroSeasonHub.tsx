@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { addTeamToSeason, addGroupToSeason } from "@/lib/actions";
 import TeamAutocomplete from "@/components/TeamAutocomplete";
+import { nationalTeamSection } from "@/lib/national-competitions";
 
 export default function RetroSeasonHub({ season }: { season: any }) {
   const isWomenLeague = season.league?.type?.includes("Women") || season.league?.type?.includes("Girls");
   const genderIcon = isWomenLeague ? "♀" : "♂";
   const teamGenderFilter = isWomenLeague ? "female" : "male";
+  const editionLabel = nationalTeamSection(season.league || {}) ? "Edition" : "Season";
 
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [isAddingRound, setIsAddingRound] = useState(false);
@@ -101,9 +103,9 @@ export default function RetroSeasonHub({ season }: { season: any }) {
 
       {/* ---------------- VENUES, REFEREES, WINNER ---------------- */}
       {[
-        { title: "Season Venues (9)", link: "#" },
-        { title: "Season Referees (44)", link: "#" },
-        { title: "Season Winner", link: "#" },
+        { title: `${editionLabel} Venues (9)`, link: "#" },
+        { title: `${editionLabel} Referees (44)`, link: "#" },
+        { title: `${editionLabel} Winner`, link: "#" },
       ].map((section, idx) => (
         <div key={idx} className="w-[980px] mx-auto text-left border border-[#040f4f] bg-[#f2f2f2] rounded-lg flex items-center h-[28px] mt-4 px-3">
           <span className="w-full font-bold text-[#040f4f] uppercase tracking-wider">{section.title}</span>
@@ -179,7 +181,7 @@ export default function RetroSeasonHub({ season }: { season: any }) {
       {/* ---------------- SEASON TEAMS ---------------- */}
       <div className="w-[980px] mx-auto text-left border border-[#040f4f] bg-[#f2f2f2] rounded-t-lg flex items-center justify-between h-[28px] mt-6 px-3">
         <span className="font-bold text-[#040f4f] uppercase tracking-wider">
-          Season Teams ({seasonTeams.length})
+          {editionLabel} Teams ({seasonTeams.length})
           <span className="ml-4 text-gray-400 cursor-pointer text-[14px]">⚙</span>
           <span className="ml-2 text-gray-400 cursor-pointer text-[14px]">👕</span>
           <span className="ml-2 font-black text-gray-400 cursor-pointer hover:underline">B</span>
@@ -202,7 +204,7 @@ export default function RetroSeasonHub({ season }: { season: any }) {
               <TeamAutocomplete gender={teamGenderFilter} />
             </div>
             <button type="submit" className="bg-[#f4a01c] text-white font-bold px-6 py-1.5 hover:bg-[#040f4f] transition-colors h-[34px]">
-              Link Team to Season
+              Link Team to {editionLabel}
             </button>
           </form>
         </div>
@@ -227,7 +229,7 @@ export default function RetroSeasonHub({ season }: { season: any }) {
           {seasonTeams.length === 0 ? (
             <tr>
               <td colSpan={10} className="text-center py-6 text-gray-500 font-bold">
-                No teams have been added to this season yet. Click the + button above to add one!
+                No teams have been added to this {editionLabel.toLowerCase()} yet. Click the + button above to add one!
               </td>
             </tr>
           ) : (

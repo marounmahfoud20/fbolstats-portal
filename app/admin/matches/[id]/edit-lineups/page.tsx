@@ -11,7 +11,8 @@ export default async function EditLineupsPage({ params }: { params: Promise<{ id
   const match = await prisma.match.findUnique({
     where: { id: matchId },
     include: {
-      appearances: true
+      appearances: true,
+      shirts: true,
     }
   });
 
@@ -21,7 +22,6 @@ export default async function EditLineupsPage({ params }: { params: Promise<{ id
     where: { name: match.teamA },
     include: {
       memberships: {
-        where: { isActive: true },
         include: { person: true }
       }
     }
@@ -31,7 +31,6 @@ export default async function EditLineupsPage({ params }: { params: Promise<{ id
     where: { name: match.teamB },
     include: {
       memberships: {
-        where: { isActive: true },
         include: { person: true }
       }
     }
@@ -46,6 +45,7 @@ export default async function EditLineupsPage({ params }: { params: Promise<{ id
         <EditLineupForm 
           matchId={matchId} 
           matchDate={match.date}
+          initialShirts={Object.fromEntries(match.shirts.map((shirt) => [shirt.personId, shirt.number || ""]))}
           teamA={teamA} 
           teamB={teamB} 
           existingAppearances={match.appearances} 

@@ -177,6 +177,34 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
     };
   });
 
+  const careerTotals = careerRows.reduce((totals, row) => ({
+    appearances: totals.appearances + row.appearances,
+    minutesPlayed: totals.minutesPlayed + row.minutesPlayed,
+    goals: totals.goals + row.goals,
+    assists: totals.assists + row.assists,
+    ownGoals: totals.ownGoals + row.ownGoals,
+    yellow: totals.yellow + row.yellow,
+    secondYellow: totals.secondYellow + row.secondYellow,
+    red: totals.red + row.red,
+    subIn: totals.subIn + row.subIn,
+    subOut: totals.subOut + row.subOut,
+    unusedSub: totals.unusedSub + row.unusedSub,
+    captain: totals.captain + row.captain,
+  }), {
+    appearances: 0,
+    minutesPlayed: 0,
+    goals: 0,
+    assists: 0,
+    ownGoals: 0,
+    yellow: 0,
+    secondYellow: 0,
+    red: 0,
+    subIn: 0,
+    subOut: 0,
+    unusedSub: 0,
+    captain: 0,
+  });
+
   return (
     <div className="p-6">
       <div className="mb-4 border border-[#040f4f] bg-[#f4a01c] p-2 text-[#040f4f]">
@@ -255,6 +283,25 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
               </tr>
             ))}
           </tbody>
+          {careerRows.length > 0 && (
+            <tfoot className="border-t-2 border-[#040f4f] bg-[#f2f2f2] font-bold">
+              <tr>
+                <td colSpan={4} className="p-2">Total</td>
+                <td className="p-1.5 text-center">{careerTotals.appearances}</td>
+                <td className="p-1.5 text-center">{careerTotals.minutesPlayed}</td>
+                <td className="p-1.5 text-center">{careerTotals.goals}</td>
+                <td className="p-1.5 text-center">{careerTotals.assists}</td>
+                <td className="p-1.5 text-center">{careerTotals.ownGoals}</td>
+                <td className="p-1.5 text-center">{careerTotals.yellow}</td>
+                <td className="p-1.5 text-center">{careerTotals.secondYellow}</td>
+                <td className="p-1.5 text-center">{careerTotals.red}</td>
+                <td className="p-1.5 text-center">{careerTotals.subIn}</td>
+                <td className="p-1.5 text-center">{careerTotals.subOut}</td>
+                <td className="p-1.5 text-center">{careerTotals.unusedSub}</td>
+                <td className="p-1.5 text-center">{careerTotals.captain}</td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 

@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addMatchToRound, addTeamToRound } from "@/lib/actions";
+import { isDatabaseConnectionError, retryDatabaseRead } from "@/lib/database-read";
 
 export default async function RoundDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -40,6 +41,19 @@ export default async function RoundDetailsPage({ params }: { params: Promise<{ i
   }
 
   const matches = round.matches || [];
+  let venues: Array<{ name: string }> = [];
+  let venueSuggestionsUnavailable = false;
+  try {
+    venues = await retryDatabaseRead(() => prisma.venue.findMany({
+      where: { status: "active" },
+      select: { name: true },
+      distinct: ["name"],
+      orderBy: { name: "asc" },
+    }));
+  } catch (error) {
+    if (!isDatabaseConnectionError(error)) throw error;
+    venueSuggestionsUnavailable = true;
+  }
   const genderIcon = round.season.league.type.includes("Women") || round.season.league.type.includes("Girls") ? "♀" : "♂";
 
   // Filter out teams that are already in this round so they don't show up in the "Add" dropdown
@@ -80,7 +94,7 @@ export default async function RoundDetailsPage({ params }: { params: Promise<{ i
           <input type="hidden" name="groupId" value={round.id} />
 
           <select name="teamId" className="px-2 py-1.5 text-[#040f4f] outline-none border border-[#040f4f] w-64" required>
-            <option value="">-- Select from Season Teams --</option>
+            <option value="">-- Select from {round.season.league.footballType === "national" ? "Edition" : "Season"} Teams --</option>
             {availableSeasonTeams.map(st => (
               <option key={st.team.id} value={st.team.id}>{st.team.name}</option>
             ))}
@@ -140,8 +154,18 @@ export default async function RoundDetailsPage({ params }: { params: Promise<{ i
           </div>
 
           <div className="flex flex-col gap-1 flex-1">
-            <label className="text-[#040f4f] font-bold">Venue</label>
-            <input type="text" name="venue" placeholder="e.g. Camille Chamoun" className="px-2 py-1.5 text-[#040f4f] outline-none border border-[#040f4f] w-full" />
+            <label htmlFor="match-venue" className="text-[#040f4f] font-bold">Venue</label>
+            <input id="match-venue" type="text" name="venue" list="round-venue-list" autoComplete="off" placeholder="Start typing a venue name..." aria-describedby={venueSuggestionsUnavailable ? "venue-suggestions-status" : undefined} className="px-2 py-1.5 text-[#040f4f] outline-none border border-[#040f4f] w-full" />
+            <datalist id="round-venue-list">
+              {venues.map((venue) => (
+                <option key={venue.name} value={venue.name} />
+              ))}
+            </datalist>
+            {venueSuggestionsUnavailable && (
+              <p id="venue-suggestions-status" role="status" className="text-amber-800">
+                Venue suggestions are temporarily unavailable. You can still enter a venue name.
+              </p>
+            )}
           </div>
 
           <button type="submit" className="bg-[#f4a01c] text-white font-bold px-6 py-1.5 hover:bg-[#040f4f] transition-colors h-[32px]">

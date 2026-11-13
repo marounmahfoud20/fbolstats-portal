@@ -1,5 +1,7 @@
 import prisma from "@/lib/prisma";
 import RetroLeagueView from "./RetroLeagueView";
+import { redirect } from "next/navigation";
+import { nationalTeamSection, nationalCompetitionHref } from "@/lib/national-competitions";
 
 // Note the change here: params is now a Promise
 export default async function LeagueDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +30,9 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
       </div>
     );
   }
+
+  const section = nationalTeamSection(league);
+  if (section) redirect(nationalCompetitionHref(section, league.id));
 
   // If found, load the Retro layout we built!
   return <RetroLeagueView league={league} />;

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-export const GOD_ADMIN_USERNAME = "maroun1996";
-const SESSION_COOKIE = "backend_admin_session";
+export const GOD_ADMIN_USERNAME = "maroun";
+const SESSION_COOKIE = "fbolstats_session";
 
 function normalizeUsername(username: string): string {
   return (username || "").trim().toLowerCase();

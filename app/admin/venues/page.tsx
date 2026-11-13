@@ -1,6 +1,7 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { PlusCircle } from "lucide-react";
+import { Prisma, type Venue } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -26,11 +27,25 @@ export default async function VenuesPage(props: {
   if (searchParams.country) where.country = { contains: searchParams.country, mode: "insensitive" };
   if (searchParams.status) where.status = searchParams.status;
 
-  const venues = await prisma.venue.findMany({
-    where,
-    take: 200,
-    orderBy: { id: "desc" },
-  });
+  let venues: Venue[] = [];
+  let searchUnavailable = false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      venues = await prisma.venue.findMany({
+        where,
+        take: 200,
+        orderBy: { id: "desc" },
+      });
+      break;
+    } catch (error) {
+      const connectionFailed =
+        error instanceof Prisma.PrismaClientInitializationError ||
+        (error instanceof Prisma.PrismaClientKnownRequestError &&
+          ["P1001", "P1002", "P1017"].includes(error.code));
+      if (!connectionFailed) throw error;
+      if (attempt === 1) searchUnavailable = true;
+    }
+  }
 
   return (
     <div className="p-6">
@@ -69,7 +84,7 @@ export default async function VenuesPage(props: {
           </div>
           <div className="flex items-end gap-3">
             <button type="submit" className="border border-[#040f4f] bg-[#f4a01c] px-6 py-2 font-bold text-[#040f4f]">
-              Search
+              {searchUnavailable ? "Retry Search" : "Search"}
             </button>
             <Link href="/admin/venues" className="border border-[#040f4f] bg-white px-6 py-2 font-bold text-[#040f4f]">
               Clear
@@ -78,48 +93,54 @@ export default async function VenuesPage(props: {
         </form>
       </div>
 
-      <div className="overflow-x-auto border border-[#040f4f] bg-white">
-        <table className="w-full text-left text-sm text-[#040f4f]">
-          <thead className="border-b border-[#040f4f] bg-[#f2f2f2]">
-            <tr>
-              <th className="p-2"></th>
-              <th className="p-2">ID</th>
-              <th className="p-2">Venue Name</th>
-              <th className="p-2">City</th>
-              <th className="p-2">Country</th>
-              <th className="p-2">Capacity</th>
-              <th className="p-2">Surface</th>
-              <th className="p-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {venues.length === 0 ? (
+      {searchUnavailable ? (
+        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          Venue search is temporarily unavailable because the database connection failed. Your filters have been kept. Please retry the search.
+        </div>
+      ) : (
+        <div className="overflow-x-auto border border-[#040f4f] bg-white">
+          <table className="w-full text-left text-sm text-[#040f4f]">
+            <thead className="border-b border-[#040f4f] bg-[#f2f2f2]">
               <tr>
-                <td colSpan={8} className="p-4 text-center text-gray-500">
-                  No venues found.
-                </td>
+                <th className="p-2"></th>
+                <th className="p-2">ID</th>
+                <th className="p-2">Venue Name</th>
+                <th className="p-2">City</th>
+                <th className="p-2">Country</th>
+                <th className="p-2">Capacity</th>
+                <th className="p-2">Surface</th>
+                <th className="p-2">Status</th>
               </tr>
-            ) : (
-              venues.map((venue) => (
-                <tr key={venue.id} className="border-b border-gray-200 hover:bg-gray-50">
-                  <td className="p-2">
-                    <Link href={`/admin/venues/${venue.id}/edit`} className="text-blue-700 hover:underline">
-                      Edit
-                    </Link>
+            </thead>
+            <tbody>
+              {venues.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-4 text-center text-gray-500">
+                    No venues found.
                   </td>
-                  <td className="p-2">{venue.id}</td>
-                  <td className="p-2">{venue.name}</td>
-                  <td className="p-2">{venue.city || "-"}</td>
-                  <td className="p-2">{venue.country || "-"}</td>
-                  <td className="p-2">{venue.capacity ?? "-"}</td>
-                  <td className="p-2">{venue.surface || "-"}</td>
-                  <td className="p-2 capitalize">{venue.status || "active"}</td>
                 </tr>
-              ))
+              ) : (
+                venues.map((venue) => (
+                  <tr key={venue.id} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="p-2">
+                      <Link href={`/admin/venues/${venue.id}/edit`} className="text-blue-700 hover:underline">
+                        Edit
+                      </Link>
+                    </td>
+                    <td className="p-2">{venue.id}</td>
+                    <td className="p-2">{venue.name}</td>
+                    <td className="p-2">{venue.city || "-"}</td>
+                    <td className="p-2">{venue.country || "-"}</td>
+                    <td className="p-2">{venue.capacity ?? "-"}</td>
+                    <td className="p-2">{venue.surface || "-"}</td>
+                    <td className="p-2 capitalize">{venue.status || "active"}</td>
+                  </tr>
+                ))
             )}
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

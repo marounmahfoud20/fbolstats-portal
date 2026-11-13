@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { logout } from "@/lib/actions";
 
 type League = {
   id: number;
@@ -16,7 +17,7 @@ type LeagueCategory = {
 };
 
 export default function Sidebar({ leagues, leagueCategories }: { leagues: League[]; leagueCategories: LeagueCategory[] }) {
-  const [openMenu, setOpenMenu] = useState<null | "club" | "national">(null);
+  const [openMenu, setOpenMenu] = useState<null | "club">(null);
 
   return (
     <>
@@ -57,11 +58,12 @@ export default function Sidebar({ leagues, leagueCategories }: { leagues: League
               <path d="M7 21V10l5-3 5 3v11" />
             </svg>
           </Link>
-          <button
-            type="button"
-            onClick={() => setOpenMenu((v) => (v === "national" ? null : "national"))}
-            className={`flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 ${openMenu === "national" ? "bg-blue-100 text-blue-700" : "hover:bg-slate-100"}`}
-            title="National Team Competitions"
+          <Link
+            href="/admin/national-teams/men"
+            onClick={() => setOpenMenu(null)}
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100"
+            title="National Teams"
+            aria-label="Lebanese Football Association national teams"
           >
             <img
               src="/Lebanese Football Association.png"
@@ -69,23 +71,25 @@ export default function Sidebar({ leagues, leagueCategories }: { leagues: League
               className="h-7 w-7 object-contain"
               style={{ filter: "grayscale(1) sepia(1) hue-rotate(165deg) saturate(6) brightness(0.45) contrast(1.2)" }}
             />
-          </button>
+          </Link>
         </div>
 
         <div className="flex flex-col items-center gap-2 pb-2">
           <Link href="/admin/administrator" className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100" title="Administrator">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </Link>
-          <span className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-xl text-slate-300" title="Log out (coming soon)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
+          <form action={logout}>
+            <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600" title="Log out" aria-label="Log out">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+          </form>
         </div>
       </aside>
 
       {openMenu ? (
         <div className="fixed left-[84px] top-0 z-40 h-screen w-[320px] border-r border-slate-200 bg-white/95 shadow-[0_8px_30px_rgb(15,23,42,0.12)] backdrop-blur">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
-            <div className="font-semibold text-slate-800">{openMenu === "club" ? "Club Competitions" : "National Team Competitions"}</div>
+            <div className="font-semibold text-slate-800">Club Competitions</div>
             <Link href="/admin/manage" onClick={() => setOpenMenu(null)} className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
               Manage
             </Link>
@@ -94,16 +98,12 @@ export default function Sidebar({ leagues, leagueCategories }: { leagues: League
           <div className="h-[calc(100%-64px)] overflow-y-auto px-3 py-3">
             {(() => {
               const filteredLeagues = leagues.filter((l) =>
-                openMenu === "national"
-                  ? (l.footballType || "club").toLowerCase().includes("national")
-                  : !(l.footballType || "club").toLowerCase().includes("national")
+                !(l.footballType || "club").toLowerCase().includes("national")
               );
               const categoryOrder = ["Men", "Women", "Youth Boys", "Youth Girls"];
               const filteredSavedCategories = leagueCategories
                 .filter((c) =>
-                  openMenu === "national"
-                    ? (c.footballType || "club").toLowerCase().includes("national")
-                    : !(c.footballType || "club").toLowerCase().includes("national")
+                  !(c.footballType || "club").toLowerCase().includes("national")
                 )
                 .map((c) => c.name);
 

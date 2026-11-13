@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { scryptSync, timingSafeEqual } from "crypto";
+import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { createAdminSessionValue, getAdminSessionCookieName, GOD_ADMIN_USERNAME } from "@/lib/adminAuth";
 
 type AdminAuthRow = {
   passwordHash: string;
@@ -40,28 +41,67 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const username = ((body?.username as string) || "").trim().toLowerCase();
-    const password = ((body?.password as string) || "").trim();
+    const password = (body?.password as string) || "";
 
     if (!username || !password) {
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 
-    await ensureAdminAccountTable();
+    const matchesConfiguredAdmin =
+      !!process.env.ADMIN_USERNAME?.trim() &&
+      !!process.env.ADMIN_PASSWORD &&
+      username === process.env.ADMIN_USERNAME.trim().toLowerCase() &&
+      password === process.env.ADMIN_PASSWORD;
 
-    const rows = await prisma.$queryRaw<AdminAuthRow[]>`
-      SELECT "passwordHash", "isActive"
-      FROM "AdminAccount"
-      WHERE "username" = ${username}
-      LIMIT 1
-    `;
+    let authenticated = false;
+    try {
+      await ensureAdminAccountTable();
 
-    const account = rows[0];
-    if (!account || !account.isActive) {
+      const rows = await prisma.$queryRaw<AdminAuthRow[]>`
+        SELECT "passwordHash", "isActive"
+        FROM "AdminAccount"
+        WHERE "username" = ${username}
+        LIMIT 1
+      `;
+
+      let account = rows[0];
+      if (!account && matchesConfiguredAdmin) {
+        const salt = randomBytes(16).toString("hex");
+        const passwordHash = `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
+        await prisma.$executeRaw`
+          INSERT INTO "AdminAccount" ("username", "passwordHash", "isActive", "createdAt", "updatedAt")
+          VALUES (${username}, ${passwordHash}, true, NOW(), NOW())
+          ON CONFLICT ("username") DO NOTHING
+        `;
+        const createdRows = await prisma.$queryRaw<AdminAuthRow[]>`
+          SELECT "passwordHash", "isActive" FROM "AdminAccount" WHERE "username" = ${username} LIMIT 1
+        `;
+        account = createdRows[0];
+      }
+
+      authenticated = !!account?.isActive && verifyPassword(password, account.passwordHash);
+    } catch (error) {
+      // Keep the configured administrator available during a database outage,
+      // matching the legacy Basic Auth entry point in proxy.ts.
+      if (!matchesConfiguredAdmin) throw error;
+      authenticated = true;
+    }
+
+    if (!authenticated) {
       return NextResponse.json({ ok: false }, { status: 401 });
     }
 
-    const ok = verifyPassword(password, account.passwordHash);
-    return NextResponse.json({ ok }, { status: ok ? 200 : 401 });
+    const sessionValue = createAdminSessionValue(username);
+    if (!sessionValue) return NextResponse.json({ ok: false }, { status: 500 });
+    const response = NextResponse.json({ ok: true, isGodAdmin: username === GOD_ADMIN_USERNAME });
+    response.cookies.set(getAdminSessionCookieName(), sessionValue, {
+      httpOnly: true,
+      secure: new URL(request.url).protocol === "https:",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 12,
+    });
+    return response;
   } catch {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
