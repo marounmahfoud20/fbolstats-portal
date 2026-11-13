@@ -39,6 +39,7 @@ const EVENT_OPTIONS: { key: PlayerEventType; iconSrc: string; title: string }[] 
 ];
 
 const GOAL_TYPES = ["Right Foot", "Left Foot", "Head", "Corner", "Free Kick", "Other"] as const;
+const SUBSTITUTION_REASONS = ["Injury", "Resting", "Tactical", "Special Achievements"];
 
 const BOOKING_REASONS = [
   "",
@@ -606,12 +607,13 @@ export default function MatchDetailsEditor({
                   </select>
                 </label>
                 <label className="flex min-w-44 flex-1 flex-col gap-1 font-bold">
-                  Reason
-                  <input required list="substitution-reasons" maxLength={300} placeholder="Choose or type a reason" value={substitution.reason} onChange={(event) => setSubstitution({ ...substitution, reason: event.target.value })} className="h-8 border border-gray-400 px-2 font-normal" />
+                  Reason (optional)
+                  <select value={substitution.reason} onChange={(event) => setSubstitution({ ...substitution, reason: event.target.value })} className="h-8 border border-gray-400 bg-white px-2 font-normal">
+                    <option value="">No reason</option>
+                    {substitution.reason && !SUBSTITUTION_REASONS.includes(substitution.reason) && <option value={substitution.reason} hidden disabled>{substitution.reason}</option>}
+                    {SUBSTITUTION_REASONS.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
+                  </select>
                 </label>
-                <datalist id="substitution-reasons">
-                  {["Tactical", "Injury", "Fatigue", "Other"].map((reason) => <option key={reason} value={reason} />)}
-                </datalist>
                 <button type="submit" disabled={savingSubstitution} className="h-8 rounded bg-green-700 px-3 font-bold text-white disabled:opacity-60">{savingSubstitution ? "Saving..." : "Save Substitution"}</button>
                 <button type="button" disabled={savingSubstitution} onClick={() => setSubstitution(null)} className="h-8 rounded border border-gray-400 px-3 disabled:opacity-60">Cancel</button>
                 {substitutionError && <p role="alert" className="w-full text-red-700">{substitutionError}</p>}

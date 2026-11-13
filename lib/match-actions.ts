@@ -16,13 +16,13 @@ export async function saveMatchSubstitution(matchId: number, payload: {
   outgoingPersonId: number;
   minute: string;
   extraTime: string;
-  reason: string;
+  reason?: string;
 }) {
   if (!getAdminUserFromCookies(await cookies())) return { ok: false as const, error: "Please sign in to save substitutions." };
   const time = matchTime(payload.minute, payload.extraTime);
-  const reason = payload.reason.trim();
+  const reason = payload.reason?.trim() || "";
   if (!time) return { ok: false as const, error: "Enter a valid minute, such as 65 or 90+3." };
-  if (!reason || reason.length > 300) return { ok: false as const, error: "Enter a substitution reason (up to 300 characters)." };
+  if (reason.length > 300) return { ok: false as const, error: "The substitution reason must be at most 300 characters." };
   if (![matchId, payload.teamId, payload.incomingPersonId, payload.outgoingPersonId].every((id) => Number.isSafeInteger(id) && id > 0)) {
     return { ok: false as const, error: "Choose both players for the substitution." };
   }
@@ -47,7 +47,7 @@ export async function saveMatchSubstitution(matchId: number, payload: {
         throw new SubstitutionValidationError("Choose a player who is on the field at that minute.");
       }
       const substitutionId = payload.substitutionId || randomUUID();
-      const common = { matchId, teamId: payload.teamId, substitutionId, substitutionReason: reason, minute: String(time[0]), extraTime: time[1] ? String(time[1]) : null };
+      const common = { matchId, teamId: payload.teamId, substitutionId, substitutionReason: reason || null, minute: String(time[0]), extraTime: time[1] ? String(time[1]) : null };
       const saved = [];
       for (const [eventType, personId] of [["sub_out", outgoing.personId], ["sub_in", incoming.personId]] as const) {
         const previous = pair.find((event) => event.eventType === eventType);
