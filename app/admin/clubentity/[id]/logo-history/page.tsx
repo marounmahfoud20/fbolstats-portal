@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Logo History", "club");
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { addClubEntityLogoHistory, deleteClubEntityLogoHistory, updateClubEntityLogoHistory } from '@/lib/actions';

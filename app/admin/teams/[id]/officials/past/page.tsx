@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Past Officials", "team");
+
 export default async function PastOfficialsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   return (

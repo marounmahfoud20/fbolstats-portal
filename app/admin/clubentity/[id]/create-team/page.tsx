@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Create Teams", "club");
+
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createTeamForClubEntity } from '@/lib/actions';

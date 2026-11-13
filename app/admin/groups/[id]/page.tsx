@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Group Settings", "group");
+
 import Link from "next/link";
 
 export default async function GroupHubPage({ params }: { params: Promise<{ id: string }> }) {

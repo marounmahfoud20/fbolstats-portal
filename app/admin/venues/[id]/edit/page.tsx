@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Edit Venue", "venue");
+
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";

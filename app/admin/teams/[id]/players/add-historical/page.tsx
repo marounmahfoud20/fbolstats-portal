@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Add Historical Players", "team");
+
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { addHistoricalPlayers } from "@/lib/actions";

@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Add Table Zone", "group");
+
 import Link from "next/link";
 
 export default async function AddZonePage({ params }: { params: Promise<{ id: string }> }) {

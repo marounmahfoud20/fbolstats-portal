@@ -1,3 +1,5 @@
+export const metadata = { title: "Venue Search" };
+
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { PlusCircle } from "lucide-react";

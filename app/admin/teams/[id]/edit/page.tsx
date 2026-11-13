@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Edit Team", "team");
+
 import { updateTeam } from '@/lib/actions';
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';

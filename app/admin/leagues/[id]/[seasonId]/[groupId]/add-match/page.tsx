@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Add Match", "group", {"idParam":"groupId"});
+
 import prisma from "@/lib/prisma";
 import { createSingleMatch } from "@/lib/actions";
 

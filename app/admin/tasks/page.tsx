@@ -1,3 +1,5 @@
+export const metadata = { title: "Tasks" };
+
 import prisma from "@/lib/prisma";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";

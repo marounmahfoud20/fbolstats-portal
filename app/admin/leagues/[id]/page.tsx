@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Competition", "league");
+
 import prisma from "@/lib/prisma";
 import RetroLeagueView from "./RetroLeagueView";
 import { redirect } from "next/navigation";

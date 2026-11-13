@@ -1,3 +1,5 @@
+export const metadata = { title: "Add Venue" };
+
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";

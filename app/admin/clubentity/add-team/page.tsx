@@ -1,3 +1,5 @@
+export const metadata = { title: "Add Club Entity" };
+
 import { createClubEntity } from '@/lib/actions';
 import PlaceOfBirthInput from '@/components/PlaceOfBirthInput';
 import AddressMapPicker from '@/components/AddressMapPicker';

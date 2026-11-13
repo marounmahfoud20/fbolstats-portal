@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Season / Edition Settings", "season");
+
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -91,4 +95,3 @@ export default async function SeasonSettingsPage({ params }: { params: Promise<{
     </div>
   );
 }
-

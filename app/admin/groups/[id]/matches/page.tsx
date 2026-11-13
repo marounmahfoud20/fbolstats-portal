@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Manage Group Matches", "group");
+
 import Link from "next/link";
 
 export default async function ManageMatchesPage({ params }: { params: Promise<{ id: string }> }) {

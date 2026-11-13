@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Round Hub", "group", {"idParam":"groupId"});
+
 import Link from 'next/link';
 import { Plus, RefreshCw } from 'lucide-react';
 

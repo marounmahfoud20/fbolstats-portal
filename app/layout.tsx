@@ -13,7 +13,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FbolStats Portal",
+  title: {
+    default: "FbolStats Portal",
+    template: "%s | FbolStats",
+  },
   description: "Modern football operations and statistics portal",
 };
 

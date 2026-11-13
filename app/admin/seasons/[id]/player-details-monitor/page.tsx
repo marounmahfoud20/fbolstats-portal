@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Player Details Monitor", "season");
+
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -152,4 +156,3 @@ export default async function SeasonPlayerDetailsMonitorPage(props: { params: Pr
     </div>
   );
 }
-

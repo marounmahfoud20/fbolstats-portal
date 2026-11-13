@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Round Teams", "group", {"idParam":"groupId"});
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();

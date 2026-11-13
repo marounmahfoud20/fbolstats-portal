@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Player Rankings", "season", {"titleParam":"ranking","titles":{"goalscorers":"Goalscorers","own-goals":"Own Goals","clean-sheets":"Clean Sheets","bookings":"Bookings","assists":"Assists"}});
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";

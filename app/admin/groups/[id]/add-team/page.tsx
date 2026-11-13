@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Add / Edit Group Teams", "group");
+
 import Link from "next/link";
 
 export default async function AddGroupTeamPage({ params }: { params: Promise<{ id: string }> }) {

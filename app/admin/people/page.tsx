@@ -1,3 +1,5 @@
+export const metadata = { title: "People Search" };
+
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
 import prisma from '@/lib/prisma';

@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Exit Players", "team");
+
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { exitTeamPlayers } from "@/lib/actions";

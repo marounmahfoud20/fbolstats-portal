@@ -1,3 +1,5 @@
+export const metadata = { title: "Administrator Accounts" };
+
 import prisma from "@/lib/prisma";
 import { createAdminAccount, deleteAdminAccount, updateAdminAccount } from "@/lib/actions";
 import { cookies } from "next/headers";

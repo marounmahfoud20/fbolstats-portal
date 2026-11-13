@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Player Statistics", "team", {"titleParam":"kind","titles":{"appearances":"Top Appearances","goals":"Top Goalscorer","assists":"Top Assists"}});
+
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';

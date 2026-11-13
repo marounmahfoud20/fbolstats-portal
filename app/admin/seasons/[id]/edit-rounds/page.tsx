@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Edit Rounds", "season");
+
 import Link from "next/link";
 
 export default async function EditRoundsPage({ params }: { params: Promise<{ id: string }> }) {

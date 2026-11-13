@@ -1,3 +1,7 @@
+import { createNationalTeamMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createNationalTeamMetadata(true);
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";

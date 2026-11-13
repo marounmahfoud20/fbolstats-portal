@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Manage Seasons / Editions", "league");
+
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { bulkUpdateSeasons } from "@/lib/actions";

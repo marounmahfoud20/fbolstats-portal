@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Edit Current Players", "team");
+
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { bulkUpdateActivePlayers } from "@/lib/actions";

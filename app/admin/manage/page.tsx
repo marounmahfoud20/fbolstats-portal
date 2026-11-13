@@ -1,3 +1,5 @@
+export const metadata = { title: "Manage Competitions" };
+
 import CategoryRow from "./CategoryRow";
 import prisma from "@/lib/prisma";
 import ManageRow from "./ManageRow";

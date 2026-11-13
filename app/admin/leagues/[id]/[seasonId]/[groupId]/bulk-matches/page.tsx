@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Add Multiple Matches", "group", {"idParam":"groupId"});
+
 import prisma from "@/lib/prisma";
 import { createBulkMatches } from "@/lib/actions";
 import CsvUploader from "@/components/CsvUploader";

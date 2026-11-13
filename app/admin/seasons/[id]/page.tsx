@@ -1,3 +1,7 @@
+import { createEntityMetadata } from "@/lib/page-metadata";
+
+export const generateMetadata = createEntityMetadata("Season / Edition", "season");
+
 import prisma from "@/lib/prisma";
 import RetroSeasonHub from "./RetroSeasonHub";
 import Link from "next/link";
