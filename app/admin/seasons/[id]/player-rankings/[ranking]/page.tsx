@@ -165,7 +165,8 @@ export default async function SeasonPlayerRankingPage({
   if (!season) notFound();
 
   const rowsMap = new Map<number, Row>();
-  const increment = (person: { id: number; nationality: string | null; commonName: string | null; firstName: string | null; lastName: string | null }, value = 1) => {
+  const increment = (person: { id: number; nationality: string | null; commonName: string | null; firstName: string | null; lastName: string | null } | null, value = 1) => {
+    if (!person) return;
     const existing = rowsMap.get(person.id);
     if (existing) {
       existing.count += value;

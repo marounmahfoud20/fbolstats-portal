@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest, NextFetchEvent } from 'next/server';
 import prisma from '@/lib/prisma';
 import { scryptSync, timingSafeEqual } from 'crypto';
 import { createAdminSessionValue, getAdminSessionCookieName, readAdminUserFromSessionValue } from '@/lib/adminAuth';
+import { recordAdminActivity } from '@/lib/activity-log';
 
 function parseBasicAuth(header: string | null): { user: string; pwd: string } | null {
   const match = header?.match(/^Basic\s+(.+)$/i);
@@ -38,7 +39,7 @@ async function verifyAdminAccountCredentials(username: string, password: string)
   return !!account?.isActive && verifyPassword(password, account.passwordHash);
 }
 
-export async function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest, event: NextFetchEvent) {
   const pathname = req.nextUrl.pathname;
   const cookieName = getAdminSessionCookieName();
   const sessionUser = readAdminUserFromSessionValue(req.cookies.get(cookieName)?.value);
@@ -46,12 +47,23 @@ export async function proxy(req: NextRequest) {
   const isLoginApi = pathname === '/api/admin-auth';
   const isNextAsset = pathname.startsWith('/_next/') || pathname === '/favicon.ico' || pathname === '/robots.txt';
 
+  const authorizedResponse = (username: string, signedIn = false) => {
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-admin-activity-path', pathname);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    if (signedIn) event.waitUntil(recordAdminActivity({ username, kind: 'login', action: 'Sign in', path: '/login' }));
+    if (req.method === 'GET' && pathname.startsWith('/admin') && !req.headers.get('purpose')?.includes('prefetch') && !req.headers.get('sec-purpose')?.includes('prefetch')) {
+      event.waitUntil(recordAdminActivity({ username, kind: 'page_view', action: 'Open page', path: pathname }));
+    }
+    return response;
+  };
+
   if (isLoginPath || isLoginApi || isNextAsset) {
     if (sessionUser && isLoginPath) return NextResponse.redirect(new URL('/', req.url));
     return NextResponse.next();
   }
 
-  if (sessionUser) return NextResponse.next();
+  if (sessionUser) return authorizedResponse(sessionUser);
 
   // Keep the legacy backend Basic Auth entry point, while issuing the same site session.
   const hostname = (req.headers.get('host') || '').toLowerCase().split(':')[0];
@@ -61,7 +73,7 @@ export async function proxy(req: NextRequest) {
       try {
         if (await verifyAdminAccountCredentials(creds.user, creds.pwd)) {
           const sessionValue = createAdminSessionValue(creds.user);
-          const response = NextResponse.next();
+          const response = authorizedResponse(normalizeUsername(creds.user), true);
           if (sessionValue) response.cookies.set(cookieName, sessionValue, {
             httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 12,
           });
@@ -74,7 +86,7 @@ export async function proxy(req: NextRequest) {
       const envPassword = process.env.ADMIN_PASSWORD || '';
       if (envUser && envPassword && normalizeUsername(creds.user) === envUser && creds.pwd === envPassword) {
         const sessionValue = createAdminSessionValue(creds.user);
-        const response = NextResponse.next();
+        const response = authorizedResponse(normalizeUsername(creds.user), true);
         if (sessionValue) response.cookies.set(cookieName, sessionValue, {
           httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 60 * 60 * 12,
         });

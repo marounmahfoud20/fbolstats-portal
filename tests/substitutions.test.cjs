@@ -56,3 +56,7 @@ test('legacy event names and inline added time are respected', () => {
 test('opponent events do not alter the selected team', () => {
   assert.deepEqual([...playersOnField(appearances, [{ ...event(1, 'sub_out', '20'), teamId: 20 }], 10, [30, 0])], [1, 2]);
 });
+
+test('a team-only own goal does not change players on the field', () => {
+  assert.deepEqual([...playersOnField(appearances, [event(null, 'own_goal', '52')], 10, [60, 0])], [1, 2]);
+});

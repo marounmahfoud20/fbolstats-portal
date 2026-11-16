@@ -1,5 +1,7 @@
 "use server";
 
+import { withAdminActivity } from "@/lib/admin-activity";
+
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -8,6 +10,7 @@ import { getAdminUserFromCookies } from "@/lib/adminAuth";
 import { isNationalTeamSection, NATIONAL_TEAM_SECTIONS, nationalCompetitionHref } from "@/lib/national-competitions";
 
 export async function createNationalCompetition(formData: FormData) {
+  return withAdminActivity("createNationalCompetition", { formData }, async () => {
   if (!getAdminUserFromCookies(await cookies())) throw new Error("Sign in to create a competition.");
   const section = String(formData.get("section") || "");
   const name = String(formData.get("name") || "").trim();
@@ -23,4 +26,6 @@ export async function createNationalCompetition(formData: FormData) {
   });
   revalidatePath(`/admin/national-teams/${section}`);
   redirect(nationalCompetitionHref(section, competition.id));
+
+  });
 }

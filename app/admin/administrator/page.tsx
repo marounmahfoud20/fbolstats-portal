@@ -1,6 +1,7 @@
 export const metadata = { title: "Administrator Accounts" };
 
 import prisma from "@/lib/prisma";
+import Link from "next/link";
 import { createAdminAccount, deleteAdminAccount, updateAdminAccount } from "@/lib/actions";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -64,7 +65,7 @@ export default async function AdministratorPage() {
             </div>
           ) : (
             accounts.map((a) => (
-              <form key={a.id} action={updateAdminAccount} className="grid grid-cols-1 gap-2 border border-[#040f4f]/30 bg-white p-3 md:grid-cols-[70px_1fr_1fr_160px_auto_auto] md:items-end">
+              <form key={a.id} action={updateAdminAccount} className="grid grid-cols-1 gap-2 border border-[#040f4f]/30 bg-white p-3 md:grid-cols-2 xl:grid-cols-[70px_1fr_1fr_160px_auto_auto_auto] md:items-end">
                 <input type="hidden" name="id" value={a.id} />
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-[#040f4f]/70">ID</label>
@@ -100,6 +101,9 @@ export default async function AdministratorPage() {
                 >
                   Delete
                 </button>
+                <Link href={`/admin/administrator/${a.id}/activity`} className="border border-[#040f4f] bg-[#f4a01c] px-3 py-2 text-center text-xs font-bold text-[#040f4f] hover:bg-orange-400">
+                  Activity Logs
+                </Link>
               </form>
             ))
           )}

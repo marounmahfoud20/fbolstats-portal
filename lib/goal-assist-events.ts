@@ -1,7 +1,7 @@
 type GoalAssistEvent = {
   id: number;
   matchId?: number;
-  personId: number;
+  personId: number | null;
   teamId: number | null;
   eventType: string;
   minute: string | null;

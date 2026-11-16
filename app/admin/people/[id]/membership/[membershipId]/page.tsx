@@ -5,43 +5,10 @@ export const generateMetadata = createEntityMetadata("Membership Details", "pers
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { groupMembershipAppearances, membershipCleanSheet } from "@/lib/membership-appearances";
 
 function personName(first?: string | null, last?: string | null, common?: string | null) {
   return common || `${first || ""} ${last || ""}`.trim() || "Unknown";
-}
-
-function parseCountryFromCompetition(name: string) {
-  if (name.includes(" - ")) return name.split(" - ")[0].trim();
-  if (name.toLowerCase().includes("leban")) return "Lebanon";
-  return "N/A";
-}
-
-function countryToCode(country: string) {
-  const key = country.trim().toLowerCase();
-  const map: Record<string, string> = {
-    lebanon: "LB",
-    world: "UN",
-    england: "GB",
-    "united kingdom": "GB",
-    france: "FR",
-    germany: "DE",
-    italy: "IT",
-    spain: "ES",
-    portugal: "PT",
-    brazil: "BR",
-    argentina: "AR",
-    "united states": "US",
-  };
-  return map[key] || (country.length === 2 ? country.toUpperCase() : "");
-}
-
-function codeToFlag(code: string) {
-  if (!code || code.length !== 2 || code === "UN") return "🌍";
-  return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)));
-}
-
-function countryFlag(country: string) {
-  return codeToFlag(countryToCode(country));
 }
 
 function toNum(v?: string | null) {
@@ -93,8 +60,10 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
       personId,
       teamId: membership.teamId,
       match: {
-        ...(membership.startDate ? { date: { gte: membership.startDate } } : {}),
-        ...(membership.endDate ? { date: { lte: membership.endDate } } : {}),
+        date: {
+          ...(membership.startDate ? { gte: membership.startDate } : {}),
+          ...(membership.endDate ? { lte: membership.endDate } : {}),
+        },
       },
     },
     include: {
@@ -110,7 +79,10 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
     orderBy: [{ match: { date: "desc" } }, { match: { time: "desc" } }],
   });
 
-  const matchRows = appearances.map((a) => {
+  const goalkeeperMatches = new Set(appearances.filter((a) => a.role.toLowerCase() === "goalkeeper").map((a) => a.matchId));
+  const goalkeeperPosition = membership.person.position?.toLowerCase().includes("goal") ?? false;
+
+  const matchRows = groupMembershipAppearances(appearances).map(({ appearance: a, captain }) => {
     const personEvents = a.match.events.filter((e) => e.personId === personId && e.teamId === membership.teamId);
     const goals = personEvents.filter((e) => e.eventType === "goal").length;
     const penaltyGoals = personEvents.filter((e) => e.eventType === "penalty_goal").length;
@@ -127,7 +99,6 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
       matchId: a.match.id,
       date: a.match.date || "",
       time: a.match.time || "",
-      country: parseCountryFromCompetition(a.match.group.season.league.competitionName),
       competition: a.match.group.season.league.competitionName,
       season: a.match.group.season.name,
       shirt,
@@ -136,6 +107,12 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
       goalsA: a.match.meta?.ftA || "",
       goalsB: a.match.meta?.ftB || "",
       minutes,
+      cleanSheets: membershipCleanSheet({
+        role: a.role,
+        isGoalkeeper: goalkeeperPosition || goalkeeperMatches.has(a.matchId),
+        teamName: membership.team.name,
+        match: a.match,
+      }),
       starterBench: a.role.toLowerCase() === "starter" ? "Starter" : "Bench",
       goals,
       penaltyGoals,
@@ -147,27 +124,27 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
       subIn,
       subOut,
       unusedSub: a.role.toLowerCase() === "substitute" && subIn === 0 ? 1 : 0,
-      captain: 0,
+      captain: captain ? 1 : 0,
     };
   });
 
   const grouped = new Map<string, typeof matchRows>();
   for (const r of matchRows) {
-    const key = `${r.country}|${r.competition}|${r.season}`;
+    const key = JSON.stringify([r.competition, r.season]);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key)!.push(r);
   }
 
   const careerRows = Array.from(grouped.entries()).map(([key, rows]) => {
-    const [country, competition, season] = key.split("|");
+    const [competition, season] = JSON.parse(key) as [string, string];
     const shirtNumbers = Array.from(new Set(rows.map((r) => r.shirt).filter(Boolean))).join(", ");
     return {
-      country,
       competition,
       season,
       shirtNumbers: shirtNumbers || "-",
       appearances: rows.length,
       minutesPlayed: rows.reduce((s, r) => s + r.minutes, 0),
+      cleanSheets: rows.reduce((s, r) => s + r.cleanSheets, 0),
       goals: rows.reduce((s, r) => s + r.goals + r.penaltyGoals, 0),
       assists: rows.reduce((s, r) => s + r.assists, 0),
       ownGoals: rows.reduce((s, r) => s + r.ownGoals, 0),
@@ -184,6 +161,7 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
   const careerTotals = careerRows.reduce((totals, row) => ({
     appearances: totals.appearances + row.appearances,
     minutesPlayed: totals.minutesPlayed + row.minutesPlayed,
+    cleanSheets: totals.cleanSheets + row.cleanSheets,
     goals: totals.goals + row.goals,
     assists: totals.assists + row.assists,
     ownGoals: totals.ownGoals + row.ownGoals,
@@ -197,6 +175,7 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
   }), {
     appearances: 0,
     minutesPlayed: 0,
+    cleanSheets: 0,
     goals: 0,
     assists: 0,
     ownGoals: 0,
@@ -210,7 +189,7 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
   });
 
   return (
-    <div className="p-6">
+    <div className="min-w-0 p-2 sm:p-4 lg:p-6">
       <div className="mb-4 border border-[#040f4f] bg-[#f4a01c] p-2 text-[#040f4f]">
         <span className="font-bold">{personName(membership.person.firstName, membership.person.lastName, membership.person.commonName)} - Player Details</span>
         <span className="float-right">
@@ -218,8 +197,8 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
         </span>
       </div>
 
-      <div className="mb-4 flex gap-4 border border-[#040f4f] bg-white p-4 text-sm text-[#040f4f]">
-        <div className="flex-1 grid grid-cols-2 gap-y-1">
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row border border-[#040f4f] bg-white p-4 text-sm text-[#040f4f]">
+        <div className="grid min-w-0 flex-1 grid-cols-[minmax(100px,1fr)_minmax(0,1fr)] gap-x-3 gap-y-1 break-words">
           <div className="font-bold">People ID</div><div>{membership.person.id}</div>
           <div className="font-bold">Firstname</div><div>{membership.person.firstName || "N/A"}</div>
           <div className="font-bold">Lastname</div><div>{membership.person.lastName || "N/A"}</div>
@@ -231,17 +210,16 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
           <div className="font-bold">Position</div><div>{membership.person.position || "N/A"}</div>
           <div className="font-bold">Gender</div><div>{membership.person.gender || "N/A"}</div>
         </div>
-        <div className="h-[150px] w-[150px] overflow-hidden border border-[#dfdfdf] bg-gray-50">
+        <div className="h-[150px] w-[150px] shrink-0 overflow-hidden border border-[#dfdfdf] bg-gray-50">
           {membership.person.image ? <img src={membership.person.image} alt="Profile" className="h-full w-full object-cover" /> : null}
         </div>
       </div>
 
       <div className="mb-3 border border-[#040f4f] bg-[#f4a01c] p-2 font-bold text-[#040f4f]">Career Stats</div>
-      <div className="mb-6 overflow-x-auto border border-[#040f4f] bg-white p-3">
-        <table className="w-full table-fixed text-left text-[11px] text-[#040f4f]">
+      <div role="region" aria-label="Career stats ? scroll horizontally to see all columns" tabIndex={0} className="mb-6 max-w-full overflow-x-auto border border-[#040f4f] bg-white p-3">
+        <table className="w-full min-w-[1100px] table-auto whitespace-nowrap text-left text-[11px] text-[#040f4f]">
           <thead className="border-b border-[#040f4f] bg-[#f2f2f2]">
             <tr>
-              <th className="p-2 text-center"><img src="/planet.png" alt="Country Of Competition" title="Country Of Competition" className="inline-block h-4 w-4" /></th>
               <th className="p-2 text-center">
                 <svg className="inline-block h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
@@ -251,6 +229,7 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
               <th className="p-2 text-center"><img src="/plain-orange-football-shirt.svg" alt="Shirt Numbers" title="Shirt Numbers" className="inline-block h-4 w-4" /></th>
               <th className="p-2 text-center"><img src="/appearance.png" alt="Number Of Appearances" title="Number Of Appearances" className="inline-block h-4 w-4" /></th>
               <th className="p-2 text-center"><img src="/time-315.png" alt="Minutes Played" title="Minutes Played" className="inline-block h-4 w-4" /></th>
+              <th className="p-2 text-center" title="Clean Sheets">CS</th>
               <th className="p-2 text-center"><img src="/Goal.png" alt="Goals" title="Goals (Goal + Penalty Goal)" className="inline-block h-4 w-4" /></th>
               <th className="p-2 text-center"><img src="/Assist.png" alt="Assists" title="Assists" className="inline-block h-4 w-4" /></th>
               <th className="p-2 text-center"><img src="/Own Goal.png" alt="Own Goals" title="Own Goals" className="inline-block h-4 w-4" /></th>
@@ -268,12 +247,12 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
               <tr><td colSpan={16} className="p-4 text-center">No Career Stats Available.</td></tr>
             ) : careerRows.map((r, i) => (
               <tr key={`${r.competition}-${r.season}-${i}`} className="border-b border-gray-200">
-                <td className="p-1.5 whitespace-nowrap">{countryFlag(r.country)} {r.country}</td>
-                <td className="p-1.5 break-words">{r.competition}</td>
+                <td className="p-1.5 whitespace-nowrap">{r.competition}</td>
                 <td className="p-1.5 whitespace-nowrap">{r.season}</td>
                 <td className="p-1.5 text-center">{r.shirtNumbers}</td>
                 <td className="p-1.5 text-center">{r.appearances}</td>
                 <td className="p-1.5 text-center">{r.minutesPlayed}</td>
+                <td className="p-1.5 text-center">{r.cleanSheets}</td>
                 <td className="p-1.5 text-center">{r.goals}</td>
                 <td className="p-1.5 text-center">{r.assists}</td>
                 <td className="p-1.5 text-center">{r.ownGoals}</td>
@@ -290,9 +269,10 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
           {careerRows.length > 0 && (
             <tfoot className="border-t-2 border-[#040f4f] bg-[#f2f2f2] font-bold">
               <tr>
-                <td colSpan={4} className="p-2">Total</td>
+                <td colSpan={3} className="p-2">Total</td>
                 <td className="p-1.5 text-center">{careerTotals.appearances}</td>
                 <td className="p-1.5 text-center">{careerTotals.minutesPlayed}</td>
+                <td className="p-1.5 text-center">{careerTotals.cleanSheets}</td>
                 <td className="p-1.5 text-center">{careerTotals.goals}</td>
                 <td className="p-1.5 text-center">{careerTotals.assists}</td>
                 <td className="p-1.5 text-center">{careerTotals.ownGoals}</td>
@@ -310,18 +290,18 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
       </div>
 
       <div className="mb-3 border border-[#040f4f] bg-[#f4a01c] p-2 font-bold text-[#040f4f]">Matches</div>
-      <div className="overflow-x-auto border border-[#040f4f] bg-white p-3">
-        <table className="w-full table-fixed text-left text-[11px] text-[#040f4f]">
+      <div role="region" aria-label="Matches ? scroll horizontally to see all columns" tabIndex={0} className="max-w-full overflow-x-auto border border-[#040f4f] bg-white p-3">
+        <table className="w-full min-w-[1600px] table-auto whitespace-nowrap text-left text-[11px] text-[#040f4f]">
           <thead className="border-b border-[#040f4f] bg-[#f2f2f2]">
             <tr>
               <th className="p-2">Date And Time Of The Match</th>
-              <th className="p-2">Country Of Competition</th>
               <th className="p-2">Name Of Competition</th>
               <th className="p-2">Team A</th>
               <th className="p-2">Team B</th>
               <th className="p-2">Goals A</th>
               <th className="p-2">Goals B</th>
               <th className="p-2">Minutes Played</th>
+              <th className="p-2">Clean Sheets</th>
               <th className="p-2">Starter Or Bench</th>
               <th className="p-2">Goals</th>
               <th className="p-2">Penalty Goals</th>
@@ -338,13 +318,13 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
             ) : matchRows.map((m) => (
               <tr key={m.matchId} className="border-b border-gray-200">
                 <td className="p-1.5 whitespace-nowrap"><Link href={`/admin/matches/${m.matchId}`} className="font-semibold hover:underline">{m.date}{m.time ? ` ${m.time}` : ""}</Link></td>
-                <td className="p-1.5 whitespace-nowrap">{m.country}</td>
-                <td className="p-1.5 break-words">{m.competition}</td>
-                <td className="p-1.5 break-words">{m.teamA}</td>
-                <td className="p-1.5 break-words">{m.teamB}</td>
+                <td className="p-1.5 whitespace-nowrap">{m.competition}</td>
+                <td className="p-1.5 whitespace-nowrap">{m.teamA}</td>
+                <td className="p-1.5 whitespace-nowrap">{m.teamB}</td>
                 <td className="p-1.5 text-center">{m.goalsA}</td>
                 <td className="p-1.5 text-center">{m.goalsB}</td>
                 <td className="p-1.5 text-center">{m.minutes}</td>
+                <td className="p-1.5 text-center">{m.cleanSheets}</td>
                 <td className="p-1.5 text-center">{m.starterBench}</td>
                 <td className="p-1.5 text-center">{m.goals}</td>
                 <td className="p-1.5 text-center">{m.penaltyGoals}</td>

@@ -1,6 +1,6 @@
 type Appearance = { personId: number; teamId: number | null; role: string };
 type FieldEvent = {
-  personId: number;
+  personId: number | null;
   teamId: number | null;
   eventType: string;
   minute: string | null;
@@ -36,6 +36,7 @@ export function playersOnField(
     })
     .sort((a, b) => compareTime(a.time, b.time));
   for (const { event } of timeline) {
+    if (event.personId === null) continue;
     const type = event.eventType.trim().toLowerCase();
     if (["sub_in", "substitute_in", "si"].includes(type)) players.add(event.personId);
     if (["sub_out", "substitute_out", "so", "red_card", "second_yellow"].includes(type)) players.delete(event.personId);

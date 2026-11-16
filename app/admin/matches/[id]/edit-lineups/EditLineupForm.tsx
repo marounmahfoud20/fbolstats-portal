@@ -184,6 +184,41 @@ export default function EditLineupForm({
       <div className="flex-1 bg-[#030b3a] border border-[#f4a01c]/50 p-4 rounded">
         <h2 className="text-[#f4a01c] font-bold text-lg mb-4">{team.name}</h2>
 
+        {(["Starter", "Substitute"] as const).map((role) => {
+          const selectedPlayers = eligiblePlayers.filter((player) => lineupSelections[`${team.id}-${player.id}`] === role);
+          return (
+            <section key={role} className="mb-4">
+              <h3 className="font-bold bg-[#dfdfdf] text-[#040f4f] px-2 py-1 mb-2 rounded-sm">
+                {role === "Starter" ? "Starters" : "Substitutes"} ({selectedPlayers.length})
+              </h3>
+              {selectedPlayers.length === 0 && <p className="text-gray-400 italic">No players selected.</p>}
+              <div className="space-y-1">
+                {selectedPlayers.map((player) => {
+                  const name = player.commonName || `${player.firstName || ""} ${player.lastName || ""}`.trim() || `Player ${player.id}`;
+                  return (
+                    <div key={player.id} className="flex items-center gap-2 border-b border-[#f4a01c]/20 pb-1">
+                      <span className="w-12 shrink-0">
+                        <MatchShirtNumberEditor matchId={matchId} personId={player.id} playerName={name} number={initialShirts[player.id] || ""} />
+                      </span>
+                      <span className="min-w-0 flex-1 break-words">{name}</span>
+                      <select
+                        aria-label={`Lineup role for ${name} (${team.name})`}
+                        className="bg-white text-black text-xs p-1 border border-gray-400"
+                        value={role}
+                        onChange={(event) => handleLineupRoleChange(team.id, player.id, event.target.value as LineupRole)}
+                      >
+                        <option value="Starter">Starter</option>
+                        <option value="Substitute">Substitute</option>
+                        <option value="">Remove</option>
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+
         <h3 className="font-bold bg-[#dfdfdf] text-[#040f4f] px-2 py-1 mb-2 rounded-sm mt-4">Coaches / Staff</h3>
         <select
           value=""
@@ -272,6 +307,7 @@ export default function EditLineupForm({
 
   const renderEligiblePlayerColumn = (team: TeamData, players: Person[]) => {
     if (!team) return <div className="text-gray-400">Team not found in DB</div>;
+    const availablePlayers = players.filter((player) => !lineupSelections[`${team.id}-${player.id}`]);
     return (
       <div className="flex-1">
         <h3 className="font-bold text-[#040f4f] border-b border-gray-300 pb-1 mb-2">{team.name}</h3>
@@ -281,9 +317,9 @@ export default function EditLineupForm({
           <span className="text-center">No.</span>
           <span>Player</span>
         </div>
-        {players.length === 0 && <p className="text-gray-400 italic text-xs py-2">No eligible players for match date.</p>}
+        {availablePlayers.length === 0 && <p className="text-gray-400 italic text-xs py-2">{players.length === 0 ? "No eligible players for match date." : "All eligible players have been selected."}</p>}
         <div className="space-y-1">
-          {players.map((p) => {
+          {availablePlayers.map((p) => {
             const key = `${team.id}-${p.id}`;
             const currentRole = lineupSelections[key] || "";
             return (
@@ -291,6 +327,7 @@ export default function EditLineupForm({
                 <label className="flex justify-center">
                   <input
                     type="radio"
+                    aria-label={`Select ${p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim()} as starter for ${team.name}`}
                     name={`lineup-${team.id}-${p.id}`}
                     checked={currentRole === "Starter"}
                     onChange={() => handleLineupRoleChange(team.id, p.id, "Starter")}
@@ -299,6 +336,7 @@ export default function EditLineupForm({
                 <label className="flex justify-center">
                   <input
                     type="radio"
+                    aria-label={`Select ${p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim()} as substitute for ${team.name}`}
                     name={`lineup-${team.id}-${p.id}`}
                     checked={currentRole === "Substitute"}
                     onChange={() => handleLineupRoleChange(team.id, p.id, "Substitute")}

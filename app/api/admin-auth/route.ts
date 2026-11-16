@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { createAdminSessionValue, getAdminSessionCookieName, GOD_ADMIN_USERNAME } from "@/lib/adminAuth";
+import { recordAdminActivity } from "@/lib/activity-log";
 
 type AdminAuthRow = {
   passwordHash: string;
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
       path: "/",
       maxAge: 60 * 60 * 12,
     });
+    await recordAdminActivity({ username, kind: "login", action: "Sign in", path: "/login" });
     return response;
   } catch {
     return NextResponse.json({ ok: false }, { status: 500 });

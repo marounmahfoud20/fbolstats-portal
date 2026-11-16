@@ -1,5 +1,7 @@
 "use server";
 
+import { withAdminActivity } from "@/lib/admin-activity";
+
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -91,6 +93,7 @@ async function ensureGodAdminPermission() {
 }
 
 export async function createLeague(formData: FormData) {
+  return withAdminActivity("createLeague", { formData }, async () => {
   const competitionName = ((formData.get("competitionName") as string) || "").trim();
   const type = ((formData.get("type") as string) || "").trim();
   const footballTypeRaw = ((formData.get("footballType") as string) || "club").toLowerCase();
@@ -108,9 +111,12 @@ export async function createLeague(formData: FormData) {
   `;
 
   revalidatePath("/admin");
+
+  });
 }
 
 export async function createCompetitionCategory(formData: FormData) {
+  return withAdminActivity("createCompetitionCategory", { formData }, async () => {
   const name = ((formData.get("name") as string) || "").trim();
   const footballTypeRaw = ((formData.get("footballType") as string) || "club").toLowerCase();
   const footballType = footballTypeRaw === "national" ? "national" : "club";
@@ -138,9 +144,12 @@ export async function createCompetitionCategory(formData: FormData) {
   `;
 
   revalidatePath("/admin", "layout");
+
+  });
 }
 
 export async function deleteCompetitionCategory(formData: FormData) {
+  return withAdminActivity("deleteCompetitionCategory", { formData }, async () => {
   const name = ((formData.get("name") as string) || "").trim();
   const footballTypeRaw = ((formData.get("footballType") as string) || "club").toLowerCase();
   const footballType = footballTypeRaw === "national" ? "national" : "club";
@@ -167,9 +176,12 @@ export async function deleteCompetitionCategory(formData: FormData) {
   `;
 
   revalidatePath("/admin", "layout");
+
+  });
 }
 
 export async function createAdminAccount(formData: FormData) {
+  return withAdminActivity("createAdminAccount", { formData }, async () => {
   await ensureGodAdminPermission();
   await ensureAdminAccountTable();
   const username = ((formData.get("username") as string) || "").trim().toLowerCase();
@@ -184,9 +196,12 @@ export async function createAdminAccount(formData: FormData) {
   `;
 
   revalidatePath("/admin/administrator");
+
+  });
 }
 
 export async function updateAdminAccount(formData: FormData) {
+  return withAdminActivity("updateAdminAccount", { formData }, async () => {
   await ensureGodAdminPermission();
   await ensureAdminAccountTable();
   const id = Number.parseInt((formData.get("id") as string) || "", 10);
@@ -221,9 +236,12 @@ export async function updateAdminAccount(formData: FormData) {
   }
 
   revalidatePath("/admin/administrator");
+
+  });
 }
 
 export async function deleteAdminAccount(formData: FormData) {
+  return withAdminActivity("deleteAdminAccount", { formData }, async () => {
   await ensureGodAdminPermission();
   await ensureAdminAccountTable();
   const id = Number.parseInt((formData.get("id") as string) || "", 10);
@@ -236,12 +254,17 @@ export async function deleteAdminAccount(formData: FormData) {
 
   await prisma.$executeRaw`DELETE FROM "AdminAccount" WHERE "id" = ${id}`;
   revalidatePath("/admin/administrator");
+
+  });
 }
 
 export async function logout() {
+  return withAdminActivity("logout", {  }, async () => {
   const cookieStore = await cookies();
   cookieStore.delete("fbolstats_session");
   redirect("/login");
+
+  });
 }
 
 export async function verifyAdminAccountCredentials(username: string, password: string): Promise<boolean> {
@@ -262,6 +285,7 @@ export async function verifyAdminAccountCredentials(username: string, password: 
 }
 
 export async function resetAndSeedDatabase() {
+  return withAdminActivity("resetAndSeedDatabase", {  }, async () => {
   try {
     console.log("Starting database reset...");
 
@@ -308,9 +332,12 @@ export async function resetAndSeedDatabase() {
   }
 
   revalidatePath("/admin");
+
+  });
 }
 
 export async function updateLeague(formData: FormData) {
+  return withAdminActivity("updateLeague", { formData }, async () => {
   const id = parseInt(formData.get("id") as string);
   const competitionName = ((formData.get("competitionName") as string) || "").trim();
   const type = ((formData.get("type") as string) || "").trim();
@@ -328,9 +355,12 @@ export async function updateLeague(formData: FormData) {
   `;
 
   revalidatePath("/admin", "layout");
+
+  });
 }
 
 export async function deleteLeague(formData: FormData) {
+  return withAdminActivity("deleteLeague", { formData }, async () => {
   const id = parseInt(formData.get("id") as string);
 
   await prisma.league.delete({
@@ -338,9 +368,12 @@ export async function deleteLeague(formData: FormData) {
   });
 
   revalidatePath("/admin", "layout");
+
+  });
 }
 
 export async function updateCategory(formData: FormData) {
+  return withAdminActivity("updateCategory", { formData }, async () => {
   const oldType = ((formData.get("oldType") as string) || "").trim();
   const newType = ((formData.get("newType") as string) || "").trim();
   const footballTypeRaw = ((formData.get("footballType") as string) || "club").toLowerCase();
@@ -364,9 +397,12 @@ export async function updateCategory(formData: FormData) {
 
     revalidatePath("/admin", "layout");
   }
+
+  });
 }
 
 export async function createSeason(formData: FormData) {
+  return withAdminActivity("createSeason", { formData }, async () => {
   const leagueId = parseInt(formData.get("leagueId") as string);
 
   await prisma.season.create({
@@ -381,9 +417,12 @@ export async function createSeason(formData: FormData) {
   revalidatePath(`/admin/leagues/${leagueId}`);
   revalidateNationalCompetitionPages();
   redirect(`/admin/leagues/${leagueId}`);
+
+  });
 }
 
 export async function bulkUpdateSeasons(formData: FormData) {
+  return withAdminActivity("bulkUpdateSeasons", { formData }, async () => {
   const leagueId = formData.get("leagueId") as string;
   const ids = formData.getAll("seasonId");
   const titles = formData.getAll("title");
@@ -404,9 +443,12 @@ export async function bulkUpdateSeasons(formData: FormData) {
   revalidatePath(`/admin/leagues/${leagueId}`);
   revalidateNationalCompetitionPages();
   redirect(`/admin/leagues/${leagueId}`);
+
+  });
 }
 
 export async function seedFirstDivisionHistory() {
+  return withAdminActivity("seedFirstDivisionHistory", {  }, async () => {
   const seasonsToCreate = [
     "1987/1988", "1989/1990", "1990/1991", "1991/1992", "1992/1993", "1993/1994", "1994/1995",
     "1995/1996", "1996/1997", "1997/1998", "1998/1999", "2005/2006", "2006/2007", "2020/2021",
@@ -440,9 +482,12 @@ export async function seedFirstDivisionHistory() {
 
   await prisma.season.createMany({ data });
   revalidatePath(`/admin/leagues/${league.id}`);
+
+  });
 }
 
 export async function seedMatchesArchitecture() {
+  return withAdminActivity("seedMatchesArchitecture", {  }, async () => {
   const league = await prisma.league.findFirst({
     where: { competitionName: "Lebanese Men's First Division" }
   });
@@ -477,9 +522,12 @@ export async function seedMatchesArchitecture() {
 
   console.log("✅ Successfully seeded Season -> Group -> Matches architecture!");
   revalidatePath(`/admin/leagues/${league.id}`);
+
+  });
 }
 
 export async function createSingleMatch(formData: FormData) {
+  return withAdminActivity("createSingleMatch", { formData }, async () => {
   const groupId = parseInt(formData.get("groupId") as string);
   const leagueId = formData.get("leagueId") as string;
   const seasonId = formData.get("seasonId") as string;
@@ -507,9 +555,12 @@ export async function createSingleMatch(formData: FormData) {
 
   revalidatePath(`/admin/leagues/${leagueId}/${seasonId}/${groupId}/matches`);
   redirect(`/admin/leagues/${leagueId}/${seasonId}/${groupId}/matches`);
+
+  });
 }
 
 export async function createBulkMatches(formData: FormData) {
+  return withAdminActivity("createBulkMatches", { formData }, async () => {
   const groupId = parseInt(formData.get("groupId") as string);
   const leagueId = formData.get("leagueId") as string;
   const seasonId = formData.get("seasonId") as string;
@@ -551,9 +602,12 @@ export async function createBulkMatches(formData: FormData) {
 
   revalidatePath(`/admin/leagues/${leagueId}/${seasonId}/${groupId}/matches`);
   redirect(`/admin/leagues/${leagueId}/${seasonId}/${groupId}/matches`);
+
+  });
 }
 
 export async function extendSeasonDate(formData: FormData) {
+  return withAdminActivity("extendSeasonDate", { formData }, async () => {
   const seasonId = parseInt(formData.get("seasonId") as string);
   const daysToAdd = parseInt(formData.get("days") as string);
 
@@ -570,9 +624,12 @@ export async function extendSeasonDate(formData: FormData) {
   });
 
   revalidatePath("/admin/tasks");
+
+  });
 }
 
 export async function markSeasonFinished(formData: FormData) {
+  return withAdminActivity("markSeasonFinished", { formData }, async () => {
   const seasonId = parseInt(formData.get("seasonId") as string);
 
   await prisma.season.update({
@@ -581,9 +638,12 @@ export async function markSeasonFinished(formData: FormData) {
   });
 
   revalidatePath("/admin/tasks");
+
+  });
 }
 
 export async function createPerson(formData: FormData) {
+  return withAdminActivity("createPerson", { formData }, async () => {
   const firstName = ((formData.get("firstName") as string) || "").trim();
   const lastName = ((formData.get("lastName") as string) || "").trim();
   const matchName = ((formData.get("matchName") as string) || "").trim();
@@ -631,9 +691,12 @@ export async function createPerson(formData: FormData) {
 
   revalidatePath("/admin/people");
   redirect(`/admin/people/${person.id}`);
+
+  });
 }
 
 export async function updatePerson(formData: FormData) {
+  return withAdminActivity("updatePerson", { formData }, async () => {
   const id = Number.parseInt((formData.get("id") as string) || "", 10);
   if (!Number.isFinite(id)) return;
 
@@ -675,9 +738,12 @@ export async function updatePerson(formData: FormData) {
   revalidatePath(`/admin/people/${id}`);
   revalidatePath("/admin/people");
   redirect(`/admin/people/${id}`);
+
+  });
 }
 
 export async function createTeam(formData: FormData) {
+  return withAdminActivity("createTeam", { formData }, async () => {
   const incomingGender = (formData.get("gender") as string) || "male";
   const gender = incomingGender === "female" ? "female" : "male";
   const addressInput = (formData.get("address") as string) || "";
@@ -740,9 +806,12 @@ export async function createTeam(formData: FormData) {
 
   revalidatePath("/admin/teams");
   redirect(`/admin/teams/${team.id}`);
+
+  });
 }
 
 export async function updateTeam(formData: FormData) {
+  return withAdminActivity("updateTeam", { formData }, async () => {
   const id = parseInt(formData.get("id") as string);
   const incomingGender = (formData.get("gender") as string) || "male";
   const gender = incomingGender === "female" ? "female" : "male";
@@ -807,9 +876,12 @@ export async function updateTeam(formData: FormData) {
 
   revalidatePath(`/admin/teams/${id}`);
   redirect(`/admin/teams/${id}`);
+
+  });
 }
 
 export async function createClubEntity(formData: FormData) {
+  return withAdminActivity("createClubEntity", { formData }, async () => {
   const name = ((formData.get("name") as string) || "").trim();
   if (!name) return;
 
@@ -865,9 +937,12 @@ export async function createClubEntity(formData: FormData) {
 
   revalidatePath("/admin/clubentity");
   redirect(`/admin/clubentity/${clubEntityId}`);
+
+  });
 }
 
 export async function addClubEntityLogoHistory(formData: FormData) {
+  return withAdminActivity("addClubEntityLogoHistory", { formData }, async () => {
   const clubEntityId = Number.parseInt((formData.get("clubEntityId") as string) || "", 10);
   if (!clubEntityId) return;
   const logoFile = formData.get("logo") as File | null;
@@ -897,9 +972,12 @@ export async function addClubEntityLogoHistory(formData: FormData) {
 
   revalidatePath(`/admin/clubentity/${clubEntityId}`);
   redirect(`/admin/clubentity/${clubEntityId}`);
+
+  });
 }
 
 export async function updateClubEntityLogoHistory(formData: FormData) {
+  return withAdminActivity("updateClubEntityLogoHistory", { formData }, async () => {
   const clubEntityId = Number.parseInt((formData.get("clubEntityId") as string) || "", 10);
   const logoHistoryId = Number.parseInt((formData.get("logoHistoryId") as string) || "", 10);
   if (!clubEntityId || !logoHistoryId) return;
@@ -939,9 +1017,12 @@ export async function updateClubEntityLogoHistory(formData: FormData) {
 
   revalidatePath(`/admin/clubentity/${clubEntityId}`);
   redirect(`/admin/clubentity/${clubEntityId}`);
+
+  });
 }
 
 export async function deleteClubEntityLogoHistory(formData: FormData) {
+  return withAdminActivity("deleteClubEntityLogoHistory", { formData }, async () => {
   const clubEntityId = Number.parseInt((formData.get("clubEntityId") as string) || "", 10);
   const logoHistoryId = Number.parseInt((formData.get("logoHistoryId") as string) || "", 10);
   if (!clubEntityId || !logoHistoryId) return;
@@ -974,9 +1055,12 @@ export async function deleteClubEntityLogoHistory(formData: FormData) {
 
   revalidatePath(`/admin/clubentity/${clubEntityId}`);
   redirect(`/admin/clubentity/${clubEntityId}`);
+
+  });
 }
 
 export async function createTeamForClubEntity(formData: FormData) {
+  return withAdminActivity("createTeamForClubEntity", { formData }, async () => {
   const clubEntityId = Number.parseInt((formData.get("clubEntityId") as string) || "", 10);
   const name = ((formData.get("name") as string) || "").trim();
   const teamCategory = ((formData.get("teamCategory") as string) || "").trim();
@@ -1041,9 +1125,12 @@ export async function createTeamForClubEntity(formData: FormData) {
   revalidatePath(`/admin/clubentity/${clubEntityId}`);
   revalidatePath("/admin/teams");
   redirect(`/admin/clubentity/${clubEntityId}`);
+
+  });
 }
 
 export async function uploadPersonImage(formData: FormData) {
+  return withAdminActivity("uploadPersonImage", { formData }, async () => {
   const file = formData.get('file') as File;
   const personId = formData.get('personId') as string;
 
@@ -1076,6 +1163,8 @@ export async function uploadPersonImage(formData: FormData) {
   });
 
   revalidatePath(`/admin/people/${personId}`);
+
+  });
 }
 
 export async function searchTeams(query: string, genderFilter: string = "both") {
@@ -1105,6 +1194,7 @@ export async function searchTeams(query: string, genderFilter: string = "both") 
 }
 
 export async function addMembership(formData: FormData) {
+  return withAdminActivity("addMembership", { formData }, async () => {
   const personId = parseInt(formData.get("personId") as string);
   const teamId = parseInt(formData.get("teamId") as string);
   const role = formData.get("role") as string;
@@ -1138,8 +1228,11 @@ export async function addMembership(formData: FormData) {
   revalidatePath(`/admin/teams/${teamId}`);
 
   redirect(`/admin/people/${personId}`);
+
+  });
 }
 export async function bulkUpdateMemberships(formData: FormData) {
+  return withAdminActivity("bulkUpdateMemberships", { formData }, async () => {
   const personId = formData.get("personId") as string;
   const personIdNum = parseInt(personId, 10);
   const membershipIds = formData.getAll("membershipId"); // Gets all the hidden IDs from the form loop
@@ -1229,9 +1322,12 @@ export async function bulkUpdateMemberships(formData: FormData) {
   revalidatePath(`/admin/people/${personId}`);
   revalidatePath(`/admin/people/${personId}/memberships/edit-all`);
   redirect(`/admin/people/${personId}`);
+
+  });
 }
 
 export async function updateMembership(formData: FormData) {
+  return withAdminActivity("updateMembership", { formData }, async () => {
   const membershipId = parseInt(formData.get("membershipId") as string);
   const personId = parseInt(formData.get("personId") as string);
   const teamId = parseInt(formData.get("teamId") as string);
@@ -1268,8 +1364,11 @@ export async function updateMembership(formData: FormData) {
   revalidatePath(`/admin/people/${personId}`);
   revalidatePath(`/admin/people/${personId}/membership/${membershipId}`);
   redirect(`/admin/people/${personId}`);
+
+  });
 }
 export async function addMultipleClubPlayers(teamId: number, formData: FormData) {
+  return withAdminActivity("addMultipleClubPlayers", { teamId, formData }, async () => {
   const parsedTeamId = typeof teamId === 'string' ? parseInt(teamId) : teamId;
 
   // We loop through the form data and create them one by one so we can create the Membership relation simultaneously
@@ -1333,8 +1432,11 @@ export async function addMultipleClubPlayers(teamId: number, formData: FormData)
 
   revalidatePath(`/admin/teams/${parsedTeamId}`);
   redirect(`/admin/teams/${parsedTeamId}`);
+
+  });
 }
 export async function addTeamToSeason(formData: FormData) {
+  return withAdminActivity("addTeamToSeason", { formData }, async () => {
   const seasonId = parseInt(formData.get("seasonId") as string);
   const teamId = parseInt(formData.get("teamId") as string);
 
@@ -1355,8 +1457,11 @@ export async function addTeamToSeason(formData: FormData) {
   }
 
   revalidatePath(`/admin/seasons/${seasonId}`);
+
+  });
 }
 export async function addMatchToRound(formData: FormData) {
+  return withAdminActivity("addMatchToRound", { formData }, async () => {
   const groupId = parseInt(formData.get("groupId") as string);
   const teamA = formData.get("teamA") as string;
   const teamB = formData.get("teamB") as string;
@@ -1382,8 +1487,11 @@ export async function addMatchToRound(formData: FormData) {
 
   // Instantly refresh the specific Round page
   revalidatePath(`/admin/rounds/${groupId}`);
+
+  });
 }
 export async function addGroupToSeason(formData: FormData) {
+  return withAdminActivity("addGroupToSeason", { formData }, async () => {
   const seasonId = parseInt(formData.get("seasonId") as string);
   const name = formData.get("name") as string;
 
@@ -1397,8 +1505,11 @@ export async function addGroupToSeason(formData: FormData) {
   });
 
   revalidatePath(`/admin/seasons/${seasonId}`);
+
+  });
 }
 export async function addTeamToRound(formData: FormData) {
+  return withAdminActivity("addTeamToRound", { formData }, async () => {
   const groupId = parseInt(formData.get("groupId") as string);
   const teamId = parseInt(formData.get("teamId") as string);
 
@@ -1416,9 +1527,12 @@ export async function addTeamToRound(formData: FormData) {
   }
 
   revalidatePath(`/admin/rounds/${groupId}`);
+
+  });
 }
 
 export async function addHistoricalPlayers(formData: FormData) {
+  return withAdminActivity("addHistoricalPlayers", { formData }, async () => {
   const teamId = parseInt(formData.get("teamId") as string);
   if (!teamId) return;
 
@@ -1464,9 +1578,12 @@ export async function addHistoricalPlayers(formData: FormData) {
 
   revalidatePath(`/admin/teams/${teamId}`);
   redirect(`/admin/teams/${teamId}`);
+
+  });
 }
 
 export async function bulkUpdateActivePlayers(formData: FormData) {
+  return withAdminActivity("bulkUpdateActivePlayers", { formData }, async () => {
   const teamId = parseInt(formData.get("teamId") as string);
   if (!teamId) return;
 
@@ -1512,9 +1629,12 @@ export async function bulkUpdateActivePlayers(formData: FormData) {
 
   revalidatePath(`/admin/teams/${teamId}`);
   redirect(`/admin/teams/${teamId}`);
+
+  });
 }
 
 export async function exitTeamPlayers(formData: FormData) {
+  return withAdminActivity("exitTeamPlayers", { formData }, async () => {
   const teamId = parseInt(formData.get("teamId") as string);
   if (!teamId) return;
 
@@ -1544,9 +1664,12 @@ export async function exitTeamPlayers(formData: FormData) {
 
   revalidatePath(`/admin/teams/${teamId}`);
   redirect(`/admin/teams/${teamId}`);
+
+  });
 }
 
 export async function updateSeasonSettings(formData: FormData) {
+  return withAdminActivity("updateSeasonSettings", { formData }, async () => {
   const seasonId = parseInt(formData.get("seasonId") as string);
   const leagueId = parseInt(formData.get("leagueId") as string);
   if (!seasonId || !leagueId) return;
@@ -1577,4 +1700,6 @@ export async function updateSeasonSettings(formData: FormData) {
   revalidatePath(`/admin/leagues/${leagueId}`);
   revalidateNationalCompetitionPages();
   redirect(`/admin/seasons/${seasonId}`);
+
+  });
 }

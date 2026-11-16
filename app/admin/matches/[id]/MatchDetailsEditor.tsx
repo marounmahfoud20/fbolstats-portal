@@ -5,6 +5,7 @@ import { saveGroupName, saveMatchCore, saveMatchEventEntry, saveMatchMeta, saveM
 import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
 import { combineGoalAndAssistEvents } from "@/lib/goal-assist-events";
 import { matchTime, playersOnField } from "@/lib/substitutions";
+import { saveTeamOwnGoal } from "@/lib/team-own-goal-actions";
 
 type Person = {
   id: number;
@@ -133,6 +134,8 @@ export default function MatchDetailsEditor({
     groupId: number;
     teamA: string;
     teamB: string;
+    teamAId: number | null;
+    teamBId: number | null;
     date: string | null;
     time: string | null;
     status: string;
@@ -157,7 +160,7 @@ export default function MatchDetailsEditor({
   } | null;
   initialEvents: {
     id: number;
-    personId: number;
+    personId: number | null;
     assistPersonId: number | null;
     teamId: number | null;
     eventType: string;
@@ -174,6 +177,24 @@ export default function MatchDetailsEditor({
   initialShirts: Record<number, string>;
 }) {
   const [saving, setSaving] = useState<string | null>(null);
+  const [ownGoal, setOwnGoal] = useState<{ teamId: string; minute: string; extraTime: string; eventId?: number } | null>(null);
+  const [ownGoalError, setOwnGoalError] = useState("");
+  const [savingOwnGoal, setSavingOwnGoal] = useState(false);
+  const saveOwnGoal = async () => {
+    if (!ownGoal || savingOwnGoal) return;
+    setSavingOwnGoal(true);
+    setOwnGoalError("");
+    try {
+      const result = await saveTeamOwnGoal(match.id, { ...ownGoal, teamId: Number(ownGoal.teamId) });
+      if (!result.ok) { setOwnGoalError(result.error); return; }
+      setEventRows((previous) => [...previous.filter((event) => event.id !== result.event.id), result.event]);
+      setOwnGoal(null);
+    } catch {
+      setOwnGoalError("Could not save the own goal. Please try again.");
+    } finally {
+      setSavingOwnGoal(false);
+    }
+  };
   const [matchInfo, setMatchInfo] = useState({ date: match.date || "", time: match.time || "", round: match.roundName, status: match.status || "" });
   const [extras, setExtras] = useState({ venue: match.venue || "", spectators: initialMeta?.spectators || "" });
   const [scores, setScores] = useState({
@@ -268,6 +289,11 @@ export default function MatchDetailsEditor({
   };
 
   const editEvent = (event: (typeof eventRows)[number]) => {
+    if (event.personId === null) {
+      setOwnGoal({ eventId: event.id, teamId: String(event.teamId || ""), minute: event.minute || "", extraTime: event.extraTime || "" });
+      setOwnGoalError("");
+      return;
+    }
     if (event.substitutionId) {
       const incomingEvent = eventRows.find((entry) => entry.substitutionId === event.substitutionId && entry.eventType === "sub_in");
       const incoming = appearances.find((a) => a.person.id === incomingEvent?.personId && a.teamId === event.teamId && a.role === "Substitute");
@@ -672,7 +698,34 @@ export default function MatchDetailsEditor({
           ) : null}
 
           <div className="border border-[#c50000] bg-white rounded-md overflow-hidden">
-            <div className="bg-[#f3f4f6] border-b border-[#c50000] text-left text-[20px] font-bold px-3 py-1">Match Events</div>
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-[#f3f4f6] border-b border-[#c50000] px-3 py-1">
+              <h2 className="text-[20px] font-bold">Match Events</h2>
+              <button type="button" onClick={() => { setOwnGoal({ teamId: "", minute: "", extraTime: "" }); setOwnGoalError(""); }} className="rounded border border-[#040f4f] bg-[#f4a01c] px-3 py-1 text-xs font-bold text-[#040f4f]">Add Team Own Goal</button>
+            </div>
+            {ownGoal && (
+              <form onSubmit={(event) => { event.preventDefault(); void saveOwnGoal(); }} className="m-3 space-y-3 rounded border border-gray-300 bg-orange-50 p-3 text-sm">
+                <h3 className="font-bold">{ownGoal.eventId ? "Edit" : "Add"} Team Own Goal</h3>
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="flex flex-col gap-1">Team committing the own goal
+                    <select required disabled={savingOwnGoal} value={ownGoal.teamId} onChange={(event) => setOwnGoal({ ...ownGoal, teamId: event.target.value })} className="border border-gray-400 bg-white p-1">
+                      <option value="">Choose team</option>
+                      {match.teamAId && <option value={match.teamAId}>{match.teamA}</option>}
+                      {match.teamBId && <option value={match.teamBId}>{match.teamB}</option>}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1">Minute
+                    <input required disabled={savingOwnGoal} value={ownGoal.minute} onChange={(event) => setOwnGoal({ ...ownGoal, minute: event.target.value })} placeholder="52 or 90+3" className="w-28 border border-gray-400 bg-white p-1" />
+                  </label>
+                  <label className="flex flex-col gap-1">Added time
+                    <input disabled={savingOwnGoal} value={ownGoal.extraTime} onChange={(event) => setOwnGoal({ ...ownGoal, extraTime: event.target.value })} placeholder="Optional" inputMode="numeric" className="w-24 border border-gray-400 bg-white p-1" />
+                  </label>
+                  <button type="submit" disabled={savingOwnGoal} className="rounded bg-[#f4a01c] px-3 py-1 font-bold disabled:opacity-50">{savingOwnGoal ? "Saving..." : "Save Own Goal"}</button>
+                  <button type="button" disabled={savingOwnGoal} onClick={() => setOwnGoal(null)} className="px-2 py-1 underline">Cancel</button>
+                </div>
+                {ownGoal.teamId && <p className="text-xs">Own goal committed by {Number(ownGoal.teamId) === match.teamAId ? match.teamA : match.teamB}, benefiting {Number(ownGoal.teamId) === match.teamAId ? match.teamB : match.teamA}. No player is attributed.</p>}
+                {ownGoalError && <p role="alert" className="text-red-700">{ownGoalError}</p>}
+              </form>
+            )}
             <div className="p-3">
               {eventRows.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500">No match events yet.</div>

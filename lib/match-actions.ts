@@ -1,5 +1,7 @@
 "use server";
 
+import { withAdminActivity } from "@/lib/admin-activity";
+
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -18,6 +20,7 @@ export async function saveMatchSubstitution(matchId: number, payload: {
   extraTime: string;
   reason?: string;
 }) {
+  return withAdminActivity("saveMatchSubstitution", { matchId, payload }, async () => {
   if (!getAdminUserFromCookies(await cookies())) return { ok: false as const, error: "Please sign in to save substitutions." };
   const time = matchTime(payload.minute, payload.extraTime);
   const reason = payload.reason?.trim() || "";
@@ -61,7 +64,7 @@ export async function saveMatchSubstitution(matchId: number, payload: {
         minute: event.minute, extraTime: event.extraTime, substitutionId: event.substitutionId,
         substitutionReason: event.substitutionReason, goalType: event.goalType, bookingReason: event.bookingReason,
         assistPersonId: null, assistPlayerName: null,
-        playerName: event.person.commonName || `${event.person.firstName || ""} ${event.person.lastName || ""}`.trim() || `Player ${event.personId}`,
+        playerName: event.person?.commonName || `${event.person?.firstName || ""} ${event.person?.lastName || ""}`.trim() || `Player ${event.personId}`,
         teamName: event.team?.name || null,
       }));
     }, { isolationLevel: "Serializable", maxWait: 10000, timeout: 15000 });
@@ -70,9 +73,12 @@ export async function saveMatchSubstitution(matchId: number, payload: {
   } catch (error) {
     return { ok: false as const, error: error instanceof SubstitutionValidationError ? error.message : "Could not save the substitution. Please try again." };
   }
+
+  });
 }
 
 export async function saveMatchLineups(matchId: number, appearances: { personId: number, teamId: number, role: string }[]) {
+  return withAdminActivity("saveMatchLineups", { matchId, appearances }, async () => {
   // Delete all existing appearances for this match that are NOT Referees
   // Referees have teamId = null
   await prisma.matchAppearance.deleteMany({
@@ -95,12 +101,15 @@ export async function saveMatchLineups(matchId: number, appearances: { personId:
   }
 
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }
 
 export async function saveMatchCore(
   matchId: number,
   payload: { date?: string; time?: string; status?: string; venue?: string }
 ) {
+  return withAdminActivity("saveMatchCore", { matchId, payload }, async () => {
   await prisma.match.update({
     where: { id: matchId },
     data: {
@@ -111,14 +120,19 @@ export async function saveMatchCore(
     },
   });
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }
 
 export async function saveGroupName(groupId: number, name: string, matchId: number) {
+  return withAdminActivity("saveGroupName", { groupId, name, matchId }, async () => {
   await prisma.group.update({
     where: { id: groupId },
     data: { name },
   });
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }
 
 export async function saveMatchReferees(
@@ -130,6 +144,7 @@ export async function saveMatchReferees(
     fourthOfficialId?: number | null;
   }
 ) {
+  return withAdminActivity("saveMatchReferees", { matchId, refs }, async () => {
   await prisma.matchAppearance.deleteMany({
     where: {
       matchId,
@@ -149,6 +164,8 @@ export async function saveMatchReferees(
   }
 
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }
 
 export async function saveMatchMeta(
@@ -165,12 +182,15 @@ export async function saveMatchMeta(
     pkB?: string;
   }
 ) {
+  return withAdminActivity("saveMatchMeta", { matchId, payload }, async () => {
   await prisma.matchMeta.upsert({
     where: { matchId },
     create: { matchId, ...payload },
     update: payload,
   });
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }
 
 export async function saveMatchEventEntry(
@@ -187,6 +207,7 @@ export async function saveMatchEventEntry(
     bookingReason?: string;
   }
 ) {
+  return withAdminActivity("saveMatchEventEntry", { matchId, payload }, async () => {
   try {
     if (payload.eventId) {
       await prisma.matchEvent.update({
@@ -243,13 +264,18 @@ export async function saveMatchEventEntry(
     }
   }
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }
 
 export async function saveMatchShirtNumber(matchId: number, personId: number, number: string) {
+  return withAdminActivity("saveMatchShirtNumber", { matchId, personId, number }, async () => {
   await prisma.matchShirtNumber.upsert({
     where: { matchId_personId: { matchId, personId } },
     create: { matchId, personId, number },
     update: { number },
   });
   revalidatePath(`/admin/matches/${matchId}`);
+
+  });
 }

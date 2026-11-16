@@ -125,12 +125,20 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
         </div>
       </div>
 
+      <div className="mb-3 flex justify-end">
+        <Link href={`/admin/matches/${matchId}/delete-events`} className="rounded border border-red-800 bg-red-700 px-4 py-2 text-xs font-bold text-white hover:bg-red-800">
+          Delete Events
+        </Link>
+      </div>
+
       <MatchDetailsEditor
         match={{
           id: match.id,
           groupId: match.groupId,
           teamA: match.teamA,
           teamB: match.teamB,
+          teamAId: teamAData?.id ?? null,
+          teamBId: teamBData?.id ?? null,
           date: match.date,
           time: match.time,
           status: match.status,
@@ -142,7 +150,7 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
         initialMeta={match.meta}
         initialEvents={match.events.map((e: {
           id: number;
-          personId: number;
+          personId: number | null;
           assistPersonId?: number | null;
           teamId: number | null;
           eventType: string;
@@ -152,7 +160,7 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
           bookingReason?: string | null;
           substitutionId: string | null;
           substitutionReason: string | null;
-          person: { id: number; firstName: string | null; lastName: string | null; commonName: string | null };
+          person: { id: number; firstName: string | null; lastName: string | null; commonName: string | null } | null;
           assistPerson?: { id: number; firstName: string | null; lastName: string | null; commonName: string | null } | null;
           team: { name: string } | null;
         }) => ({
@@ -170,7 +178,7 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
           bookingReason: e.bookingReason ?? null,
           substitutionId: e.substitutionId,
           substitutionReason: e.substitutionReason,
-          playerName: e.person.commonName || `${e.person.firstName || ""} ${e.person.lastName || ""}`.trim() || `Player ${e.personId}`,
+          playerName: e.person?.commonName || `${e.person?.firstName || ""} ${e.person?.lastName || ""}`.trim() || "Own goal",
           teamName: e.team?.name || null,
         }))}
         initialShirts={Object.fromEntries(match.shirts.map((s) => [s.personId, s.number || ""]))}
