@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 import MatchDetailsEditor from "./MatchDetailsEditor";
 import EditLineupForm from "./edit-lineups/EditLineupForm";
 import { isDatabaseConnectionError, retryDatabaseRead } from "@/lib/database-read";
-import { getEditionShirtNumbers } from "@/lib/edition-shirt-numbers";
+import { getEditionShirtNumbers, getMatchShirtNumbers } from "@/lib/edition-shirt-numbers";
 
 export default async function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   try {
@@ -111,6 +111,7 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
     matchId, seasonId: match.group.seasonId, date: match.date,
     teamIds: [teamAData?.id, teamBData?.id].filter((id): id is number => id != null),
   }));
+  const displayedShirts = getMatchShirtNumbers(match.appearances, match.shirts, suggestedShirts);
 
   return (
     <div className="min-h-screen bg-white text-[#040f4f] pb-20 font-sans text-[13px] p-4">
@@ -187,7 +188,7 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
           playerName: e.person?.commonName || `${e.person?.firstName || ""} ${e.person?.lastName || ""}`.trim() || "Own goal",
           teamName: e.team?.name || null,
         }))}
-        initialShirts={Object.fromEntries(match.shirts.map((s) => [s.personId, s.number || ""]))}
+        initialShirts={displayedShirts}
         refereeOptions={refereePeople.map((p) => ({
           id: p.id,
           name: p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim() || `Referee ${p.id}`,

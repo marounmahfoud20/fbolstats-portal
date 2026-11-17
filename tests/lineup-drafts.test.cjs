@@ -122,6 +122,27 @@ test('edition number lookup scopes by edition, team and prior date, and only use
   assert.deepEqual(query.orderBy[0], { match: { date: 'desc' } });
 });
 
+test('the displayed lineup inherits numbers for saved starters and substitutes without match-specific shirt rows', () => {
+  const { getMatchShirtNumbers } = load('../lib/edition-shirt-numbers.ts');
+  const numbers = getMatchShirtNumbers([
+    { personId: 1419, teamId: 13, role: 'Starter' },
+    { personId: 140, teamId: 13, role: 'Substitute' },
+    { personId: 5, teamId: 20, role: 'Starter' },
+    { personId: 7, teamId: null, role: 'Main Referee' },
+    { personId: 8, teamId: 13, role: 'Coach' },
+  ], [], { '13-1419': '4', '13-140': '1', '13-5': '9', '13-7': '10', '13-8': '11' });
+  assert.deepEqual(plain(numbers), { 1419: '4', 140: '1' });
+});
+
+test('displayed inherited numbers never replace a match-specific edit or an explicitly cleared number', () => {
+  const { getMatchShirtNumbers } = load('../lib/edition-shirt-numbers.ts');
+  const numbers = getMatchShirtNumbers([
+    { personId: 1, teamId: 13, role: 'Starter' },
+    { personId: 2, teamId: 13, role: 'Substitute' },
+  ], [{ personId: 1, number: '17' }, { personId: 2, number: '' }], { '13-1': '4', '13-2': '5' });
+  assert.deepEqual(plain(numbers), { 1: '17', 2: '' });
+});
+
 function actionHarness({ fail = false, authenticated = true } = {}) {
   let state = { appearances: [{ personId: 90, teamId: null, role: 'Main Referee' }, { personId: 1, teamId: 10, role: 'Starter' }], shirts: [{ personId: 1, number: '9' }, { personId: 2, number: '' }] };
   const calls = [];
