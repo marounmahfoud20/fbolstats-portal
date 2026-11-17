@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
 import { getAdminUserFromCookies } from "@/lib/adminAuth";
 import { isSubstitutionIn, matchTime, playersOnField } from "@/lib/substitutions";
+import { getEditionShirtNumbers } from "@/lib/edition-shirt-numbers";
 
 class SubstitutionValidationError extends Error {}
 
@@ -77,31 +78,50 @@ export async function saveMatchSubstitution(matchId: number, payload: {
   });
 }
 
-export async function saveMatchLineups(matchId: number, appearances: { personId: number, teamId: number, role: string }[]) {
+export async function saveMatchLineups(
+  matchId: number,
+  appearances: { personId: number; teamId: number; role: string }[],
+  shirts: { personId: number; number: string }[] = [],
+) {
   return withAdminActivity("saveMatchLineups", { matchId, appearances }, async () => {
-  // Delete all existing appearances for this match that are NOT Referees
-  // Referees have teamId = null
-  await prisma.matchAppearance.deleteMany({
-    where: { 
-      matchId,
-      teamId: { not: null }
+    if (!getAdminUserFromCookies(await cookies())) throw new Error("Unauthorized");
+    if (!Number.isSafeInteger(matchId) || matchId <= 0 || !Array.isArray(appearances) || !Array.isArray(shirts)) {
+      throw new Error("Invalid lineup");
     }
-  });
-
-  // Insert the new ones
-  if (appearances.length > 0) {
-    await prisma.matchAppearance.createMany({
-      data: appearances.map(app => ({
-        matchId,
-        personId: app.personId,
-        teamId: app.teamId,
-        role: app.role
-      }))
-    });
-  }
-
-  revalidatePath(`/admin/matches/${matchId}`);
-
+    if (appearances.some(a => !Number.isSafeInteger(a.personId) || a.personId <= 0 || !Number.isSafeInteger(a.teamId) || a.teamId <= 0 || typeof a.role !== "string" || !a.role.trim())) {
+      throw new Error("Invalid lineup appearance");
+    }
+    if (shirts.some(s => !Number.isSafeInteger(s.personId) || typeof s.number !== "string" || !/^\d{0,3}$/.test(s.number.trim()))) {
+      throw new Error("Shirt numbers must contain up to three digits");
+    }
+    await prisma.$transaction(async tx => {
+      const match = await tx.match.findUnique({ where: { id: matchId }, include: { group: true, shirts: true } });
+      if (!match) throw new Error("Match not found");
+      const teams = await tx.team.findMany({ where: { name: { in: [match.teamA, match.teamB] } }, select: { id: true } });
+      if (appearances.some(a => !teams.some(t => t.id === a.teamId))) throw new Error("Choose players from the match teams");
+      const players = appearances.filter(a => a.role === "Starter" || a.role === "Substitute");
+      if (new Set(players.map(a => a.personId)).size !== players.length) throw new Error("A player can only have one lineup role");
+      if (shirts.some(s => !players.some(p => p.personId === s.personId))) throw new Error("Only lineup players can have shirt numbers saved here");
+      const defaults = await getEditionShirtNumbers(tx, {
+        matchId, seasonId: match.group.seasonId, date: match.date, teamIds: teams.map(t => t.id),
+      });
+      // Save the entire draft atomically, preserving referee assignments.
+      await tx.matchAppearance.deleteMany({ where: { matchId, teamId: { not: null } } });
+      if (appearances.length) await tx.matchAppearance.createMany({ data: appearances.map(a => ({ ...a, matchId })) });
+      const numbers = players.flatMap(player => {
+        const override = shirts.find(s => s.personId === player.personId);
+        const existing = match.shirts.find(s => s.personId === player.personId);
+        const number = override ? override.number.trim() : existing ? existing.number : defaults[`${player.teamId}-${player.personId}`];
+        return number == null ? [] : [{ matchId, personId: player.personId, number }];
+      });
+      // One batch read/write keeps full lineups within the transaction timeout.
+      if (numbers.length) {
+        await tx.matchShirtNumber.deleteMany({ where: { matchId, personId: { in: numbers.map(s => s.personId) } } });
+        await tx.matchShirtNumber.createMany({ data: numbers });
+      }
+    }, { maxWait: 10000, timeout: 15000 });
+    revalidatePath(`/admin/matches/${matchId}`);
+    revalidatePath(`/admin/matches/${matchId}/edit-lineups`);
   });
 }
 

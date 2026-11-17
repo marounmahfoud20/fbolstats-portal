@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import MatchDetailsEditor from "./MatchDetailsEditor";
 import EditLineupForm from "./edit-lineups/EditLineupForm";
 import { isDatabaseConnectionError, retryDatabaseRead } from "@/lib/database-read";
+import { getEditionShirtNumbers } from "@/lib/edition-shirt-numbers";
 
 export default async function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   try {
@@ -105,6 +106,11 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
       orderBy: { name: "asc" },
     })),
   ]);
+
+  const suggestedShirts = await retryDatabaseRead(() => getEditionShirtNumbers(prisma, {
+    matchId, seasonId: match.group.seasonId, date: match.date,
+    teamIds: [teamAData?.id, teamBData?.id].filter((id): id is number => id != null),
+  }));
 
   return (
     <div className="min-h-screen bg-white text-[#040f4f] pb-20 font-sans text-[13px] p-4">
@@ -206,9 +212,11 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
 
       <div className="mt-4 border border-[#B40404] bg-[#040f4f] text-white p-4">
         <EditLineupForm
+          key={matchId}
           matchId={matchId}
           matchDate={match.date}
           initialShirts={Object.fromEntries(match.shirts.map((shirt) => [shirt.personId, shirt.number || ""]))}
+          suggestedShirts={suggestedShirts}
           teamA={teamAData}
           teamB={teamBData}
           existingAppearances={match.appearances.map((a) => ({

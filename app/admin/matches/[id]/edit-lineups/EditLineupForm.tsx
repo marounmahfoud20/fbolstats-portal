@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveMatchLineups } from "@/lib/match-actions";
 import { isMembershipActiveOnDate } from "@/lib/membership-eligibility";
-import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
 
 type Person = { id: number; firstName: string | null; lastName: string | null; commonName: string | null; position: string | null };
 type Membership = { id: number; role: string; startDate: string | null; endDate: string | null; isActive: boolean; person: Person };
@@ -19,6 +18,7 @@ export default function EditLineupForm({
   teamB, 
   existingAppearances,
   initialShirts,
+  suggestedShirts = {},
 }: {
   matchId: number;
   matchDate: string | null;
@@ -26,9 +26,12 @@ export default function EditLineupForm({
   teamB: TeamData;
   existingAppearances: ExistingApp[];
   initialShirts: Record<number, string>;
+  suggestedShirts?: Record<string, string>;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [shirtDrafts, setShirtDrafts] = useState<Record<string, string>>({});
 
   const [lineupSelections, setLineupSelections] = useState<Record<string, LineupRole>>(() => {
     const init: Record<string, LineupRole> = {};
@@ -39,6 +42,22 @@ export default function EditLineupForm({
     }
     return init;
   });
+
+  // Keep rows in their saved sections while the user makes multiple selections.
+  const [savedLineupSelections, setSavedLineupSelections] = useState(lineupSelections);
+  const shirtNumber = (teamId: number, personId: number) =>
+    shirtDrafts[`${teamId}-${personId}`] ?? initialShirts[personId] ?? suggestedShirts[`${teamId}-${personId}`] ?? "";
+
+  const renderShirtInput = (teamId: number, player: Person) => (
+    <input
+      inputMode="numeric"
+      maxLength={3}
+      aria-label={`Shirt number for ${player.commonName || `${player.firstName || ""} ${player.lastName || ""}`.trim()} (${teamId})`}
+      value={shirtNumber(teamId, player.id)}
+      onChange={(event) => setShirtDrafts(prev => ({ ...prev, [`${teamId}-${player.id}`]: event.target.value.replace(/\D/g, "") }))}
+      className="h-7 w-full min-w-8 border border-gray-300 bg-white text-center font-bold text-[#040f4f] focus:border-blue-500"
+    />
+  );
 
   const [staffSelections, setStaffSelections] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
@@ -120,7 +139,9 @@ export default function EditLineupForm({
   };
 
   const handleSave = async () => {
+    if (loading) return;
     setLoading(true);
+    setError("");
     const appearances: { teamId: number; personId: number; role: string }[] = [];
 
     for (const [key, role] of Object.entries(lineupSelections)) {
@@ -145,9 +166,19 @@ export default function EditLineupForm({
       }
     }
 
-    await saveMatchLineups(matchId, appearances);
-    setLoading(false);
-    router.push(`/admin/matches/${matchId}`);
+    const shirts = appearances
+      .filter(a => a.role === "Starter" || a.role === "Substitute")
+      .map(a => ({ personId: a.personId, number: shirtNumber(a.teamId, a.personId) }));
+    try {
+      await saveMatchLineups(matchId, appearances, shirts);
+      setSavedLineupSelections({ ...lineupSelections });
+      router.push(`/admin/matches/${matchId}`);
+      router.refresh();
+    } catch {
+      setError("Could not save the lineup. Your selections and shirt numbers are still here. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderTeamSection = (team: TeamData, eligiblePlayers: Person[]) => {
@@ -185,7 +216,7 @@ export default function EditLineupForm({
         <h2 className="text-[#f4a01c] font-bold text-lg mb-4">{team.name}</h2>
 
         {(["Starter", "Substitute"] as const).map((role) => {
-          const selectedPlayers = eligiblePlayers.filter((player) => lineupSelections[`${team.id}-${player.id}`] === role);
+          const selectedPlayers = eligiblePlayers.filter((player) => savedLineupSelections[`${team.id}-${player.id}`] === role);
           return (
             <section key={role} className="mb-4">
               <h3 className="font-bold bg-[#dfdfdf] text-[#040f4f] px-2 py-1 mb-2 rounded-sm">
@@ -198,13 +229,13 @@ export default function EditLineupForm({
                   return (
                     <div key={player.id} className="flex items-center gap-2 border-b border-[#f4a01c]/20 pb-1">
                       <span className="w-12 shrink-0">
-                        <MatchShirtNumberEditor matchId={matchId} personId={player.id} playerName={name} number={initialShirts[player.id] || ""} />
+                        {renderShirtInput(team.id, player)}
                       </span>
                       <span className="min-w-0 flex-1 break-words">{name}</span>
                       <select
                         aria-label={`Lineup role for ${name} (${team.name})`}
                         className="bg-white text-black text-xs p-1 border border-gray-400"
-                        value={role}
+                        value={lineupSelections[`${team.id}-${player.id}`] || ""}
                         onChange={(event) => handleLineupRoleChange(team.id, player.id, event.target.value as LineupRole)}
                       >
                         <option value="Starter">Starter</option>
@@ -307,7 +338,7 @@ export default function EditLineupForm({
 
   const renderEligiblePlayerColumn = (team: TeamData, players: Person[]) => {
     if (!team) return <div className="text-gray-400">Team not found in DB</div>;
-    const availablePlayers = players.filter((player) => !lineupSelections[`${team.id}-${player.id}`]);
+    const availablePlayers = players.filter((player) => !savedLineupSelections[`${team.id}-${player.id}`]);
     return (
       <div className="flex-1">
         <h3 className="font-bold text-[#040f4f] border-b border-gray-300 pb-1 mb-2">{team.name}</h3>
@@ -326,29 +357,24 @@ export default function EditLineupForm({
               <div key={p.id} className="grid grid-cols-[32px_32px_56px_1fr] items-center text-xs border-b border-gray-100 pb-1">
                 <label className="flex justify-center">
                   <input
-                    type="radio"
+                    type="checkbox"
                     aria-label={`Select ${p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim()} as starter for ${team.name}`}
                     name={`lineup-${team.id}-${p.id}`}
                     checked={currentRole === "Starter"}
-                    onChange={() => handleLineupRoleChange(team.id, p.id, "Starter")}
+                    onChange={() => handleLineupRoleChange(team.id, p.id, currentRole === "Starter" ? "" : "Starter")}
                   />
                 </label>
                 <label className="flex justify-center">
                   <input
-                    type="radio"
+                    type="checkbox"
                     aria-label={`Select ${p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim()} as substitute for ${team.name}`}
                     name={`lineup-${team.id}-${p.id}`}
                     checked={currentRole === "Substitute"}
-                    onChange={() => handleLineupRoleChange(team.id, p.id, "Substitute")}
+                    onChange={() => handleLineupRoleChange(team.id, p.id, currentRole === "Substitute" ? "" : "Substitute")}
                   />
                 </label>
                 <span className="mx-1">
-                  <MatchShirtNumberEditor
-                    matchId={matchId}
-                    personId={p.id}
-                    playerName={p.commonName || `${p.firstName || ""} ${p.lastName || ""}`.trim() || `Player ${p.id}`}
-                    number={initialShirts[p.id] || ""}
-                  />
+                  {renderShirtInput(team.id, p)}
                 </span>
                 <span className="truncate">{p.commonName || `${p.firstName || ""} ${p.lastName || ""}`}</span>
               </div>
@@ -360,7 +386,7 @@ export default function EditLineupForm({
   };
 
   return (
-    <div>
+    <fieldset disabled={loading} className="min-w-0">
       <div className="flex gap-4 items-start">
         {renderTeamSection(teamA, teamAEligiblePlayers)}
         {renderTeamSection(teamB, teamBEligiblePlayers)}
@@ -368,6 +394,7 @@ export default function EditLineupForm({
 
       <div className="mt-6 border border-[#f4a01c]/50 rounded bg-white p-4 text-[#040f4f]">
         <div className="font-bold mb-3">Eligible Players For This Match</div>
+        <p className="mb-3 text-xs">Choose starters and substitutes, then save. Players stay in place and shirt numbers remain editable until you save the lineup.</p>
         <div className="flex gap-4">
           {renderEligiblePlayerColumn(teamA, teamAEligiblePlayers)}
           {renderEligiblePlayerColumn(teamB, teamBEligiblePlayers)}
@@ -375,7 +402,9 @@ export default function EditLineupForm({
       </div>
 
       <div className="mt-8 text-center border-t border-[#f4a01c]/50 pt-6">
+        {error && <p role="alert" className="mb-3 text-red-300">{error}</p>}
         <button 
+          type="button"
           onClick={handleSave}
           disabled={loading}
           className="bg-[#f4a01c] text-[#040f4f] font-bold px-8 py-2 rounded shadow hover:bg-orange-500 disabled:opacity-50"
@@ -383,6 +412,6 @@ export default function EditLineupForm({
           {loading ? "Saving..." : "Save Lineups"}
         </button>
       </div>
-    </div>
+    </fieldset>
   );
 }
