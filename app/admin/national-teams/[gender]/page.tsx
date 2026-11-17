@@ -9,6 +9,7 @@ import { retryDatabaseRead } from "@/lib/database-read";
 import { createNationalCompetition } from "@/lib/national-competition-actions";
 import { isNationalTeamSection, NATIONAL_TEAM_SECTIONS, nationalCompetitionHref } from "@/lib/national-competitions";
 import CompetitionSubmitButton from "./CompetitionSubmitButton";
+import NationalTeamNavigation from "./NationalTeamNavigation";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +28,7 @@ export default async function NationalTeamPage({ params }: { params: Promise<{ g
   return (
     <div className="min-h-screen bg-white py-10 font-sans text-xs text-[#040f4f]">
       <div className="mx-auto w-full max-w-[980px] px-4">
-      <nav aria-label="National teams" className="mb-6 flex gap-2">
-        {(["men", "women"] as const).map((key) => (
-          <Link key={key} href={`/admin/national-teams/${key}`} aria-current={key === gender ? "page" : undefined} className={`border border-[#040f4f] px-4 py-1.5 font-bold ${key === gender ? "bg-[#f4a01c]" : "bg-white hover:bg-[#f2f2f2]"}`}>
-            {key === "men" ? "Men" : "Women"}
-          </Link>
-        ))}
-      </nav>
+      <NationalTeamNavigation section={gender} />
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="mb-2 text-3xl font-bold">{section.title}</h1>
