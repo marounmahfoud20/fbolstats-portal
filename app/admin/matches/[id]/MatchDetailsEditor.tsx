@@ -671,7 +671,7 @@ export default function MatchDetailsEditor({
                         <select value={assistPersonId} onChange={(e) => setAssistPersonId(e.target.value)} className="h-6 border border-gray-400 px-1 min-w-[180px]">
                           <option value=""></option>
                           {assistOptions.map((a) => (
-                            <option key={a.id} value={a.id}>{a.label}</option>
+                            <option key={a.id} value={a.id}>{initialShirts[a.id] ? `${initialShirts[a.id]}. ` : ""}{a.label}</option>
                           ))}
                         </select>
                       </>
