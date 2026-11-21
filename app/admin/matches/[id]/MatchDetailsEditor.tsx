@@ -429,13 +429,21 @@ export default function MatchDetailsEditor({
   const supportsBookingReason = selectedEvent === "yellow_card" || selectedEvent === "second_yellow" || selectedEvent === "red_card";
 
   const assistOptions = useMemo(() => {
-    if (!selectedPlayer) return [];
+    const goalTime = matchTime(eventMinute, eventExtraTime);
+    if (!selectedPlayer || selectedPlayer.teamId === null || !goalTime) return [];
+    const activePlayers = playersOnField(
+      appearances.map((a) => ({ personId: a.person.id, teamId: a.teamId, role: a.role })),
+      eventRows,
+      selectedPlayer.teamId,
+      goalTime,
+    );
     return appearances
       .filter(
         (a) =>
           a.teamId !== null &&
           a.teamId === selectedPlayer.teamId &&
           (a.role === "Starter" || a.role === "Substitute") &&
+          activePlayers.has(a.person.id) &&
           a.person.id !== selectedPlayer.id
       )
       .map((a) => ({
@@ -449,16 +457,17 @@ export default function MatchDetailsEditor({
         const orderB = numberB && /^\d+$/.test(numberB) ? Number(numberB) : Infinity;
         return (orderA - orderB) || a.label.localeCompare(b.label);
       });
-  }, [appearances, selectedPlayer, initialShirts]);
+  }, [appearances, selectedPlayer, initialShirts, eventRows, eventMinute, eventExtraTime]);
+  const eligibleAssistId = assistOptions.some((a) => String(a.id) === assistPersonId) ? assistPersonId : "";
 
   const persistEvent = async () => {
     if (!selectedPlayer) return;
     const playerAppearance = appearances.find((a) => a.person.id === selectedPlayer.id && a.teamId !== null);
-    const assistName = assistOptions.find((a) => String(a.id) === assistPersonId)?.label || null;
+    const assistName = assistOptions.find((a) => String(a.id) === eligibleAssistId)?.label || null;
     await saveMatchEventEntry(match.id, {
       eventId: editingEventId,
       personId: selectedPlayer.id,
-      assistPersonId: supportsAssist && assistPersonId ? parseInt(assistPersonId) : null,
+      assistPersonId: supportsAssist && eligibleAssistId ? parseInt(eligibleAssistId) : null,
       teamId: playerAppearance?.teamId ?? null,
       eventType: selectedEvent,
       minute: eventMinute,
@@ -470,7 +479,7 @@ export default function MatchDetailsEditor({
       const nextItem = {
         id: editingEventId || Date.now(),
         personId: selectedPlayer.id,
-        assistPersonId: supportsAssist && assistPersonId ? parseInt(assistPersonId) : null,
+        assistPersonId: supportsAssist && eligibleAssistId ? parseInt(eligibleAssistId) : null,
         teamId: playerAppearance?.teamId ?? null,
         eventType: selectedEvent,
         minute: eventMinute || null,
@@ -674,8 +683,8 @@ export default function MatchDetailsEditor({
                     {supportsAssist ? (
                       <>
                         <img src="/Assist.png" alt="Assist" className="w-5 h-5 object-contain" />
-                        <select value={assistPersonId} onChange={(e) => setAssistPersonId(e.target.value)} className="h-6 border border-gray-400 px-1 min-w-[180px]">
-                          <option value=""></option>
+                        <select value={eligibleAssistId} onChange={(e) => setAssistPersonId(e.target.value)} disabled={!matchTime(eventMinute, eventExtraTime)} className="h-6 border border-gray-400 px-1 min-w-[180px]">
+                          <option value="">{matchTime(eventMinute, eventExtraTime) ? "" : "Enter goal minute first"}</option>
                           {assistOptions.map((a) => (
                             <option key={a.id} value={a.id}>{initialShirts[a.id] ? `${initialShirts[a.id]}. ` : ""}{a.label}</option>
                           ))}
