@@ -45,7 +45,8 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
   const sessionUser = readAdminUserFromSessionValue(req.cookies.get(cookieName)?.value);
   const isLoginPath = pathname === '/login' || pathname.startsWith('/login/');
   const isLoginApi = pathname === '/api/admin-auth';
-  const isNextAsset = pathname.startsWith('/_next/') || pathname === '/favicon.ico' || pathname === '/robots.txt';
+  const isNextAsset = pathname.startsWith('/_next/') || pathname === '/favicon.ico' || pathname === '/robots.txt'
+    || pathname === '/favicon-orange.png' || pathname === '/Logo-minimal-orange.png';
 
   const authorizedResponse = (username: string, signedIn = false) => {
     const requestHeaders = new Headers(req.headers);
