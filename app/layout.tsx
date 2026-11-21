@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   },
   description: "Modern football operations and statistics portal",
   icons: {
-    icon: "/Logo-minimal-orange.png",
-    shortcut: "/Logo-minimal-orange.png",
+    icon: { url: "/favicon-small.svg", type: "image/svg+xml" },
+    shortcut: "/favicon-small.svg",
     apple: "/Logo-minimal-orange.png",
   },
 };

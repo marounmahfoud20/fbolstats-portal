@@ -28,7 +28,7 @@ export default function Sidebar({ leagues, leagueCategories }: { leagues: League
             className="mb-2 flex w-full items-center justify-center border-b border-slate-200 px-2 py-5"
             title="Tasks"
           >
-            <img src="/logo-minimal.png" alt="FbolStats" className="w-16 object-contain" />
+            <img src="/logo.png" alt="FbolStats" className="w-16 object-contain" />
           </Link>
 
           <button
