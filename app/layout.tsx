@@ -18,6 +18,11 @@ export const metadata: Metadata = {
     template: "%s | FbolStats",
   },
   description: "Modern football operations and statistics portal",
+  icons: {
+    icon: "/Logo-minimal-orange.png",
+    shortcut: "/Logo-minimal-orange.png",
+    apple: "/Logo-minimal-orange.png",
+  },
 };
 
 export default function RootLayout({

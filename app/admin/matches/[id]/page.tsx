@@ -1,6 +1,6 @@
 import { createEntityMetadata } from "@/lib/page-metadata";
 
-export const generateMetadata = createEntityMetadata("Match", "match");
+export const generateMetadata = createEntityMetadata("Match", "match", { nameOnly: true });
 
 import prisma from "@/lib/prisma";
 import Link from "next/link";

@@ -442,8 +442,14 @@ export default function MatchDetailsEditor({
         id: a.person.id,
         label: displayName(a.person),
       }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [appearances, selectedPlayer]);
+      .sort((a, b) => {
+        const numberA = initialShirts[a.id]?.trim();
+        const numberB = initialShirts[b.id]?.trim();
+        const orderA = numberA && /^\d+$/.test(numberA) ? Number(numberA) : Infinity;
+        const orderB = numberB && /^\d+$/.test(numberB) ? Number(numberB) : Infinity;
+        return (orderA - orderB) || a.label.localeCompare(b.label);
+      });
+  }, [appearances, selectedPlayer, initialShirts]);
 
   const persistEvent = async () => {
     if (!selectedPlayer) return;

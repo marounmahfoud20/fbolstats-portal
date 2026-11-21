@@ -40,7 +40,7 @@ const entityName = cache(async (entity: Entity, id: number): Promise<string | un
 export function createEntityMetadata(
   title: string,
   entity: Entity,
-  options: { idParam?: string; titleParam?: string; titles?: Record<string, string> } = {},
+  options: { idParam?: string; titleParam?: string; titles?: Record<string, string>; nameOnly?: boolean } = {},
 ) {
   return async ({ params }: MetadataProps): Promise<Metadata> => {
     await connection();
@@ -50,7 +50,7 @@ export function createEntityMetadata(
     if (!Number.isSafeInteger(id) || id <= 0) return { title: pageTitle };
     try {
       const name = await entityName(entity, id);
-      return { title: name ? `${pageTitle} — ${name}` : pageTitle };
+      return { title: name ? options.nameOnly ? name : `${pageTitle} — ${name}` : pageTitle };
     } catch {
       // Keep the page's own error/retry UI available if its title lookup fails.
       return { title: pageTitle };
