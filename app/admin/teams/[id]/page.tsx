@@ -171,8 +171,8 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                   )}
                   <span>{displayName(person)}</span>
                 </div>
+                <div className="w-24 shrink-0" title="Date of birth">{person.dob || ''}</div>
                 <div className="w-32 shrink-0" title="Position">{resolvePositionName(person.position) || 'N/A'}</div>
-                <div className="w-24 shrink-0">{person.dob || ''}</div>
               </div>
             );
           })}
