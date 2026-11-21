@@ -5,6 +5,8 @@ export const generateMetadata = createEntityMetadata("Player Rankings", "season"
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { resolvePositionName } from "@/lib/people-format";
+import { goalkeeperCleanSheet } from "@/lib/substitutions";
 
 const rankingMeta: Record<string, { title: string; eventLabel: string }> = {
   goalscorers: {
@@ -228,27 +230,26 @@ export default async function SeasonPlayerRankingPage({
 
     for (const group of season.groups) {
       for (const match of group.matches) {
-        const scoreA = Number.parseInt(match.meta?.ftA || "", 10);
-        const scoreB = Number.parseInt(match.meta?.ftB || "", 10);
-        if (Number.isNaN(scoreA) || Number.isNaN(scoreB)) continue;
-
         const teamAId = seasonTeamByName.get(match.teamA);
         const teamBId = seasonTeamByName.get(match.teamB);
-
-        if (scoreB === 0 && teamAId) {
-          const keepersA = match.appearances.filter((a) => {
-            const pos = a.person.position?.toLowerCase() || "";
-            return a.role === "Starter" && a.teamId === teamAId && pos.includes("goal");
-          });
-          for (const gk of keepersA) increment(gk.person);
-        }
-
-        if (scoreA === 0 && teamBId) {
-          const keepersB = match.appearances.filter((a) => {
-            const pos = a.person.position?.toLowerCase() || "";
-            return a.role === "Starter" && a.teamId === teamBId && pos.includes("goal");
-          });
-          for (const gk of keepersB) increment(gk.person);
+        const goalkeeperIds = new Set(match.appearances
+          .filter((a) => a.role.trim().toLowerCase() === "goalkeeper")
+          .map((a) => a.personId));
+        const credited = new Set<number>();
+        for (const appearance of match.appearances) {
+          const teamName = appearance.teamId === teamAId ? match.teamA
+            : appearance.teamId === teamBId ? match.teamB : null;
+          if (!teamName || credited.has(appearance.personId)) continue;
+          const position = resolvePositionName(appearance.person.position).toLowerCase();
+          if (goalkeeperCleanSheet({
+            appearance,
+            isGoalkeeper: goalkeeperIds.has(appearance.personId) || position.includes("goal"),
+            teamName,
+            match,
+          })) {
+            increment(appearance.person);
+            credited.add(appearance.personId);
+          }
         }
       }
     }

@@ -5,7 +5,9 @@ export const generateMetadata = createEntityMetadata("Membership Details", "pers
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { groupMembershipAppearances, membershipCleanSheet } from "@/lib/membership-appearances";
+import { groupMembershipAppearances } from "@/lib/membership-appearances";
+import { resolvePositionName } from "@/lib/people-format";
+import { goalkeeperCleanSheet } from "@/lib/substitutions";
 
 function personName(first?: string | null, last?: string | null, common?: string | null) {
   return common || `${first || ""} ${last || ""}`.trim() || "Unknown";
@@ -80,7 +82,7 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
   });
 
   const goalkeeperMatches = new Set(appearances.filter((a) => a.role.toLowerCase() === "goalkeeper").map((a) => a.matchId));
-  const goalkeeperPosition = membership.person.position?.toLowerCase().includes("goal") ?? false;
+  const goalkeeperPosition = resolvePositionName(membership.person.position).toLowerCase().includes("goal");
 
   const matchRows = groupMembershipAppearances(appearances).map(({ appearance: a, captain }) => {
     const personEvents = a.match.events.filter((e) => e.personId === personId && e.teamId === membership.teamId);
@@ -107,8 +109,8 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
       goalsA: a.match.meta?.ftA || "",
       goalsB: a.match.meta?.ftB || "",
       minutes,
-      cleanSheets: membershipCleanSheet({
-        role: a.role,
+      cleanSheets: goalkeeperCleanSheet({
+        appearance: a,
         isGoalkeeper: goalkeeperPosition || goalkeeperMatches.has(a.matchId),
         teamName: membership.team.name,
         match: a.match,

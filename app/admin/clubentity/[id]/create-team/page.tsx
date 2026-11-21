@@ -14,8 +14,8 @@ export default async function CreateTeamPage(props: { params: Promise<{ id: stri
   const id = Number.parseInt(params.id, 10);
   if (!Number.isFinite(id)) notFound();
 
-  const entity = await prisma.$queryRaw<Array<{ id: number; name: string }>>`
-    SELECT "id", "name" FROM "ClubEntity" WHERE "id" = ${id} LIMIT 1`;
+  const entity = await prisma.$queryRaw<Array<{ id: number; name: string; officialName: string | null }>>`
+    SELECT "id", "name", "officialName" FROM "ClubEntity" WHERE "id" = ${id} LIMIT 1`;
   if (entity.length === 0) notFound();
 
   return (
@@ -36,7 +36,8 @@ export default async function CreateTeamPage(props: { params: Promise<{ id: stri
         </div>
         <div className="flex flex-col md:col-span-2">
           <label className="font-semibold mb-1">Official Team Name</label>
-          <input type="text" name="name" required placeholder="This will be saved as official name" className="border border-[#040f4f] p-1.5 outline-none focus:ring-1 focus:ring-[#040f4f]" />
+          <input type="text" name="name" defaultValue={entity[0].officialName || ''} placeholder="Defaults to the club's official name" className="border border-[#040f4f] p-1.5 outline-none focus:ring-1 focus:ring-[#040f4f]" />
+          <p className="mt-1">Club details are copied automatically. You can override the official team name.</p>
         </div>
         <button type="submit" className="bg-[#f4a01c] border border-[#040f4f] text-[#040f4f] font-bold px-4 py-2 hover:bg-[#040f4f] hover:text-[#f4a01c] transition-colors">Add Team</button>
       </form>

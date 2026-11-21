@@ -1064,7 +1064,7 @@ export async function createTeamForClubEntity(formData: FormData) {
   const clubEntityId = Number.parseInt((formData.get("clubEntityId") as string) || "", 10);
   const name = ((formData.get("name") as string) || "").trim();
   const teamCategory = ((formData.get("teamCategory") as string) || "").trim();
-  if (!clubEntityId || !name || !teamCategory) return;
+  if (!clubEntityId || !teamCategory) return;
 
   const entity = await prisma.$queryRaw<Array<{
     name: string;
@@ -1086,7 +1086,8 @@ export async function createTeamForClubEntity(formData: FormData) {
     clubColors: string | null;
     nicknames: string | null;
     logo: string | null;
-  }>>`SELECT "name","shortName","tla","area","country","type","status","address","latitude","longitude","city","url","facebookUrl","instagramUrl","twitterUrl","founded","clubColors","nicknames","logo"
+    officialName: string | null;
+  }>>`SELECT "name","shortName","tla","officialName","area","country","type","status","address","latitude","longitude","city","url","facebookUrl","instagramUrl","twitterUrl","founded","clubColors","nicknames","logo"
       FROM "ClubEntity" WHERE "id" = ${clubEntityId} LIMIT 1`;
 
   const e = entity[0];
@@ -1099,7 +1100,7 @@ export async function createTeamForClubEntity(formData: FormData) {
       ${e.name},
       ${e.shortName},
       ${e.tla},
-      ${name},
+      ${name || e.officialName},
       ${e.area},
       ${e.country},
       ${e.type || "club"},

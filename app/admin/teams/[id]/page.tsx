@@ -7,6 +7,12 @@ import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import TeamStatTable from '@/components/TeamStatTable';
 import { getTeamStats } from '@/lib/team-stats';
+import { nationalityFlag, resolvePositionName } from '@/lib/people-format';
+import { resolveCountryName } from '@/lib/countries';
+
+function displayName(person: { id: number; commonName: string | null; firstName: string | null; lastName: string | null }) {
+  return person.commonName?.trim() || `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim() || `Player ${person.id}`;
+}
 
 // 🚨 Forces Next.js to NEVER cache this page. It will always fetch fresh data.
 export const dynamic = 'force-dynamic';
@@ -45,8 +51,8 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
   const nameCollator = new Intl.Collator('en', { sensitivity: 'base' });
   const compareNames = (a: typeof team.memberships[number], b: typeof team.memberships[number]) =>
     nameCollator.compare(
-      `${a.person.firstName ?? ''} ${a.person.lastName ?? ''}`.trim(),
-      `${b.person.firstName ?? ''} ${b.person.lastName ?? ''}`.trim(),
+      displayName(a.person),
+      displayName(b.person),
     );
 
   const activePlayers = team.memberships
@@ -157,11 +163,16 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                   </Link>
                 </div>
                 <div className="w-20 font-mono text-gray-500">{person.id}</div>
-                <div className="flex-1 font-semibold">{person.firstName} {person.lastName}</div>
-                <div className="w-24">{person.dob || ''}</div>
-                <div className="w-32 flex items-center gap-2">
-                  {person.nationality && <span className="text-gray-600">ID: {person.nationality}</span>}
+                <div className="flex-1 font-semibold flex items-center gap-2">
+                  {person.nationality && (
+                    <span role="img" aria-label={resolveCountryName(person.nationality)} title={resolveCountryName(person.nationality)}>
+                      {nationalityFlag(person.nationality) || resolveCountryName(person.nationality)}
+                    </span>
+                  )}
+                  <span>{displayName(person)}</span>
                 </div>
+                <div className="w-32 shrink-0" title="Position">{resolvePositionName(person.position) || 'N/A'}</div>
+                <div className="w-24 shrink-0">{person.dob || ''}</div>
               </div>
             );
           })}
@@ -193,7 +204,7 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                   </Link>
                 </div>
                 <div className="w-20 font-mono text-gray-500">{person.id}</div>
-                <div className="flex-1 font-semibold">{person.firstName} {person.lastName}</div>
+                <div className="flex-1 font-semibold">{displayName(person)}</div>
                 <div className="w-32 capitalize font-bold text-[#f4a01c]">{membership.role.replace('_', ' ')}</div>
               </div>
             );
@@ -226,7 +237,7 @@ export default async function TeamPage(props: { params: Promise<{ id: string }> 
                   </Link>
                 </div>
                 <div className="w-20 font-mono text-gray-500">{person.id}</div>
-                <div className="flex-1 font-semibold">{person.firstName} {person.lastName}</div>
+                <div className="flex-1 font-semibold">{displayName(person)}</div>
                 <div className="w-64 shrink-0 text-gray-500 text-right pr-4">
                   <span title="Joined">{membership.startDate || 'Unknown'}</span>
                   {' – '}

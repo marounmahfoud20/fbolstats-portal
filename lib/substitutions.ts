@@ -38,12 +38,74 @@ export function playersOnField(
   for (const { event } of timeline) {
     if (event.personId === null) continue;
     const type = event.eventType.trim().toLowerCase();
-    if (["sub_in", "substitute_in", "si"].includes(type)) players.add(event.personId);
-    if (["sub_out", "substitute_out", "so", "red_card", "second_yellow"].includes(type)) players.delete(event.personId);
+    if (isSubstitutionIn(type)) players.add(event.personId);
+    if (isFieldExit(type)) players.delete(event.personId);
   }
   return players;
 }
 
 export function isSubstitutionIn(type: string) {
   return ["sub_in", "substitute_in", "si"].includes(type.trim().toLowerCase());
+}
+
+function isFieldExit(type: string) {
+  return ["sub_out", "substitute_out", "so", "red_card", "second_yellow"].includes(type);
+}
+
+export function goalkeeperCleanSheet(input: {
+  appearance: Appearance;
+  isGoalkeeper: boolean;
+  teamName: string;
+  match: {
+    teamA: string;
+    teamB: string;
+    meta: { ftA: string | null; ftB: string | null; etA?: string | null; etB?: string | null } | null;
+    events: readonly FieldEvent[];
+  };
+}): number {
+  const { appearance, isGoalkeeper, teamName, match } = input;
+  const { personId, teamId } = appearance;
+  const role = appearance.role.trim().toLowerCase();
+  if (!isGoalkeeper || teamId === null || (role !== "starter" && role !== "substitute")) return 0;
+  if (teamName !== match.teamA && teamName !== match.teamB) return 0;
+
+  const scoreA = match.meta?.ftA?.trim() ?? "";
+  const scoreB = match.meta?.ftB?.trim() ?? "";
+  if (!/^\d+$/.test(scoreA) || !/^\d+$/.test(scoreB)) return 0;
+  const extraScoreA = match.meta?.etA?.trim() ?? "";
+  const extraScoreB = match.meta?.etB?.trim() ?? "";
+  const playedExtraTime = /^\d+$/.test(extraScoreA) && /^\d+$/.test(extraScoreB)
+    && Number(extraScoreA) >= Number(scoreA) && Number(extraScoreB) >= Number(scoreB);
+  const finalScoreA = playedExtraTime ? extraScoreA : scoreA;
+  const finalScoreB = playedExtraTime ? extraScoreB : scoreB;
+  const conceded = Number(teamName === match.teamA ? finalScoreB : finalScoreA);
+  const duration = playedExtraTime ? 120 : 90;
+
+  let entry: [number, number] | null = role === "starter" ? [0, 0] : null;
+  let exit: [number, number] | null = null;
+  const concededTimes: ([number, number] | null)[] = [];
+  for (const event of match.events) {
+    const type = event.eventType.trim().toLowerCase();
+    if (event.personId === personId && event.teamId === teamId) {
+      const enters = role === "substitute" && isSubstitutionIn(type);
+      const leaves = isFieldExit(type);
+      if (enters || leaves) {
+        const time = matchTime(event.minute ?? "", event.extraTime ?? "");
+        if (!time || time[0] > duration) return 0;
+        if (enters && (!entry || compareTime(time, entry) < 0)) entry = time;
+        if (leaves && (!exit || compareTime(time, exit) < 0)) exit = time;
+      }
+    }
+
+    const isConcededGoal = type === "own_goal" ? event.teamId === teamId
+      : (type === "goal" || type === "penalty_goal") && event.teamId !== null && event.teamId !== teamId;
+    if (isConcededGoal) concededTimes.push(matchTime(event.minute ?? "", event.extraTime ?? ""));
+  }
+
+  if (!entry || (exit?.[0] ?? duration) - entry[0] < 60) return 0;
+  // Every conceded goal must be accounted for before crediting a partial-match shutout.
+  if (concededTimes.length !== conceded) return 0;
+  // A goal at the exact time of a substitution has no recorded ordering.
+  return concededTimes.every((time) => time && time[0] <= duration
+    && (compareTime(time, entry) < 0 || (exit && compareTime(time, exit) > 0))) ? 1 : 0;
 }
