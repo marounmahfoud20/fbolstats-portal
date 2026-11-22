@@ -5,6 +5,7 @@ export const generateMetadata = createEntityMetadata("Membership Details", "pers
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import MatchNoteIcon from "@/components/MatchNoteIcon";
 import { groupMembershipAppearances } from "@/lib/membership-appearances";
 import { resolvePositionName } from "@/lib/people-format";
 import { goalkeeperCleanSheet } from "@/lib/substitutions";
@@ -99,6 +100,7 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
     const shirt = a.match.shirts.find((s) => s.personId === personId)?.number || "";
     return {
       matchId: a.match.id,
+      note: a.match.note,
       date: a.match.date || "",
       time: a.match.time || "",
       competition: a.match.group.season.league.competitionName,
@@ -319,7 +321,10 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
               <tr><td colSpan={16} className="p-4 text-center">No Matches Available For This Membership.</td></tr>
             ) : matchRows.map((m) => (
               <tr key={m.matchId} className="border-b border-gray-200">
-                <td className="p-1.5 whitespace-nowrap"><Link href={`/admin/matches/${m.matchId}`} className="font-semibold hover:underline">{m.date}{m.time ? ` ${m.time}` : ""}</Link></td>
+                <td className="p-1.5 whitespace-nowrap">
+                  <Link href={`/admin/matches/${m.matchId}`} className="font-semibold hover:underline">{m.date}{m.time ? ` ${m.time}` : ""}</Link>
+                  <MatchNoteIcon matchId={m.matchId} note={m.note} />
+                </td>
                 <td className="p-1.5 whitespace-nowrap">{m.competition}</td>
                 <td className="p-1.5 whitespace-nowrap">{m.teamA}</td>
                 <td className="p-1.5 whitespace-nowrap">{m.teamB}</td>

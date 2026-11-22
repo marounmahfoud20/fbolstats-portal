@@ -5,6 +5,7 @@ export const generateMetadata = createNationalTeamMetadata(true);
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import MatchNoteIcon from "@/components/MatchNoteIcon";
 import { retryDatabaseRead } from "@/lib/database-read";
 import { isNationalTeamSection, NATIONAL_TEAM_SECTIONS, nationalCompetitionHref } from "@/lib/national-competitions";
 
@@ -22,7 +23,7 @@ export default async function NationalTeamMatchesPage({ params }: { params: Prom
       { id: "desc" },
     ],
     select: {
-      id: true, date: true, time: true, teamA: true, teamB: true, venue: true, status: true,
+      id: true, date: true, time: true, teamA: true, teamB: true, venue: true, status: true, note: true,
       meta: { select: { ftA: true, ftB: true } },
       group: { select: { season: { select: { id: true, name: true, league: { select: { id: true, competitionName: true } } } } } },
     },
@@ -68,6 +69,7 @@ export default async function NationalTeamMatchesPage({ params }: { params: Prom
                     </td>
                     <td className="px-3 py-2 font-bold">
                       <Link href={`/admin/matches/${match.id}`} className="hover:underline">{match.teamA} vs {match.teamB}</Link>
+                      <MatchNoteIcon matchId={match.id} note={match.note} />
                     </td>
                     <td className="whitespace-nowrap px-3 py-2 text-center font-bold">
                       {hasScore ? `${match.meta!.ftA}–${match.meta!.ftB}` : "—"}

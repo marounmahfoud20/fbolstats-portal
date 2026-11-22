@@ -88,6 +88,7 @@ function pageHarness(file, prisma) {
     'next/link': 'a',
     'next/navigation': { notFound: () => { throw Error('not found'); } },
     '@/lib/prisma': prisma,
+    '@/components/MatchNoteIcon': 'match-note-icon',
     '@/lib/database-read': { retryDatabaseRead: fn => fn() },
     '@/lib/national-competitions': sections,
     '@/lib/page-metadata': { createNationalTeamMetadata: () => ({}), createEntityMetadata: () => ({}) },

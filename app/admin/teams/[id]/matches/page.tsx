@@ -5,6 +5,7 @@ export const generateMetadata = createEntityMetadata("Matches", "team");
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import MatchNoteIcon from "@/components/MatchNoteIcon";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,6 +18,7 @@ type MatchRow = {
   teamB: string;
   venue: string | null;
   status: string;
+  note: string | null;
   roundName: string;
   seasonName: string;
   competitionName: string;
@@ -42,6 +44,7 @@ export default async function TeamMatchesPage(props: { params: Promise<{ id: str
       m."teamB",
       m."venue",
       m."status",
+      m."note",
       g."name" AS "roundName",
       s."name" AS "seasonName",
       l."competitionName" AS "competitionName"
@@ -130,6 +133,7 @@ export default async function TeamMatchesPage(props: { params: Promise<{ id: str
                       <span className={m.teamA === team.name || m.teamA === `${team.name} Women` ? "font-bold text-[#040f4f]" : ""}>{m.teamA}</span>
                       <span className="px-2 text-[10px] font-bold text-[#f4a01c]">VS</span>
                       <span className={m.teamB === team.name || m.teamB === `${team.name} Women` ? "font-bold text-[#040f4f]" : ""}>{m.teamB}</span>
+                      <MatchNoteIcon matchId={m.id} note={m.note} />
                     </td>
                     <td className="hidden max-w-[160px] truncate px-2 lg:table-cell" title={m.venue || ""}>{m.venue || "-"}</td>
                     <td className="hidden px-2 md:table-cell">

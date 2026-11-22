@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import MatchDetailsEditor from "./MatchDetailsEditor";
+import MatchNoteForm from "./MatchNoteForm";
 import EditLineupForm from "./edit-lineups/EditLineupForm";
 import { isDatabaseConnectionError, retryDatabaseRead } from "@/lib/database-read";
 import { getEditionShirtNumbers, getMatchShirtNumbers } from "@/lib/edition-shirt-numbers";
@@ -227,6 +228,8 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
           }))}
         />
       </div>
+
+      <MatchNoteForm key={matchId} matchId={matchId} initialNote={match.note} />
     </div>
   );
 }

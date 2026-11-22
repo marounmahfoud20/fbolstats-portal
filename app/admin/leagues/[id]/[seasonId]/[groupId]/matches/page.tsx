@@ -3,6 +3,7 @@ import { createEntityMetadata } from "@/lib/page-metadata";
 export const generateMetadata = createEntityMetadata("Matches", "group", {"idParam":"groupId"});
 
 import { PrismaClient } from "@prisma/client";
+import MatchNoteIcon from "@/components/MatchNoteIcon";
 
 const prisma = new PrismaClient();
 
@@ -32,7 +33,10 @@ export default async function MatchesListPage({
                     <div className="w-24 font-bold">{match.date}</div>
                     <div className="w-16">{match.time}</div>
                     <div className="w-48 font-bold">{match.teamA}</div>
-                    <div className="w-48 font-bold">{match.teamB}</div>
+                    <div className="w-48 font-bold">
+                        {match.teamB}
+                        <MatchNoteIcon matchId={match.id} note={match.note} />
+                    </div>
                     <div className="w-48 text-gray-600">{match.venue}</div>
                     <div className="w-24">
                         <span className={`px-2 py-1 rounded ${match.status === 'Played' ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>

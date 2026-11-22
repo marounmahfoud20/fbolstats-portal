@@ -12,6 +12,32 @@ import { getEditionShirtNumbers } from "@/lib/edition-shirt-numbers";
 
 class SubstitutionValidationError extends Error {}
 
+export async function saveMatchNote(matchId: number, _previous: unknown, formData: FormData) {
+  return withAdminActivity("saveMatchNote", { matchId }, async () => {
+    if (!getAdminUserFromCookies(await cookies())) return { ok: false as const, error: "Please sign in to save this note." };
+    const text = formData.get("note");
+    if (!Number.isSafeInteger(matchId) || matchId <= 0 || typeof text !== "string") {
+      return { ok: false as const, error: "Could not read the match note." };
+    }
+
+    const note = text.trim() ? text.replace(/\r\n?/g, "\n") : null;
+    try {
+      await prisma.match.update({ where: { id: matchId }, data: { note }, select: { id: true } });
+    } catch (error) {
+      console.error("Could not save match note.", error);
+      return { ok: false as const, error: "Could not save the note. Please try again." };
+    }
+
+    revalidatePath(`/admin/matches/${matchId}`);
+    revalidatePath("/admin/teams/[id]/matches", "page");
+    revalidatePath("/admin/rounds/[id]", "page");
+    revalidatePath("/admin/leagues/[id]/[seasonId]/[groupId]/matches", "page");
+    revalidatePath("/admin/national-teams/[gender]/matches", "page");
+    revalidatePath("/admin/people/[id]/membership/[membershipId]", "page");
+    return { ok: true as const, note };
+  });
+}
+
 export async function saveMatchSubstitution(matchId: number, payload: {
   substitutionId?: string;
   teamId: number;

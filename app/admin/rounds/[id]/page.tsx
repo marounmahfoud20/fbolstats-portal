@@ -3,6 +3,7 @@ import { createEntityMetadata } from "@/lib/page-metadata";
 export const generateMetadata = createEntityMetadata("Round", "group");
 
 import prisma from "@/lib/prisma";
+import MatchNoteIcon from "@/components/MatchNoteIcon";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addMatchToRound, addTeamToRound } from "@/lib/actions";
@@ -208,7 +209,10 @@ export default async function RoundDetailsPage({ params }: { params: Promise<{ i
                 <td className="text-gray-600">{match.time || "-"}</td>
                 <td className="text-right pr-4 font-bold text-[#040f4f] text-[13px]">{match.teamA}</td>
                 <td className="text-center text-[#f4a01c] text-[10px]">VS</td>
-                <td className="pl-4 font-bold text-[#040f4f] text-[13px]">{match.teamB}</td>
+                <td className="pl-4 font-bold text-[#040f4f] text-[13px]">
+                  {match.teamB}
+                  <MatchNoteIcon matchId={match.id} note={match.note} />
+                </td>
                 <td className="text-gray-500 truncate max-w-[120px]" title={match.venue || ""}>{match.venue || "-"}</td>
                 <td>
                   <span className="bg-[#f2f2f2] text-[#040f4f] px-2 py-0.5 rounded border border-[#040f4f]">
