@@ -209,23 +209,21 @@ export default async function RoundDetailsPage({ params }: { params: Promise<{ i
                 <td className="text-gray-600">{match.time || "-"}</td>
                 <td className="text-right pr-4 font-bold text-[#040f4f] text-[13px]">{match.teamA}</td>
                 <td className="text-center text-[#f4a01c] text-[10px]">VS</td>
-                <td className="pl-4 font-bold text-[#040f4f] text-[13px]">
-                  {match.teamB}
-                  <MatchNoteIcon matchId={match.id} note={match.note} />
-                </td>
+                <td className="pl-4 font-bold text-[#040f4f] text-[13px]">{match.teamB}</td>
                 <td className="text-gray-500 truncate max-w-[120px]" title={match.venue || ""}>{match.venue || "-"}</td>
                 <td>
                   <span className="bg-[#f2f2f2] text-[#040f4f] px-2 py-0.5 rounded border border-[#040f4f]">
                     {match.status}
                   </span>
                 </td>
-                <td className="text-center">
+                <td className="text-center whitespace-nowrap">
                   <Link
                     href={`/admin/matches/${match.id}`}
                     className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-bold"
                   >
                     View
                   </Link>
+                  <MatchNoteIcon matchId={match.id} note={match.note} />
                 </td>
               </tr>
             ))

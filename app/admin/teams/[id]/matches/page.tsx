@@ -133,16 +133,16 @@ export default async function TeamMatchesPage(props: { params: Promise<{ id: str
                       <span className={m.teamA === team.name || m.teamA === `${team.name} Women` ? "font-bold text-[#040f4f]" : ""}>{m.teamA}</span>
                       <span className="px-2 text-[10px] font-bold text-[#f4a01c]">VS</span>
                       <span className={m.teamB === team.name || m.teamB === `${team.name} Women` ? "font-bold text-[#040f4f]" : ""}>{m.teamB}</span>
-                      <MatchNoteIcon matchId={m.id} note={m.note} />
                     </td>
                     <td className="hidden max-w-[160px] truncate px-2 lg:table-cell" title={m.venue || ""}>{m.venue || "-"}</td>
                     <td className="hidden px-2 md:table-cell">
                       <span className="rounded border border-[#040f4f] bg-[#f2f2f2] px-2 py-0.5">{m.status || "-"}</span>
                     </td>
-                    <td className="px-2 text-center">
+                    <td className="whitespace-nowrap px-2 text-center">
                       <Link href={`/admin/matches/${m.id}`} className="font-bold text-blue-600 hover:underline">
                         View
                       </Link>
+                      <MatchNoteIcon matchId={m.id} note={m.note} />
                     </td>
                   </tr>
                 ))

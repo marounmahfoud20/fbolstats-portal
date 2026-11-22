@@ -69,7 +69,6 @@ export default async function NationalTeamMatchesPage({ params }: { params: Prom
                     </td>
                     <td className="px-3 py-2 font-bold">
                       <Link href={`/admin/matches/${match.id}`} className="hover:underline">{match.teamA} vs {match.teamB}</Link>
-                      <MatchNoteIcon matchId={match.id} note={match.note} />
                     </td>
                     <td className="whitespace-nowrap px-3 py-2 text-center font-bold">
                       {hasScore ? `${match.meta!.ftA}–${match.meta!.ftB}` : "—"}
@@ -78,7 +77,10 @@ export default async function NationalTeamMatchesPage({ params }: { params: Prom
                     <td className="px-3 py-2"><Link href={`/admin/seasons/${edition.id}`} className="hover:underline">{edition.name}</Link></td>
                     <td className="px-3 py-2 text-gray-600">{match.venue || "—"}</td>
                     <td className="px-3 py-2">{match.status}</td>
-                    <td className="px-3 py-2 text-right"><Link href={`/admin/matches/${match.id}`} className="font-bold text-blue-600 hover:underline">View</Link></td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right">
+                      <Link href={`/admin/matches/${match.id}`} className="font-bold text-blue-600 hover:underline">View</Link>
+                      <MatchNoteIcon matchId={match.id} note={match.note} />
+                    </td>
                   </tr>
                 );
               })}
