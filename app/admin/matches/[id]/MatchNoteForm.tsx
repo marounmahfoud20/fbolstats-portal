@@ -8,7 +8,7 @@ export default function MatchNoteForm({ matchId, initialNote }: { matchId: numbe
   const [result, action, pending] = useActionState(saveMatchNote.bind(null, matchId), null);
 
   return (
-    <form id="match-note" action={action} className="mt-4 scroll-mt-4 border border-[#040f4f] p-4">
+    <form id="match-note" action={action} className="scroll-mt-4 rounded-md border border-[#c50000] bg-white p-3">
       <label htmlFor="match-note-text" className="mb-2 block font-bold">Match note</label>
       <textarea
         id="match-note-text"

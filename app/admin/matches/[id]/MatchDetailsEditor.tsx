@@ -6,6 +6,7 @@ import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
 import { combineGoalAndAssistEvents } from "@/lib/goal-assist-events";
 import { matchTime, playersOnField } from "@/lib/substitutions";
 import { saveTeamOwnGoal } from "@/lib/team-own-goal-actions";
+import MatchNoteForm from "./MatchNoteForm";
 
 type Person = {
   id: number;
@@ -128,6 +129,7 @@ export default function MatchDetailsEditor({
   initialMeta,
   initialEvents,
   initialShirts,
+  initialNote,
 }: {
   match: {
     id: number;
@@ -175,6 +177,7 @@ export default function MatchDetailsEditor({
     teamName: string | null;
   }[];
   initialShirts: Record<number, string>;
+  initialNote: string | null;
 }) {
   const [saving, setSaving] = useState<string | null>(null);
   const [ownGoal, setOwnGoal] = useState<{ teamId: string; minute: string; extraTime: string; eventId?: number } | null>(null);
@@ -616,6 +619,8 @@ export default function MatchDetailsEditor({
               </button>
             </form>
           </div>
+
+          <MatchNoteForm key={match.id} matchId={match.id} initialNote={initialNote} />
         </div>
 
         <div className="flex-1 flex flex-col gap-3">
