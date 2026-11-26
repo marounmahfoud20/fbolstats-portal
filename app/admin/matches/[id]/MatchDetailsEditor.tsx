@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { saveGroupName, saveMatchCore, saveMatchEventEntry, saveMatchMeta, saveMatchReferees, saveMatchSubstitution } from "@/lib/match-actions";
+import { saveMatchDetails, saveMatchEventEntry, saveMatchMeta, saveMatchReferees, saveMatchSubstitution } from "@/lib/match-actions";
 import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
 import { combineGoalAndAssistEvents } from "@/lib/goal-assist-events";
 import { matchTime, playersOnField } from "@/lib/substitutions";
@@ -133,7 +133,6 @@ export default function MatchDetailsEditor({
 }: {
   match: {
     id: number;
-    groupId: number;
     teamA: string;
     teamB: string;
     teamAId: number | null;
@@ -179,7 +178,9 @@ export default function MatchDetailsEditor({
   initialShirts: Record<number, string>;
   initialNote: string | null;
 }) {
-  const [saving, setSaving] = useState<string | null>(null);
+  const [savingScores, setSavingScores] = useState(false);
+  const [detailsStatus, setDetailsStatus] = useState<"saving" | "saved" | "error" | null>(null);
+  const [refereesStatus, setRefereesStatus] = useState<"saving" | "saved" | "error" | null>(null);
   const [ownGoal, setOwnGoal] = useState<{ teamId: string; minute: string; extraTime: string; eventId?: number } | null>(null);
   const [ownGoalError, setOwnGoalError] = useState("");
   const [savingOwnGoal, setSavingOwnGoal] = useState(false);
@@ -198,8 +199,15 @@ export default function MatchDetailsEditor({
       setSavingOwnGoal(false);
     }
   };
-  const [matchInfo, setMatchInfo] = useState({ date: match.date || "", time: match.time || "", round: match.roundName, status: match.status || "" });
-  const [extras, setExtras] = useState({ venue: match.venue || "", spectators: initialMeta?.spectators || "" });
+  const [savedDetails, setSavedDetails] = useState({
+    date: match.date || "",
+    time: match.time || "",
+    round: match.roundName,
+    status: match.status || "",
+    venue: match.venue || "",
+    spectators: initialMeta?.spectators || "",
+  });
+  const [matchDetails, setMatchDetails] = useState(savedDetails);
   const [scores, setScores] = useState({
     ftA: initialMeta?.ftA || "",
     ftB: initialMeta?.ftB || "",
@@ -358,49 +366,47 @@ export default function MatchDetailsEditor({
     fourth: lineups.referees.fourth ? displayName(lineups.referees.fourth.person) : "",
   });
 
-  const findRefId = (name: string) => {
+  const findRefId = (name: string, assigned?: Appearance) => {
     const cleaned = name.trim().toLowerCase();
     if (!cleaned) return null;
+    if (assigned && displayName(assigned.person).trim().toLowerCase() === cleaned) return assigned.person.id;
     const exact = refereeOptions.find((r) => r.name.toLowerCase() === cleaned);
     if (exact) return exact.id;
     const partial = refereeOptions.filter((r) => r.name.toLowerCase().includes(cleaned));
     return partial.length === 1 ? partial[0].id : null;
   };
 
-  const persistMatchInfo = async () => {
-    try {
-      setSaving("info");
-      await saveMatchCore(match.id, { date: matchInfo.date, time: matchInfo.time, status: matchInfo.status });
-      await saveGroupName(match.groupId, matchInfo.round, match.id);
-    } finally {
-      setSaving(null);
+  const persistMatchDetails = async () => {
+    if (detailsStatus === "saving") return;
+    const changes: Partial<typeof matchDetails> = {};
+    for (const field of Object.keys(matchDetails) as (keyof typeof matchDetails)[]) {
+      if (matchDetails[field] !== savedDetails[field]) changes[field] = matchDetails[field];
     }
-  };
-
-  const persistExtras = async () => {
+    setDetailsStatus("saving");
     try {
-      setSaving("extras");
-      await saveMatchCore(match.id, { venue: extras.venue });
-      await saveMatchMeta(match.id, { spectators: extras.spectators });
-    } finally {
-      setSaving(null);
+      if (Object.keys(changes).length) await saveMatchDetails(match.id, changes);
+      setSavedDetails(matchDetails);
+      setDetailsStatus("saved");
+    } catch {
+      setDetailsStatus("error");
     }
   };
 
   const persistScores = async () => {
     try {
-      setSaving("scores");
+      setSavingScores(true);
       await saveMatchMeta(match.id, scores);
     } finally {
-      setSaving(null);
+      setSavingScores(false);
     }
   };
 
   const persistReferees = async () => {
-    const mainRefId = findRefId(refInputs.main);
-    const a1RefId = findRefId(refInputs.a1);
-    const a2RefId = findRefId(refInputs.a2);
-    const fourthRefId = findRefId(refInputs.fourth);
+    if (refereesStatus === "saving") return;
+    const mainRefId = findRefId(refInputs.main, lineups.referees.main);
+    const a1RefId = findRefId(refInputs.a1, lineups.referees.a1);
+    const a2RefId = findRefId(refInputs.a2, lineups.referees.a2);
+    const fourthRefId = findRefId(refInputs.fourth, lineups.referees.fourth);
     const hasInvalidInput =
       (!!refInputs.main.trim() && !mainRefId) ||
       (!!refInputs.a1.trim() && !a1RefId) ||
@@ -413,15 +419,16 @@ export default function MatchDetailsEditor({
     }
 
     try {
-      setSaving("refs");
+      setRefereesStatus("saving");
       await saveMatchReferees(match.id, {
         mainRefereeId: mainRefId,
         assistant1Id: a1RefId,
         assistant2Id: a2RefId,
         fourthOfficialId: fourthRefId,
       });
-    } finally {
-      setSaving(null);
+      setRefereesStatus("saved");
+    } catch {
+      setRefereesStatus("error");
     }
   };
 
@@ -570,37 +577,53 @@ export default function MatchDetailsEditor({
       <div className="flex gap-3 items-start text-[13px]">
         <div className="w-[320px] flex flex-col gap-3">
           <div className="border border-[#c50000] bg-white rounded-md overflow-hidden">
-            <div className="bg-[#dfdfdf] border-b border-[#c50000] text-center text-[22px] font-bold py-1">Match Info</div>
-            <form className="p-2 flex flex-col gap-1" onSubmit={(e) => { e.preventDefault(); void persistMatchInfo(); }}>
-              <div className="flex items-center gap-1"><span className="w-16 font-bold">Date</span><input value={matchInfo.date} onChange={(e) => setMatchInfo((p) => ({ ...p, date: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 h-6" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-              <div className="flex items-center gap-1"><span className="w-16 font-bold">Time</span><input value={matchInfo.time} onChange={(e) => setMatchInfo((p) => ({ ...p, time: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 h-6" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-              <div className="flex items-center gap-1"><span className="w-16 font-bold">Round</span><input value={matchInfo.round} onChange={(e) => setMatchInfo((p) => ({ ...p, round: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 h-6" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-              <div className="flex items-center gap-1">
-                <span className="w-16 font-bold">Status</span>
-                <select
-                  value={matchInfo.status}
-                  onChange={(e) => setMatchInfo((p) => ({ ...p, status: e.target.value }))}
-                  className="border border-gray-400 px-1 py-0.5 flex-1 h-6 bg-white"
-                >
-                  <option value="Played">Played</option>
-                  <option value="Playing">Playing</option>
-                  <option value="Fixture">Fixture</option>
-                  <option value="Awarded">Awarded</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Postponed">Postponed</option>
-                  <option value="Suspended">Suspended</option>
-                  <option value="Break">Break</option>
-                </select>
-                <button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button>
-              </div>
-            </form>
-          </div>
-
-          <div className="border border-[#c50000] bg-white rounded-md overflow-hidden">
-            <div className="bg-[#dfdfdf] border-b border-[#c50000] text-center text-[22px] font-bold py-1">Match Extras</div>
-            <form className="p-2 flex flex-col gap-1" onSubmit={(e) => { e.preventDefault(); void persistExtras(); }}>
-              <div className="flex items-center gap-1"><span className="w-16 font-bold">Venue</span><input list="venue-list" value={extras.venue} onChange={(e) => setExtras((p) => ({ ...p, venue: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 h-6" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-              <div className="flex items-center gap-1"><span className="w-16 font-bold">Specs</span><input value={extras.spectators} onChange={(e) => setExtras((p) => ({ ...p, spectators: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 h-6" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
+            <div id="match-details-heading" className="bg-[#dfdfdf] border-b border-[#c50000] text-center text-[22px] font-bold py-1">Match Info &amp; Extras</div>
+            <form aria-labelledby="match-details-heading" onChange={() => setDetailsStatus(null)} onSubmit={(e) => { e.preventDefault(); void persistMatchDetails(); }}>
+              <fieldset disabled={detailsStatus === "saving"} className="p-2 flex flex-col gap-1">
+                {([
+                  ["date", "Date"],
+                  ["time", "Time"],
+                  ["round", "Round"],
+                ] as const).map(([field, label]) => (
+                  <label key={field} className="flex items-center gap-1">
+                    <span className="w-16 font-bold">{label}</span>
+                    <input value={matchDetails[field]} onChange={(e) => setMatchDetails((p) => ({ ...p, [field]: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 min-w-0 h-6" />
+                  </label>
+                ))}
+                <label className="flex items-center gap-1">
+                  <span className="w-16 font-bold">Status</span>
+                  <select
+                    value={matchDetails.status}
+                    onChange={(e) => setMatchDetails((p) => ({ ...p, status: e.target.value }))}
+                    className="border border-gray-400 px-1 py-0.5 flex-1 h-6 bg-white"
+                  >
+                    <option value="Played">Played</option>
+                    <option value="Playing">Playing</option>
+                    <option value="Fixture">Fixture</option>
+                    <option value="Awarded">Awarded</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Postponed">Postponed</option>
+                    <option value="Suspended">Suspended</option>
+                    <option value="Break">Break</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-1">
+                  <span className="w-16 font-bold">Venue</span>
+                  <input list="venue-list" value={matchDetails.venue} onChange={(e) => setMatchDetails((p) => ({ ...p, venue: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 min-w-0 h-6" />
+                </label>
+                <label className="flex items-center gap-1">
+                  <span className="w-16 font-bold">Spectators</span>
+                  <input value={matchDetails.spectators} onChange={(e) => setMatchDetails((p) => ({ ...p, spectators: e.target.value }))} className="border border-gray-400 px-1 py-0.5 flex-1 min-w-0 h-6" />
+                </label>
+                <div className="mt-1 flex items-center justify-end gap-2">
+                  <span role="status" className="text-xs">
+                    {detailsStatus === "saved" ? "Saved" : detailsStatus === "error" ? "Could not save match details. Please try again." : ""}
+                  </span>
+                  <button type="submit" className="h-6 shrink-0 px-3 border border-gray-500 bg-[#efefef] text-[11px] font-bold disabled:cursor-wait disabled:opacity-60">
+                    {detailsStatus === "saving" ? "Saving..." : "Save Match Details"}
+                  </button>
+                </div>
+              </fieldset>
             </form>
           </div>
 
@@ -614,8 +637,8 @@ export default function MatchDetailsEditor({
                   <input value={scores[`${k.toLowerCase()}B` as keyof typeof scores]} onChange={(e) => setScores((p) => ({ ...p, [`${k.toLowerCase()}B`]: e.target.value }))} className="border border-gray-400 px-1 h-6 w-12 text-center" placeholder="B" />
                 </div>
               ))}
-              <button type="submit" disabled={saving === "scores"} className="self-end h-6 px-3 border border-gray-500 bg-[#efefef] text-[11px] font-bold disabled:cursor-wait disabled:opacity-60">
-                {saving === "scores" ? "Saving..." : "Save"}
+              <button type="submit" disabled={savingScores} className="self-end h-6 px-3 border border-gray-500 bg-[#efefef] text-[11px] font-bold disabled:cursor-wait disabled:opacity-60">
+                {savingScores ? "Saving..." : "Save"}
               </button>
             </form>
           </div>
@@ -856,18 +879,34 @@ export default function MatchDetailsEditor({
             </div>
 
             <div className="border-t border-[#c50000] px-4 py-3">
-              <div className="font-bold text-[20px] mb-2">Referees</div>
-              <form className="grid grid-cols-2 gap-2 text-[14px]" onSubmit={(e) => { e.preventDefault(); void persistReferees(); }}>
-                <div className="flex items-center gap-1"><b>R:</b><input list="referee-list" value={refInputs.main} onChange={(e) => setRefInputs((p) => ({ ...p, main: e.target.value }))} className="border border-gray-400 h-6 px-1 flex-1" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-                <div className="flex items-center gap-1"><b>A1:</b><input list="referee-list" value={refInputs.a1} onChange={(e) => setRefInputs((p) => ({ ...p, a1: e.target.value }))} className="border border-gray-400 h-6 px-1 flex-1" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-                <div className="flex items-center gap-1"><b>A2:</b><input list="referee-list" value={refInputs.a2} onChange={(e) => setRefInputs((p) => ({ ...p, a2: e.target.value }))} className="border border-gray-400 h-6 px-1 flex-1" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
-                <div className="flex items-center gap-1"><b>4th:</b><input list="referee-list" value={refInputs.fourth} onChange={(e) => setRefInputs((p) => ({ ...p, fourth: e.target.value }))} className="border border-gray-400 h-6 px-1 flex-1" /><button type="submit" className="h-6 px-2 border border-gray-500 bg-[#efefef] text-[11px] font-bold">Save</button></div>
+              <div id="referees-heading" className="font-bold text-[20px] mb-2">Referees</div>
+              <form aria-labelledby="referees-heading" onChange={() => setRefereesStatus(null)} onSubmit={(e) => { e.preventDefault(); void persistReferees(); }}>
+                <fieldset disabled={refereesStatus === "saving"} className="grid grid-cols-1 gap-2 text-[14px] sm:grid-cols-2">
+                  {([
+                    ["main", "R", "Main referee"],
+                    ["a1", "A1", "Assistant referee 1"],
+                    ["a2", "A2", "Assistant referee 2"],
+                    ["fourth", "4th", "Fourth official"],
+                  ] as const).map(([field, label, name]) => (
+                    <label key={field} className="flex items-center gap-1">
+                      <b className="w-8">{label}:</b>
+                      <input list="referee-list" aria-label={name} value={refInputs[field]} onChange={(e) => setRefInputs((p) => ({ ...p, [field]: e.target.value }))} className="border border-gray-400 h-6 px-1 flex-1 min-w-0" />
+                    </label>
+                  ))}
+                  <div className="mt-1 flex items-center justify-end gap-2 sm:col-span-2">
+                    <span role="status" className="text-xs">
+                      {refereesStatus === "saved" ? "Saved" : refereesStatus === "error" ? "Could not save referees. Please try again." : ""}
+                    </span>
+                    <button type="submit" className="h-6 shrink-0 px-3 border border-gray-500 bg-[#efefef] text-[11px] font-bold disabled:cursor-wait disabled:opacity-60">
+                      {refereesStatus === "saving" ? "Saving..." : "Save Referees"}
+                    </button>
+                  </div>
+                </fieldset>
               </form>
             </div>
           </div>
         </div>
       </div>
-      {saving ? <div className="text-xs text-slate-500 mt-2">Saving...</div> : null}
     </div>
   );
 }

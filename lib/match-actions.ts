@@ -151,33 +151,29 @@ export async function saveMatchLineups(
   });
 }
 
-export async function saveMatchCore(
+export async function saveMatchDetails(
   matchId: number,
-  payload: { date?: string; time?: string; status?: string; venue?: string }
+  payload: Partial<Record<"date" | "time" | "round" | "status" | "venue" | "spectators", string>>,
 ) {
-  return withAdminActivity("saveMatchCore", { matchId, payload }, async () => {
-  await prisma.match.update({
-    where: { id: matchId },
-    data: {
-      date: payload.date ?? undefined,
-      time: payload.time ?? undefined,
-      status: payload.status ?? undefined,
-      venue: payload.venue ?? undefined,
-    },
-  });
-  revalidatePath(`/admin/matches/${matchId}`);
+  return withAdminActivity("saveMatchDetails", { matchId }, async () => {
+    if (!getAdminUserFromCookies(await cookies())) throw new Error("Unauthorized");
+    const { date, time, round, status, venue, spectators } = payload;
+    if (![date, time, round, status, venue, spectators].every((value) => value === undefined || typeof value === "string")) {
+      throw new Error("Invalid match details");
+    }
 
-  });
-}
-
-export async function saveGroupName(groupId: number, name: string, matchId: number) {
-  return withAdminActivity("saveGroupName", { groupId, name, matchId }, async () => {
-  await prisma.group.update({
-    where: { id: groupId },
-    data: { name },
-  });
-  revalidatePath(`/admin/matches/${matchId}`);
-
+    await prisma.match.update({
+      where: { id: matchId },
+      data: {
+        date,
+        time,
+        status,
+        venue,
+        group: round === undefined ? undefined : { update: { name: round } },
+        meta: spectators === undefined ? undefined : { upsert: { create: { spectators }, update: { spectators } } },
+      },
+    });
+    revalidatePath(`/admin/matches/${matchId}`);
   });
 }
 
@@ -191,26 +187,25 @@ export async function saveMatchReferees(
   }
 ) {
   return withAdminActivity("saveMatchReferees", { matchId, refs }, async () => {
-  await prisma.matchAppearance.deleteMany({
-    where: {
-      matchId,
-      teamId: null,
-      role: { in: ["Main Referee", "Referee", "Assistant 1", "Assistant 2", "4th Official"] },
-    },
-  });
+    if (!getAdminUserFromCookies(await cookies())) throw new Error("Unauthorized");
 
-  const rows: { matchId: number; personId: number; teamId: null; role: string }[] = [];
-  if (refs.mainRefereeId) rows.push({ matchId, personId: refs.mainRefereeId, teamId: null, role: "Main Referee" });
-  if (refs.assistant1Id) rows.push({ matchId, personId: refs.assistant1Id, teamId: null, role: "Assistant 1" });
-  if (refs.assistant2Id) rows.push({ matchId, personId: refs.assistant2Id, teamId: null, role: "Assistant 2" });
-  if (refs.fourthOfficialId) rows.push({ matchId, personId: refs.fourthOfficialId, teamId: null, role: "4th Official" });
+    const rows: { matchId: number; personId: number; teamId: null; role: string }[] = [];
+    if (refs.mainRefereeId) rows.push({ matchId, personId: refs.mainRefereeId, teamId: null, role: "Main Referee" });
+    if (refs.assistant1Id) rows.push({ matchId, personId: refs.assistant1Id, teamId: null, role: "Assistant 1" });
+    if (refs.assistant2Id) rows.push({ matchId, personId: refs.assistant2Id, teamId: null, role: "Assistant 2" });
+    if (refs.fourthOfficialId) rows.push({ matchId, personId: refs.fourthOfficialId, teamId: null, role: "4th Official" });
 
-  if (rows.length > 0) {
-    await prisma.matchAppearance.createMany({ data: rows });
-  }
-
-  revalidatePath(`/admin/matches/${matchId}`);
-
+    await prisma.$transaction(async (tx) => {
+      await tx.matchAppearance.deleteMany({
+        where: {
+          matchId,
+          teamId: null,
+          role: { in: ["Main Referee", "Referee", "Assistant 1", "Assistant 2", "4th Official"] },
+        },
+      });
+      if (rows.length > 0) await tx.matchAppearance.createMany({ data: rows });
+    }, { isolationLevel: "Serializable" });
+    revalidatePath(`/admin/matches/${matchId}`);
   });
 }
 

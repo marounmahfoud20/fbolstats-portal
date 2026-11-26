@@ -141,7 +141,6 @@ async function renderMatchDetails({ params }: { params: Promise<{ id: string }> 
       <MatchDetailsEditor
         match={{
           id: match.id,
-          groupId: match.groupId,
           teamA: match.teamA,
           teamB: match.teamB,
           teamAId: teamAData?.id ?? null,
