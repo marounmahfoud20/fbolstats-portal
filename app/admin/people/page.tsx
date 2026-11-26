@@ -2,9 +2,10 @@ export const metadata = { title: "People Search" };
 
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
+import NationalityLabel from '@/components/NationalityLabel';
 import prisma from '@/lib/prisma';
-import { COUNTRIES, getLegacyCountryIdsForName, resolveCountryName } from '@/lib/countries';
-import { genderIcon, nationalityFlag, resolvePositionName } from '@/lib/people-format';
+import { COUNTRIES, getLegacyCountryIdsForName } from '@/lib/countries';
+import { genderIcon, resolvePositionName } from '@/lib/people-format';
 
 export default async function PeopleSearchPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams;
@@ -194,7 +195,7 @@ export default async function PeopleSearchPage(props: { searchParams: Promise<{ 
                   <td className="p-2">{person.commonName || '-'}</td>
                   <td className="p-2">{person.dob || '-'}</td>
                   <td className="p-2">
-                    {resolveCountryName(person.nationality) ? `${nationalityFlag(person.nationality)} ${resolveCountryName(person.nationality)}` : '-'}
+                    <NationalityLabel nationality={person.nationality} />
                   </td>
                   <td className="p-2">{resolvePositionName(person.position) || '-'}</td>
                 </tr>
