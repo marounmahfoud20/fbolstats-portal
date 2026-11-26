@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { addMultipleClubPlayers } from '@/lib/actions';
 import { COUNTRIES } from '@/lib/countries';
 import PlaceOfBirthInput from '@/components/PlaceOfBirthInput';
+import MembershipSaveForm from '@/components/MembershipSaveForm';
 import { parseDayFirstDate } from '@/lib/date-input';
 
 type SharedPlayerValues = { nationality: string; country_of_birth: string; start_date_day: string; start_date_month: string; start_date_year: string; end_date_day: string; end_date_month: string; end_date_year: string };
@@ -55,13 +56,9 @@ export default function AddMultiplePlayersForm({ teamId, teamName, teamCountry }
     setBulkMessage('Bulk values applied to all player rows. You can still edit individual players below.');
   };
 
-  const handleSubmit = async (formData: FormData) => {
-    await addMultipleClubPlayers(teamId, formData);
-  };
-
   return (
     <div className="p-6 bg-[#f8f9fa] min-h-screen font-sans">
-      <form action={handleSubmit} className="max-w-[1200px] mx-auto bg-white border border-gray-300 shadow-sm p-4 text-xs">
+      <MembershipSaveForm action={addMultipleClubPlayers.bind(null, teamId)} className="max-w-[1200px] mx-auto bg-white border border-gray-300 shadow-sm p-4 text-xs">
         <div className="flex justify-between items-center bg-[#f4a01c] border border-[#040f4f] p-2 mb-4">
           <span className="text-[#040f4f] font-bold text-sm">
             &nbsp;&nbsp;&nbsp;Add new People
@@ -188,7 +185,7 @@ export default function AddMultiplePlayersForm({ teamId, teamName, teamCountry }
             Send Data
           </button>
         </div>
-      </form>
+      </MembershipSaveForm>
     </div>
   );
 }

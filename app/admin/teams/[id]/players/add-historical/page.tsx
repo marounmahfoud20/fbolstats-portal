@@ -6,6 +6,7 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { addHistoricalPlayers } from "@/lib/actions";
 import { COUNTRIES } from "@/lib/countries";
+import MembershipSaveForm from "@/components/MembershipSaveForm";
 
 export default async function AddHistoricalPlayersPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -14,13 +15,14 @@ export default async function AddHistoricalPlayersPage(props: { params: Promise<
 
   return (
     <div className="p-6 bg-[#f8f9fa] min-h-screen font-sans">
-      <form action={addHistoricalPlayers} className="max-w-[1200px] mx-auto bg-white border border-gray-300 shadow-sm p-4 text-xs">
+      <MembershipSaveForm action={addHistoricalPlayers} className="max-w-[1200px] mx-auto bg-white border border-gray-300 shadow-sm p-4 text-xs">
         <input type="hidden" name="teamId" value={teamId} />
         <div className="flex justify-between items-center bg-[#f4a01c] border border-[#040f4f] p-2 mb-4">
           <span className="text-[#040f4f] font-bold text-sm">&nbsp;&nbsp;&nbsp;Add Historical Players - {team?.name || `Team #${teamId}`}</span>
           <Link href={`/admin/teams/${teamId}`} className="text-[#040f4f] hover:underline font-bold text-sm">Back to Team</Link>
         </div>
 
+        <p className="mb-3">Enter an end date for each historical Player membership.</p>
         <div className="space-y-3">
           {Array.from({ length: 30 }).map((_, i) => (
             <div key={i} className="border border-gray-300 p-2 bg-[#fdfdfd] flex gap-2 flex-wrap">
@@ -54,7 +56,7 @@ export default async function AddHistoricalPlayersPage(props: { params: Promise<
             Save Historical Players
           </button>
         </div>
-      </form>
+      </MembershipSaveForm>
     </div>
   );
 }

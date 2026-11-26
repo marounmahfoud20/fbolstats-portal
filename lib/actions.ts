@@ -1,6 +1,7 @@
 "use server";
 
 import { withAdminActivity } from "@/lib/admin-activity";
+import type { Prisma } from "@prisma/client";
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
@@ -11,6 +12,7 @@ import { join } from 'path';
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { getAdminUserFromCookies, isGodAdmin } from "@/lib/adminAuth";
 import { createMembershipIfMissing } from "@/lib/memberships";
+import { isPlayerRole, playerMembershipStatusError, readPlayerEndDate } from "@/lib/player-membership-status";
 
 function revalidateNationalCompetitionPages() {
   revalidatePath("/admin/national-teams/[gender]", "page");
@@ -1196,9 +1198,10 @@ export async function searchTeams(query: string, genderFilter: string = "both") 
 
 export async function addMembership(formData: FormData) {
   return withAdminActivity("addMembership", { formData }, async () => {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false, error: "Please sign in to save memberships." };
   const personId = parseInt(formData.get("personId") as string);
   const teamId = parseInt(formData.get("teamId") as string);
-  const role = formData.get("role") as string;
+  const role = (formData.get("role") as string) || "Player";
   const active = formData.get("active") === "yes";
 
   // Format Start Date
@@ -1211,7 +1214,11 @@ export async function addMembership(formData: FormData) {
   const endDay = formData.get("endDay") as string;
   const endMonth = formData.get("endMonth") as string;
   const endYear = formData.get("endYear") as string;
-  const endDate = endYear && endMonth && endDay ? `${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}` : null;
+  const endDate = isPlayerRole(role)
+    ? readPlayerEndDate(formData)
+    : endYear && endMonth && endDay ? `${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}` : null;
+  const error = isPlayerRole(role) && playerMembershipStatusError(active, endDate);
+  if (error) return { ok: false, error };
 
   if (!teamId || !personId) return;
 
@@ -1220,7 +1227,7 @@ export async function addMembership(formData: FormData) {
     teamId,
     role,
     startDate,
-    endDate,
+    endDate: endDate ?? null,
     isActive: active
   });
 
@@ -1234,16 +1241,21 @@ export async function addMembership(formData: FormData) {
 }
 export async function bulkUpdateMemberships(formData: FormData) {
   return withAdminActivity("bulkUpdateMemberships", { formData }, async () => {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false, error: "Please sign in to save memberships." };
   const personId = formData.get("personId") as string;
   const personIdNum = parseInt(personId, 10);
-  const membershipIds = formData.getAll("membershipId"); // Gets all the hidden IDs from the form loop
+  if (!personIdNum) return;
+  const membershipIds = formData.getAll("membershipId").map((id) => Number(id)).filter(Number.isSafeInteger);
+  const existing = await prisma.membership.findMany({ where: { id: { in: membershipIds }, personId: personIdNum } });
   const touchedTeamIds = new Set<number>();
+  const updates: { id: number; data: { teamId: number; role: string; isActive: boolean; startDate: string | null; endDate: string | null } }[] = [];
+  const additions: (typeof updates)[number]["data"][] = [];
 
-  for (const idStr of membershipIds) {
-    const id = parseInt(idStr as string);
+  for (const previous of existing) {
+    const { id } = previous;
     const teamId = parseInt((formData.get(`teamId_${id}`) as string) || "", 10);
-    if (!Number.isFinite(id) || !Number.isFinite(teamId) || !Number.isFinite(personIdNum)) continue;
-    const role = formData.get(`role_${id}`) as string;
+    if (!Number.isFinite(teamId)) continue;
+    const role = (formData.get(`role_${id}`) as string) || previous.role;
     const active = formData.get(`active_${id}`) === "yes";
 
     // Reconstruct Start Date
@@ -1256,27 +1268,17 @@ export async function bulkUpdateMemberships(formData: FormData) {
     const eDay = formData.get(`endDay_${id}`) as string;
     const eMonth = formData.get(`endMonth_${id}`) as string;
     const eYear = formData.get(`endYear_${id}`) as string;
-    const endDate = (eDay && eMonth && eYear) ? `${eYear}-${eMonth.padStart(2, '0')}-${eDay.padStart(2, '0')}` : null;
+    const endDate = isPlayerRole(role)
+      ? readPlayerEndDate(formData, `endDay_${id}`, `endMonth_${id}`, `endYear_${id}`)
+      : eDay && eMonth && eYear ? `${eYear}-${eMonth.padStart(2, '0')}-${eDay.padStart(2, '0')}` : null;
 
-    const previousMembership = await prisma.membership.findFirst({
-      where: { id, personId: personIdNum },
-      select: { teamId: true },
-    });
-    if (previousMembership) touchedTeamIds.add(previousMembership.teamId);
-
-    // Update the database record
-    await prisma.membership.updateMany({
-      where: { id, personId: personIdNum },
-      data: {
-        teamId,
-        role,
-        isActive: active,
-        startDate,
-        endDate
-      }
-    });
-
-    // Refresh the page for the team's assignment before and after the edit.
+    // Preserve untouched historical rows whose end dates are unknown.
+    if (teamId === previous.teamId && role === previous.role && active === previous.isActive &&
+        startDate === previous.startDate && endDate === previous.endDate) continue;
+    const error = isPlayerRole(role) && playerMembershipStatusError(active, endDate);
+    if (error) return { ok: false, error: `Membership #${id}: ${error}` };
+    updates.push({ id, data: { teamId, role, isActive: active, startDate, endDate: endDate ?? null } });
+    touchedTeamIds.add(previous.teamId);
     touchedTeamIds.add(teamId);
   }
 
@@ -1299,21 +1301,24 @@ export async function bulkUpdateMemberships(formData: FormData) {
     const eDay = ((formData.get(`new_endDay_${i}`) as string) || "").trim();
     const eMonth = ((formData.get(`new_endMonth_${i}`) as string) || "").trim();
     const eYear = ((formData.get(`new_endYear_${i}`) as string) || "").trim();
-    const endDate = (eDay && eMonth && eYear)
-      ? `${eYear}-${eMonth.padStart(2, "0")}-${eDay.padStart(2, "0")}`
-      : null;
-
-    await createMembershipIfMissing({
-      personId: personIdNum,
-      teamId,
-      role,
-      startDate,
-      endDate,
-      isActive: active,
-    });
+    const endDate = isPlayerRole(role)
+      ? readPlayerEndDate(formData, `new_endDay_${i}`, `new_endMonth_${i}`, `new_endYear_${i}`)
+      : eDay && eMonth && eYear ? `${eYear}-${eMonth.padStart(2, "0")}-${eDay.padStart(2, "0")}` : null;
+    const error = isPlayerRole(role) && playerMembershipStatusError(active, endDate);
+    if (error) return { ok: false, error: `New membership row ${i + 1}: ${error}` };
+    additions.push({ teamId, role, startDate, endDate: endDate ?? null, isActive: active });
 
     touchedTeamIds.add(teamId);
   }
+
+  await prisma.$transaction(async (tx) => {
+    for (const { id, data } of updates) {
+      await tx.membership.updateMany({ where: { id, personId: personIdNum }, data });
+    }
+    for (const data of additions) {
+      await createMembershipIfMissing({ personId: personIdNum, ...data }, tx);
+    }
+  }, { timeout: 15000 });
 
   for (const teamId of touchedTeamIds) {
     revalidatePath(`/admin/teams/${teamId}`);
@@ -1329,6 +1334,7 @@ export async function bulkUpdateMemberships(formData: FormData) {
 
 export async function updateMembership(formData: FormData) {
   return withAdminActivity("updateMembership", { formData }, async () => {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false, error: "Please sign in to save memberships." };
   const membershipId = parseInt(formData.get("membershipId") as string);
   const personId = parseInt(formData.get("personId") as string);
   const teamId = parseInt(formData.get("teamId") as string);
@@ -1347,18 +1353,20 @@ export async function updateMembership(formData: FormData) {
   const startDate = (startDay && startMonth && startYear)
     ? `${startYear}-${startMonth.padStart(2, "0")}-${startDay.padStart(2, "0")}`
     : null;
-  const endDate = (endDay && endMonth && endYear)
-    ? `${endYear}-${endMonth.padStart(2, "0")}-${endDay.padStart(2, "0")}`
-    : null;
+  const endDate = isPlayerRole(role)
+    ? readPlayerEndDate(formData)
+    : endDay && endMonth && endYear ? `${endYear}-${endMonth.padStart(2, "0")}-${endDay.padStart(2, "0")}` : null;
+  const error = isPlayerRole(role) && playerMembershipStatusError(active, endDate);
+  if (error) return { ok: false, error };
 
   await prisma.membership.update({
-    where: { id: membershipId },
+    where: { id: membershipId, personId },
     data: {
       teamId,
       role,
       isActive: active,
       startDate,
-      endDate,
+      endDate: endDate ?? null,
     },
   });
 
@@ -1370,9 +1378,11 @@ export async function updateMembership(formData: FormData) {
 }
 export async function addMultipleClubPlayers(teamId: number, formData: FormData) {
   return withAdminActivity("addMultipleClubPlayers", { teamId, formData }, async () => {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false, error: "Please sign in to add players." };
   const parsedTeamId = typeof teamId === 'string' ? parseInt(teamId) : teamId;
+  const players: Prisma.PersonCreateArgs["data"][] = [];
 
-  // We loop through the form data and create them one by one so we can create the Membership relation simultaneously
+  // Validate the full batch before creating profiles and their memberships.
   for (let i = 0; i < 50; i++) {
     const firstName = formData.get(`firstname[${i}]`) as string;
     const lastName = formData.get(`lastname[${i}]`) as string;
@@ -1389,48 +1399,40 @@ export async function addMultipleClubPlayers(teamId: number, formData: FormData)
     const startYear = formData.get(`start_date_year[${i}]`) as string;
     const teamStartDate = (startDay && startMonth && startYear) ? `${startYear}-${startMonth.padStart(2, '0')}-${startDay.padStart(2, '0')}` : null;
 
-    const endDay = formData.get(`end_date_day[${i}]`) as string;
-    const endMonth = formData.get(`end_date_month[${i}]`) as string;
-    const endYear = formData.get(`end_date_year[${i}]`) as string;
-    const teamEndDate = (endDay && endMonth && endYear) ? `${endYear}-${endMonth.padStart(2, '0')}-${endDay.padStart(2, '0')}` : null;
+    const teamEndDate = readPlayerEndDate(formData, `end_date_day[${i}]`, `end_date_month[${i}]`, `end_date_year[${i}]`);
+    if (teamEndDate === undefined) return { ok: false, error: `Player row ${i + 1}: Enter a valid end date in DD/MM/YYYY format.` };
 
-    // Smart Rule: If there is no end date, the membership is active. If there is an end date, it is inactive.
-    const isMembershipActive = !teamEndDate;
-
-    await prisma.person.create({
-      data: {
-        firstName,
-        lastName,
-        matchName: formData.get(`matchname[${i}]`) as string || null,
-        commonName: formData.get(`commonname[${i}]`) as string || null,
-        dob,
-        gender: formData.get(`gender[${i}]`) as string || null,
-        status: formData.get(`status[${i}]`) as string || "active",
-        placeOfBirth: formData.get(`place_of_birth[${i}]`) as string || null,
-        countryOfBirth: formData.get(`country_of_birth[${i}]`) as string || null,
-        nationality: formData.get(`nationality[${i}]`) as string || null,
-        position: formData.get(`position[${i}]`) as string || null,
-        strongFoot: formData.get(`foot[${i}]`) as string || null,
-        height: formData.get(`height[${i}]`) as string || null,
-        weight: formData.get(`weight[${i}]`) as string || null,
-        // Legacy direct connections (kept for backwards compatibility)
-        teamId: parsedTeamId,
-        teamStartDate: teamStartDate,
-        teamEndDate: teamEndDate,
-        // NEW: Create the precise Membership record that the Team Page actually reads from
-        memberships: {
-          create: {
-            teamId: parsedTeamId,
-            role: "Player",
-            startDate: teamStartDate,
-            endDate: teamEndDate,
-            isActive: isMembershipActive
-          }
-        }
-      }
+    players.push({
+      firstName,
+      lastName,
+      matchName: formData.get(`matchname[${i}]`) as string || null,
+      commonName: formData.get(`commonname[${i}]`) as string || null,
+      dob,
+      gender: formData.get(`gender[${i}]`) as string || null,
+      status: formData.get(`status[${i}]`) as string || "active",
+      placeOfBirth: formData.get(`place_of_birth[${i}]`) as string || null,
+      countryOfBirth: formData.get(`country_of_birth[${i}]`) as string || null,
+      nationality: formData.get(`nationality[${i}]`) as string || null,
+      position: formData.get(`position[${i}]`) as string || null,
+      strongFoot: formData.get(`foot[${i}]`) as string || null,
+      height: formData.get(`height[${i}]`) as string || null,
+      weight: formData.get(`weight[${i}]`) as string || null,
+      teamId: parsedTeamId,
+      teamStartDate,
+      teamEndDate,
+      memberships: {
+        create: {
+          teamId: parsedTeamId,
+          role: "Player",
+          startDate: teamStartDate,
+          endDate: teamEndDate,
+          isActive: teamEndDate === null,
+        },
+      },
     });
   }
 
+  if (players.length) await prisma.$transaction(players.map((data) => prisma.person.create({ data })));
   revalidatePath(`/admin/teams/${parsedTeamId}`);
   redirect(`/admin/teams/${parsedTeamId}`);
 
@@ -1534,8 +1536,10 @@ export async function addTeamToRound(formData: FormData) {
 
 export async function addHistoricalPlayers(formData: FormData) {
   return withAdminActivity("addHistoricalPlayers", { formData }, async () => {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false, error: "Please sign in to add players." };
   const teamId = parseInt(formData.get("teamId") as string);
   if (!teamId) return;
+  const players: Prisma.PersonCreateArgs["data"][] = [];
 
   for (let i = 0; i < 30; i++) {
     const firstName = (formData.get(`firstName_${i}`) as string) || "";
@@ -1549,34 +1553,29 @@ export async function addHistoricalPlayers(formData: FormData) {
       ? `${startYear}-${startMonth.padStart(2, "0")}-${startDay.padStart(2, "0")}`
       : null;
 
-    const endDay = formData.get(`endDay_${i}`) as string;
-    const endMonth = formData.get(`endMonth_${i}`) as string;
-    const endYear = formData.get(`endYear_${i}`) as string;
-    const endDate = (endDay && endMonth && endYear)
-      ? `${endYear}-${endMonth.padStart(2, "0")}-${endDay.padStart(2, "0")}`
-      : null;
+    const endDate = readPlayerEndDate(formData, `endDay_${i}`, `endMonth_${i}`, `endYear_${i}`);
+    if (!endDate) return { ok: false, error: `Historical player row ${i + 1}: Enter a valid end date in DD/MM/YYYY format.` };
 
-    await prisma.person.create({
-      data: {
-        firstName: firstName || null,
-        lastName: lastName || null,
-        matchName: (formData.get(`matchName_${i}`) as string) || null,
-        commonName: (formData.get(`commonName_${i}`) as string) || null,
-        position: (formData.get(`position_${i}`) as string) || null,
-        nationality: (formData.get(`nationality_${i}`) as string) || null,
-        memberships: {
-          create: {
-            teamId,
-            role: "Player",
-            startDate,
-            endDate,
-            isActive: false
-          }
-        }
-      }
+    players.push({
+      firstName: firstName || null,
+      lastName: lastName || null,
+      matchName: (formData.get(`matchName_${i}`) as string) || null,
+      commonName: (formData.get(`commonName_${i}`) as string) || null,
+      position: (formData.get(`position_${i}`) as string) || null,
+      nationality: (formData.get(`nationality_${i}`) as string) || null,
+      memberships: {
+        create: {
+          teamId,
+          role: "Player",
+          startDate,
+          endDate,
+          isActive: false,
+        },
+      },
     });
   }
 
+  if (players.length) await prisma.$transaction(players.map((data) => prisma.person.create({ data })));
   revalidatePath(`/admin/teams/${teamId}`);
   redirect(`/admin/teams/${teamId}`);
 
@@ -1636,32 +1635,27 @@ export async function bulkUpdateActivePlayers(formData: FormData) {
 
 export async function exitTeamPlayers(formData: FormData) {
   return withAdminActivity("exitTeamPlayers", { formData }, async () => {
+  if (!getAdminUserFromCookies(await cookies())) return { ok: false, error: "Please sign in to exit players." };
   const teamId = parseInt(formData.get("teamId") as string);
   if (!teamId) return;
 
   const exitMembershipIds = formData.getAll("exitMembershipId");
   const now = new Date();
   const fallbackDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const exits: { id: number; endDate: string }[] = [];
 
   for (const idStr of exitMembershipIds) {
     const membershipId = parseInt(idStr as string);
     if (!membershipId) continue;
 
-    const endDay = formData.get(`endDay_${membershipId}`) as string;
-    const endMonth = formData.get(`endMonth_${membershipId}`) as string;
-    const endYear = formData.get(`endYear_${membershipId}`) as string;
-    const endDate = (endDay && endMonth && endYear)
-      ? `${endYear}-${endMonth.padStart(2, "0")}-${endDay.padStart(2, "0")}`
-      : fallbackDate;
-
-    await prisma.membership.update({
-      where: { id: membershipId },
-      data: {
-        isActive: false,
-        endDate
-      }
-    });
+    const endDate = readPlayerEndDate(formData, `endDay_${membershipId}`, `endMonth_${membershipId}`, `endYear_${membershipId}`);
+    if (endDate === undefined) return { ok: false, error: `Membership #${membershipId}: Enter a valid end date in DD/MM/YYYY format.` };
+    exits.push({ id: membershipId, endDate: endDate ?? fallbackDate });
   }
+  if (exits.length) await prisma.$transaction(exits.map(({ id, endDate }) => prisma.membership.updateMany({
+    where: { id, teamId, role: { equals: "Player", mode: "insensitive" }, isActive: true },
+    data: { isActive: false, endDate },
+  })));
 
   revalidatePath(`/admin/teams/${teamId}`);
   redirect(`/admin/teams/${teamId}`);

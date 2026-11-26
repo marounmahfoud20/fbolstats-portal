@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { bulkUpdateMemberships } from '@/lib/actions';
 import Link from 'next/link';
-import SaveMembershipsButton from './SaveMembershipsButton';
+import MembershipSaveForm from '@/components/MembershipSaveForm';
 
 // Helper function to chop the database "YYYY-MM-DD" string into pieces for the input boxes
 const splitDate = (dateStr?: string | null) => {
@@ -14,6 +14,15 @@ const splitDate = (dateStr?: string | null) => {
   const parts = dateStr.split('-');
   return { year: parts[0] || '', month: parts[1] || '', day: parts[2] || '' };
 };
+
+const roles = [
+  ["Player", "Player"],
+  ["coach", "Coach"],
+  ["assistant_coach", "Assistant Coach"],
+  ["team_manager", "Team Manager"],
+  ["sporting_director", "Sporting Director"],
+  ["physiotherapist", "Physiotherapist"],
+];
 
 export default async function EditAllMembershipsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -59,7 +68,8 @@ export default async function EditAllMembershipsPage(props: { params: Promise<{ 
 
       <div className="bg-white border border-[#040f4f] overflow-x-auto p-4">
 
-        <form action={bulkUpdateMemberships} className="text-[#040f4f] text-sm">
+        <MembershipSaveForm action={bulkUpdateMemberships} className="text-[#040f4f] text-sm">
+            <p className="mb-3 text-xs">Player memberships need an end date when inactive. Clear it when reopening.</p>
             <input type="hidden" name="personId" value={person.id} />
             <input type="hidden" name="newRowCount" value={newRows.length} />
 
@@ -103,12 +113,8 @@ export default async function EditAllMembershipsPage(props: { params: Promise<{ 
 
                       <td className="p-2">
                         <select name={`role_${m.id}`} defaultValue={m.role} className="border border-[#040f4f] p-1.5 outline-none focus:ring-1 focus:ring-[#f4a01c] w-full">
-                          <option value="Player">Player</option>
-                          <option value="coach">Coach</option>
-                          <option value="assistant_coach">Assistant Coach</option>
-                          <option value="team_manager">Team Manager</option>
-                          <option value="sporting_director">Sporting Director</option>
-                          <option value="physiotherapist">Physiotherapist</option>
+                          {!roles.some(([role]) => role === m.role) && <option value={m.role}>{m.role}</option>}
+                          {roles.map(([role, label]) => <option key={role} value={role}>{label}</option>)}
                         </select>
                       </td>
 
@@ -162,12 +168,7 @@ export default async function EditAllMembershipsPage(props: { params: Promise<{ 
 
                     <td className="p-2">
                       <select name={`new_role_${i}`} defaultValue="Player" className="border border-[#040f4f] p-1.5 outline-none focus:ring-1 focus:ring-[#f4a01c] w-full">
-                        <option value="Player">Player</option>
-                        <option value="coach">Coach</option>
-                        <option value="assistant_coach">Assistant Coach</option>
-                        <option value="team_manager">Team Manager</option>
-                        <option value="sporting_director">Sporting Director</option>
-                        <option value="physiotherapist">Physiotherapist</option>
+                        {roles.map(([role, label]) => <option key={role} value={role}>{label}</option>)}
                       </select>
                     </td>
 
@@ -199,9 +200,11 @@ export default async function EditAllMembershipsPage(props: { params: Promise<{ 
             </table>
 
             <div className="pt-4 border-t border-[#040f4f] flex justify-end">
-              <SaveMembershipsButton />
+              <button type="submit" className="bg-[#f4a01c] border border-[#040f4f] text-[#040f4f] font-bold px-8 py-2 hover:bg-[#040f4f] hover:text-[#f4a01c] transition-colors disabled:cursor-wait disabled:opacity-60">
+                Save All Changes
+              </button>
             </div>
-          </form>
+          </MembershipSaveForm>
 
       </div>
     </div>

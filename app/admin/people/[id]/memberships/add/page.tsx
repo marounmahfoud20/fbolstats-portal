@@ -70,7 +70,8 @@ export default function AddMembershipPage(props: { params: Promise<{ id: string 
     }
 
     // If all rules pass, execute the backend save
-    await addMembership(formData);
+    const result = await addMembership(formData);
+    if (result?.error) setErrorMsg(result.error);
   };
 
   return (

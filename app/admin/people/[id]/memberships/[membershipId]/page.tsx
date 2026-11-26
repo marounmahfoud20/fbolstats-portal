@@ -6,6 +6,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { updateMembership } from "@/lib/actions";
+import MembershipSaveForm from "@/components/MembershipSaveForm";
+import { isPlayerRole } from "@/lib/player-membership-status";
 
 function splitDate(dateStr?: string | null) {
   if (!dateStr) return { year: "", month: "", day: "" };
@@ -47,7 +49,7 @@ export default async function MembershipDetailsPage(
       </div>
 
       <div className="max-w-3xl border border-[#040f4f] bg-white p-4">
-        <form action={updateMembership} className="space-y-4 text-sm text-[#040f4f]">
+        <MembershipSaveForm action={updateMembership} className="space-y-4 text-sm text-[#040f4f]">
           <input type="hidden" name="personId" value={personId} />
           <input type="hidden" name="membershipId" value={membership.id} />
 
@@ -66,6 +68,7 @@ export default async function MembershipDetailsPage(
             <div className="flex flex-col">
               <label className="mb-1 font-semibold">Role</label>
               <select name="role" defaultValue={membership.role} className="border border-[#040f4f] p-1.5 bg-white">
+                {isPlayerRole(membership.role) && membership.role !== "Player" && <option value={membership.role}>Player</option>}
                 <option value="Player">Player</option>
                 <option value="academy_director">Academy director</option>
                 <option value="advisor">Advisor</option>
@@ -129,6 +132,7 @@ export default async function MembershipDetailsPage(
 
           <div className="flex flex-col">
             <label className="mb-1 font-semibold">Active</label>
+            <p className="mb-1 text-xs">Player memberships need an end date when inactive. Clear it when reopening.</p>
             <div className="flex gap-5">
               <label className="flex items-center gap-1">
                 <input type="radio" name="active" value="yes" defaultChecked={membership.isActive} />
@@ -146,7 +150,7 @@ export default async function MembershipDetailsPage(
               Save Data
             </button>
           </div>
-        </form>
+        </MembershipSaveForm>
       </div>
     </div>
   );

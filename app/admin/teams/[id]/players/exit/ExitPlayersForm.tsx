@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { useMemo, useState } from "react";
+import MembershipSaveForm from "@/components/MembershipSaveForm";
 
 type ExitPlayerRow = {
   membershipId: number;
@@ -21,7 +22,7 @@ export default function ExitPlayersForm({
 }: {
   teamId: number;
   rows: ExitPlayerRow[];
-  action: (formData: FormData) => void | Promise<void>;
+  action: (formData: FormData) => Promise<{ error: string } | void>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const now = useMemo(() => new Date(), []);
@@ -39,7 +40,7 @@ export default function ExitPlayersForm({
   };
 
   return (
-    <form ref={formRef} action={action} className="max-w-[1200px] mx-auto bg-white border border-gray-300 shadow-sm p-4 text-xs">
+    <MembershipSaveForm ref={formRef} action={action} className="max-w-[1200px] mx-auto bg-white border border-gray-300 shadow-sm p-4 text-xs">
       <input type="hidden" name="teamId" value={teamId} />
 
       <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[#040f4f]">Display Controls</div>
@@ -149,6 +150,6 @@ export default function ExitPlayersForm({
           Submit
         </button>
       </div>
-    </form>
+    </MembershipSaveForm>
   );
 }
