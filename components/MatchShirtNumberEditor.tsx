@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveMatchShirtNumber } from "@/lib/match-actions";
 
@@ -11,17 +11,19 @@ export default function MatchShirtNumberEditor({ matchId, personId, playerName, 
   number: string;
 }) {
   const router = useRouter();
+  const saveInProgress = useRef(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(number);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const save = async () => {
-    if (saving) return;
+    if (saveInProgress.current) return;
     if (draft === number) {
       setEditing(false);
       return;
     }
+    saveInProgress.current = true;
     setSaving(true);
     setError("");
     try {
@@ -31,6 +33,7 @@ export default function MatchShirtNumberEditor({ matchId, personId, playerName, 
     } catch {
       setError("Could not save shirt number. Click the number to try again.");
     } finally {
+      saveInProgress.current = false;
       setSaving(false);
     }
   };

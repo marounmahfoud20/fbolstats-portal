@@ -1,14 +1,27 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { saveMatchNote } from "@/lib/match-actions";
 
 export default function MatchNoteForm({ matchId, initialNote }: { matchId: number; initialNote: string | null }) {
   const [note, setNote] = useState(initialNote ?? "");
-  const [result, action, pending] = useActionState(saveMatchNote.bind(null, matchId), null);
+  const saveInProgress = useRef(false);
+  const [result, action, pending] = useActionState(async (_previous: Awaited<ReturnType<typeof saveMatchNote>> | null, formData: FormData) => {
+    try {
+      return await saveMatchNote(matchId, _previous, formData);
+    } finally {
+      saveInProgress.current = false;
+    }
+  }, null);
 
   return (
-    <form id="match-note" action={action} className="scroll-mt-4 rounded-md border border-[#c50000] bg-white p-3">
+    <form id="match-note" action={action} onSubmit={(event) => {
+      if (saveInProgress.current || pending) {
+        event.preventDefault();
+        return;
+      }
+      saveInProgress.current = true;
+    }} className="scroll-mt-4 rounded-md border border-[#c50000] bg-white p-3">
       <label htmlFor="match-note-text" className="mb-2 block font-bold">Match note</label>
       <textarea
         id="match-note-text"

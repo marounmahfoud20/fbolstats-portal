@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState } from "react";
 import { saveMatchDetails, saveMatchEventEntry, saveMatchMeta, saveMatchReferees, saveMatchSubstitution } from "@/lib/match-actions";
 import MatchShirtNumberEditor from "@/components/MatchShirtNumberEditor";
+import { shirtNumberOrder } from "@/lib/edition-shirt-numbers";
 import { combineGoalAndAssistEvents } from "@/lib/goal-assist-events";
-import { matchTime, playersOnField } from "@/lib/substitutions";
+import { isSubstitutionIn, matchTime, playersOnField } from "@/lib/substitutions";
 import { saveTeamOwnGoal } from "@/lib/team-own-goal-actions";
 import MatchNoteForm from "./MatchNoteForm";
 
@@ -178,14 +179,17 @@ export default function MatchDetailsEditor({
   initialShirts: Record<number, string>;
   initialNote: string | null;
 }) {
+  const savesInProgress = useRef({ scores: false, details: false, referees: false, event: false, substitution: false, ownGoal: false });
   const [savingScores, setSavingScores] = useState(false);
+  const [scoresError, setScoresError] = useState("");
   const [detailsStatus, setDetailsStatus] = useState<"saving" | "saved" | "error" | null>(null);
   const [refereesStatus, setRefereesStatus] = useState<"saving" | "saved" | "error" | null>(null);
   const [ownGoal, setOwnGoal] = useState<{ teamId: string; minute: string; extraTime: string; eventId?: number } | null>(null);
   const [ownGoalError, setOwnGoalError] = useState("");
   const [savingOwnGoal, setSavingOwnGoal] = useState(false);
   const saveOwnGoal = async () => {
-    if (!ownGoal || savingOwnGoal) return;
+    if (!ownGoal || savesInProgress.current.ownGoal) return;
+    savesInProgress.current.ownGoal = true;
     setSavingOwnGoal(true);
     setOwnGoalError("");
     try {
@@ -196,6 +200,7 @@ export default function MatchDetailsEditor({
     } catch {
       setOwnGoalError("Could not save the own goal. Please try again.");
     } finally {
+      savesInProgress.current.ownGoal = false;
       setSavingOwnGoal(false);
     }
   };
@@ -228,6 +233,8 @@ export default function MatchDetailsEditor({
   const [goalType, setGoalType] = useState<string>("");
   const [bookingReason, setBookingReason] = useState<string>("");
   const [eventRows, setEventRows] = useState(initialEvents);
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [eventError, setEventError] = useState("");
   const [substitution, setSubstitution] = useState<{
     incoming: Appearance;
     substitutionId?: string;
@@ -241,6 +248,7 @@ export default function MatchDetailsEditor({
   const substitutionForm = useRef<HTMLDivElement>(null);
 
   const openSubstitution = (incoming: Appearance) => {
+    if (savesInProgress.current.event || savesInProgress.current.substitution) return;
     const entry = eventRows.find((event) => event.personId === incoming.person.id && event.teamId === incoming.teamId && event.eventType === "sub_in" && event.substitutionId);
     const outgoing = entry && eventRows.find((event) => event.substitutionId === entry.substitutionId && event.eventType === "sub_out");
     setSelectedPlayer(null);
@@ -259,24 +267,31 @@ export default function MatchDetailsEditor({
 
   const replacementOptions = useMemo(() => {
     if (!substitution || substitution.incoming.teamId === null) return [];
-    const onField = playersOnField(
+    const { teamId, person } = substitution.incoming;
+    const time = matchTime(substitution.minute, substitution.extraTime);
+    const onField = time ? playersOnField(
       appearances.map((a) => ({ personId: a.person.id, teamId: a.teamId, role: a.role })),
       eventRows,
-      substitution.incoming.teamId,
-      matchTime(substitution.minute, substitution.extraTime) || [0, 0],
+      teamId,
+      time,
       substitution.substitutionId,
-    );
+    ) : null;
+    const previousEntrants = new Set(onField ? [] : eventRows
+      .filter((event) => event.teamId === teamId && isSubstitutionIn(event.eventType) && matchTime(event.minute || "", event.extraTime || ""))
+      .map((event) => event.personId));
     return appearances
-      .filter((a) => a.teamId === substitution.incoming.teamId && ["Starter", "Substitute"].includes(a.role) && onField.has(a.person.id) && a.person.id !== substitution.incoming.person.id)
+      .filter((a) => a.teamId === teamId && ["Starter", "Substitute"].includes(a.role) && a.person.id !== person.id)
+      .filter((a) => onField ? onField.has(a.person.id) : a.role === "Starter" || previousEntrants.has(a.person.id))
       .sort((a, b) => displayName(a.person).localeCompare(displayName(b.person)));
   }, [substitution, appearances, eventRows]);
 
   const persistSubstitution = async () => {
-    if (!substitution || substitution.incoming.teamId === null || savingSubstitution) return;
+    if (!substitution || substitution.incoming.teamId === null || savesInProgress.current.substitution) return;
     if (!replacementOptions.some((a) => String(a.person.id) === substitution.outgoingPersonId)) {
       setSubstitutionError("Choose the player being replaced at that minute.");
       return;
     }
+    savesInProgress.current.substitution = true;
     setSavingSubstitution(true);
     setSubstitutionError("");
     try {
@@ -295,11 +310,13 @@ export default function MatchDetailsEditor({
     } catch {
       setSubstitutionError("Could not save the substitution. Please try again.");
     } finally {
+      savesInProgress.current.substitution = false;
       setSavingSubstitution(false);
     }
   };
 
   const editEvent = (event: (typeof eventRows)[number]) => {
+    if (savesInProgress.current.event || savesInProgress.current.substitution || savesInProgress.current.ownGoal) return;
     if (event.personId === null) {
       setOwnGoal({ eventId: event.id, teamId: String(event.teamId || ""), minute: event.minute || "", extraTime: event.extraTime || "" });
       setOwnGoalError("");
@@ -311,6 +328,7 @@ export default function MatchDetailsEditor({
       if (incoming) { openSubstitution(incoming); return; }
     }
     setSubstitution(null);
+    setEventError("");
     const appearance = appearances.find((a) => a.person.id === event.personId && a.teamId === event.teamId);
     setSelectedPlayer({ id: event.personId, name: event.playerName, teamName: event.teamName || "", teamId: appearance?.teamId ?? null });
     setEditingEventId(event.id);
@@ -323,7 +341,9 @@ export default function MatchDetailsEditor({
   };
 
   const selectEventPlayer = (appearance: Appearance) => {
+    if (savesInProgress.current.event || savesInProgress.current.substitution) return;
     setSubstitution(null);
+    setEventError("");
     setEditingEventId(null);
     setSelectedPlayer({ id: appearance.person.id, name: displayName(appearance.person), teamName: appearance.teamName || "", teamId: appearance.teamId });
     setSelectedEvent("goal");
@@ -337,18 +357,23 @@ export default function MatchDetailsEditor({
   const lineups = useMemo(() => {
     const teamAAppearances = appearances.filter((a) => a.teamName === match.teamA);
     const teamBAppearances = appearances.filter((a) => a.teamName === match.teamB);
+    const byShirt = (a: Appearance, b: Appearance) =>
+      shirtNumberOrder(initialShirts[a.person.id]) - shirtNumberOrder(initialShirts[b.person.id]);
+    const headCoach = (staff: Appearance[]) => staff.find((a) =>
+      ["coach", "headcoach", "interimcoach"].includes(a.role.trim().toLowerCase().replace(/[ _-]/g, ""))
+    ) || null;
     const refs = appearances.filter((a) => a.teamId === null || a.role.toLowerCase().includes("referee") || a.role.includes("Assistant") || a.role.includes("4th"));
 
     return {
       teamA: {
-        starters: teamAAppearances.filter((a) => a.role === "Starter"),
-        subs: teamAAppearances.filter((a) => a.role === "Substitute"),
-        coaches: teamAAppearances.filter((a) => a.role.toLowerCase().includes("coach")),
+        starters: teamAAppearances.filter((a) => a.role === "Starter").sort(byShirt),
+        subs: teamAAppearances.filter((a) => a.role === "Substitute").sort(byShirt),
+        headCoach: headCoach(teamAAppearances),
       },
       teamB: {
-        starters: teamBAppearances.filter((a) => a.role === "Starter"),
-        subs: teamBAppearances.filter((a) => a.role === "Substitute"),
-        coaches: teamBAppearances.filter((a) => a.role.toLowerCase().includes("coach")),
+        starters: teamBAppearances.filter((a) => a.role === "Starter").sort(byShirt),
+        subs: teamBAppearances.filter((a) => a.role === "Substitute").sort(byShirt),
+        headCoach: headCoach(teamBAppearances),
       },
       referees: {
         main: refs.find((r) => r.role === "Main Referee" || r.role === "Referee"),
@@ -357,7 +382,7 @@ export default function MatchDetailsEditor({
         fourth: refs.find((r) => r.role === "4th Official"),
       },
     };
-  }, [appearances, match.teamA, match.teamB]);
+  }, [appearances, initialShirts, match.teamA, match.teamB]);
 
   const [refInputs, setRefInputs] = useState({
     main: lineups.referees.main ? displayName(lineups.referees.main.person) : "",
@@ -377,11 +402,12 @@ export default function MatchDetailsEditor({
   };
 
   const persistMatchDetails = async () => {
-    if (detailsStatus === "saving") return;
+    if (savesInProgress.current.details) return;
     const changes: Partial<typeof matchDetails> = {};
     for (const field of Object.keys(matchDetails) as (keyof typeof matchDetails)[]) {
       if (matchDetails[field] !== savedDetails[field]) changes[field] = matchDetails[field];
     }
+    savesInProgress.current.details = true;
     setDetailsStatus("saving");
     try {
       if (Object.keys(changes).length) await saveMatchDetails(match.id, changes);
@@ -389,20 +415,28 @@ export default function MatchDetailsEditor({
       setDetailsStatus("saved");
     } catch {
       setDetailsStatus("error");
+    } finally {
+      savesInProgress.current.details = false;
     }
   };
 
   const persistScores = async () => {
+    if (savesInProgress.current.scores) return;
+    savesInProgress.current.scores = true;
+    setSavingScores(true);
+    setScoresError("");
     try {
-      setSavingScores(true);
       await saveMatchMeta(match.id, scores);
+    } catch {
+      setScoresError("Could not save scores. Please try again.");
     } finally {
+      savesInProgress.current.scores = false;
       setSavingScores(false);
     }
   };
 
   const persistReferees = async () => {
-    if (refereesStatus === "saving") return;
+    if (savesInProgress.current.referees) return;
     const mainRefId = findRefId(refInputs.main, lineups.referees.main);
     const a1RefId = findRefId(refInputs.a1, lineups.referees.a1);
     const a2RefId = findRefId(refInputs.a2, lineups.referees.a2);
@@ -418,8 +452,9 @@ export default function MatchDetailsEditor({
       return;
     }
 
+    savesInProgress.current.referees = true;
+    setRefereesStatus("saving");
     try {
-      setRefereesStatus("saving");
       await saveMatchReferees(match.id, {
         mainRefereeId: mainRefId,
         assistant1Id: a1RefId,
@@ -429,6 +464,8 @@ export default function MatchDetailsEditor({
       setRefereesStatus("saved");
     } catch {
       setRefereesStatus("error");
+    } finally {
+      savesInProgress.current.referees = false;
     }
   };
 
@@ -461,31 +498,32 @@ export default function MatchDetailsEditor({
         label: displayName(a.person),
       }))
       .sort((a, b) => {
-        const numberA = initialShirts[a.id]?.trim();
-        const numberB = initialShirts[b.id]?.trim();
-        const orderA = numberA && /^\d+$/.test(numberA) ? Number(numberA) : Infinity;
-        const orderB = numberB && /^\d+$/.test(numberB) ? Number(numberB) : Infinity;
+        const orderA = shirtNumberOrder(initialShirts[a.id]);
+        const orderB = shirtNumberOrder(initialShirts[b.id]);
         return (orderA - orderB) || a.label.localeCompare(b.label);
       });
   }, [appearances, selectedPlayer, initialShirts, eventRows, eventMinute, eventExtraTime]);
   const eligibleAssistId = assistOptions.some((a) => String(a.id) === assistPersonId) ? assistPersonId : "";
 
   const persistEvent = async () => {
-    if (!selectedPlayer) return;
+    if (!selectedPlayer || savesInProgress.current.event) return;
     const playerAppearance = appearances.find((a) => a.person.id === selectedPlayer.id && a.teamId !== null);
     const assistName = assistOptions.find((a) => String(a.id) === eligibleAssistId)?.label || null;
-    await saveMatchEventEntry(match.id, {
-      eventId: editingEventId,
-      personId: selectedPlayer.id,
-      assistPersonId: supportsAssist && eligibleAssistId ? parseInt(eligibleAssistId) : null,
-      teamId: playerAppearance?.teamId ?? null,
-      eventType: selectedEvent,
-      minute: eventMinute,
-      extraTime: eventExtraTime,
-      goalType: supportsGoalType ? goalType : "",
-      bookingReason: supportsBookingReason ? bookingReason : "",
-    });
-    setEventRows((prev) => {
+    savesInProgress.current.event = true;
+    setSavingEvent(true);
+    setEventError("");
+    try {
+      await saveMatchEventEntry(match.id, {
+        eventId: editingEventId,
+        personId: selectedPlayer.id,
+        assistPersonId: supportsAssist && eligibleAssistId ? parseInt(eligibleAssistId) : null,
+        teamId: playerAppearance?.teamId ?? null,
+        eventType: selectedEvent,
+        minute: eventMinute,
+        extraTime: eventExtraTime,
+        goalType: supportsGoalType ? goalType : "",
+        bookingReason: supportsBookingReason ? bookingReason : "",
+      });
       const nextItem = {
         id: editingEventId || Date.now(),
         personId: selectedPlayer.id,
@@ -502,16 +540,20 @@ export default function MatchDetailsEditor({
         assistPlayerName: assistName,
         teamName: selectedPlayer.teamName,
       };
-      if (!editingEventId) return [nextItem, ...prev];
-      return prev.map((x) => (x.id === editingEventId ? nextItem : x));
-    });
-    setEventMinute("");
-    setEventExtraTime("");
-    setAssistPersonId("");
-    setGoalType("");
-    setBookingReason("");
-    setEditingEventId(null);
-    setSelectedPlayer(null);
+      setEventRows((prev) => editingEventId ? prev.map((x) => (x.id === editingEventId ? nextItem : x)) : [nextItem, ...prev]);
+      setEventMinute("");
+      setEventExtraTime("");
+      setAssistPersonId("");
+      setGoalType("");
+      setBookingReason("");
+      setEditingEventId(null);
+      setSelectedPlayer(null);
+    } catch {
+      setEventError("Could not save the match event. Please try again.");
+    } finally {
+      savesInProgress.current.event = false;
+      setSavingEvent(false);
+    }
   };
 
   const sortedEventRows = useMemo(
@@ -546,6 +588,7 @@ export default function MatchDetailsEditor({
     const person = appearances.find((appearance) => appearance.person.id === personId)?.person;
     return (
       <MatchShirtNumberEditor
+        key={personId}
         matchId={match.id}
         personId={personId}
         playerName={person ? displayName(person) : `Player ${personId}`}
@@ -558,7 +601,7 @@ export default function MatchDetailsEditor({
     <button
       type="button"
       onClick={() => openSubstitution(appearance)}
-      disabled={savingSubstitution}
+      disabled={savingEvent || savingSubstitution}
       aria-label={`Record substitution for ${displayName(appearance.person)}`}
       title={`Add or edit substitution for ${displayName(appearance.person)}`}
       className="inline-flex h-7 w-5 shrink-0 items-center justify-center rounded border border-green-600 bg-green-50 text-lg font-bold text-green-800 hover:bg-green-100 focus-visible:outline-2 focus-visible:outline-green-700 disabled:opacity-60"
@@ -602,6 +645,7 @@ export default function MatchDetailsEditor({
                     <option value="Fixture">Fixture</option>
                     <option value="Awarded">Awarded</option>
                     <option value="Cancelled">Cancelled</option>
+                    <option value="Voided">Voided</option>
                     <option value="Postponed">Postponed</option>
                     <option value="Suspended">Suspended</option>
                     <option value="Break">Break</option>
@@ -629,7 +673,7 @@ export default function MatchDetailsEditor({
 
           <div className="border border-[#c50000] bg-white rounded-md overflow-hidden">
             <div className="bg-[#dfdfdf] border-b border-[#c50000] text-center text-[22px] font-bold py-1">Scores</div>
-            <form className="p-2 flex flex-col gap-1" onSubmit={(e) => { e.preventDefault(); persistScores(); }}>
+            <form className="p-2 flex flex-col gap-1" onSubmit={(e) => { e.preventDefault(); void persistScores(); }}>
               {(["FT", "HT", "ET", "PK"] as const).map((k) => (
                 <div key={k} className="flex items-center gap-1">
                   <span className="w-10 font-bold">{k}</span>
@@ -637,6 +681,7 @@ export default function MatchDetailsEditor({
                   <input value={scores[`${k.toLowerCase()}B` as keyof typeof scores]} onChange={(e) => setScores((p) => ({ ...p, [`${k.toLowerCase()}B`]: e.target.value }))} className="border border-gray-400 px-1 h-6 w-12 text-center" placeholder="B" />
                 </div>
               ))}
+              {scoresError && <p role="alert" className="text-red-700">{scoresError}</p>}
               <button type="submit" disabled={savingScores} className="self-end h-6 px-3 border border-gray-500 bg-[#efefef] text-[11px] font-bold disabled:cursor-wait disabled:opacity-60">
                 {savingScores ? "Saving..." : "Save"}
               </button>
@@ -660,20 +705,20 @@ export default function MatchDetailsEditor({
               </h2>
               <form className="flex flex-wrap items-end gap-3 p-3" onSubmit={(event) => { event.preventDefault(); void persistSubstitution(); }}>
                 <div className="w-full font-bold text-green-800">↑ Player on: {displayName(substitution.incoming.person)}</div>
+                <label className="flex min-w-52 flex-1 flex-col gap-1 font-bold">
+                  Player off
+                  <select autoFocus required value={replacementOptions.some((a) => String(a.person.id) === substitution.outgoingPersonId) ? substitution.outgoingPersonId : ""} onChange={(event) => setSubstitution({ ...substitution, outgoingPersonId: event.target.value })} className="h-8 border border-gray-400 bg-white px-2 font-normal">
+                    <option value="">Choose player being replaced</option>
+                    {replacementOptions.map((appearance) => <option key={appearance.id} value={appearance.person.id}>{initialShirts[appearance.person.id] ? `${initialShirts[appearance.person.id]} ` : ""}{displayName(appearance.person)}</option>)}
+                  </select>
+                </label>
                 <label className="flex flex-col gap-1 font-bold">
                   Minute
-                  <input autoFocus required inputMode="numeric" placeholder="65 or 90+3" value={substitution.minute} onChange={(event) => setSubstitution({ ...substitution, minute: event.target.value })} className="h-8 w-28 border border-gray-400 px-2 font-normal" />
+                  <input required inputMode="numeric" placeholder="65 or 90+3" value={substitution.minute} onChange={(event) => setSubstitution({ ...substitution, minute: event.target.value })} className="h-8 w-28 border border-gray-400 px-2 font-normal" />
                 </label>
                 <label className="flex flex-col gap-1 font-bold">
                   Added time
                   <input inputMode="numeric" placeholder="0" maxLength={3} value={substitution.extraTime} onChange={(event) => setSubstitution({ ...substitution, extraTime: event.target.value })} className="h-8 w-20 border border-gray-400 px-2 font-normal" />
-                </label>
-                <label className="flex min-w-52 flex-1 flex-col gap-1 font-bold">
-                  Player off
-                  <select required value={replacementOptions.some((a) => String(a.person.id) === substitution.outgoingPersonId) ? substitution.outgoingPersonId : ""} onChange={(event) => setSubstitution({ ...substitution, outgoingPersonId: event.target.value })} className="h-8 border border-gray-400 bg-white px-2 font-normal">
-                    <option value="">Choose player being replaced</option>
-                    {replacementOptions.map((appearance) => <option key={appearance.id} value={appearance.person.id}>{initialShirts[appearance.person.id] ? `#${initialShirts[appearance.person.id]} ` : ""}{displayName(appearance.person)}</option>)}
-                  </select>
                 </label>
                 <label className="flex min-w-44 flex-1 flex-col gap-1 font-bold">
                   Reason (optional)
@@ -704,7 +749,7 @@ export default function MatchDetailsEditor({
                   ))}
                   <span className="font-bold">M</span><input value={eventMinute} onChange={(e) => setEventMinute(e.target.value)} className="w-12 border border-gray-400 px-1 h-6" />
                   <span className="font-bold">E</span><input value={eventExtraTime} onChange={(e) => setEventExtraTime(e.target.value)} className="w-10 border border-gray-400 px-1 h-6" />
-                  <button type="submit" className="h-6 px-3 border border-gray-500 bg-[#efefef] font-bold text-[12px]">Save</button>
+                  <button type="submit" disabled={savingEvent} className="h-6 px-3 border border-gray-500 bg-[#efefef] font-bold text-[12px] disabled:opacity-60">{savingEvent ? "Saving..." : "Save"}</button>
                 </div>
                 {(supportsAssist || supportsGoalType || supportsBookingReason) ? (
                   <div className="flex items-center gap-2 whitespace-nowrap overflow-x-auto">
@@ -737,13 +782,14 @@ export default function MatchDetailsEditor({
                   </div>
                 ) : null}
               </form>
+              {eventError && <p role="alert" className="px-2 pb-2 text-red-700">{eventError}</p>}
             </div>
           ) : null}
 
           <div className="border border-[#c50000] bg-white rounded-md overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-2 bg-[#f3f4f6] border-b border-[#c50000] px-3 py-1">
               <h2 className="text-[20px] font-bold">Match Events</h2>
-              <button type="button" onClick={() => { setOwnGoal({ teamId: "", minute: "", extraTime: "" }); setOwnGoalError(""); }} className="rounded border border-[#040f4f] bg-[#f4a01c] px-3 py-1 text-xs font-bold text-[#040f4f]">Add Team Own Goal</button>
+              <button type="button" disabled={savingOwnGoal} onClick={() => { setOwnGoal({ teamId: "", minute: "", extraTime: "" }); setOwnGoalError(""); }} className="rounded border border-[#040f4f] bg-[#f4a01c] px-3 py-1 text-xs font-bold text-[#040f4f]">Add Team Own Goal</button>
             </div>
             {ownGoal && (
               <form onSubmit={(event) => { event.preventDefault(); void saveOwnGoal(); }} className="m-3 space-y-3 rounded border border-gray-300 bg-orange-50 p-3 text-sm">
@@ -820,6 +866,19 @@ export default function MatchDetailsEditor({
 
           <div className="border border-[#c50000] bg-white rounded-md overflow-hidden shadow-sm">
             <div className="bg-[#f3f4f6] border-b border-[#c50000] text-left text-[24px] font-bold px-4 py-1">Lineups</div>
+            <div className="grid grid-cols-2 gap-6 border-b border-gray-200 px-4 py-3 text-sm">
+              {[
+                { team: match.teamA, coach: lineups.teamA.headCoach, alignment: "text-right" },
+                { team: match.teamB, coach: lineups.teamB.headCoach, alignment: "text-left" },
+              ].map(({ team, coach, alignment }) => (
+                <div key={team} className={alignment} aria-label={`Head coach for ${team}`}>
+                  <div className="font-bold">Head coach</div>
+                  {coach ? (
+                    <a href={`/admin/people/${coach.person.id}`} className="text-blue-700 hover:underline">{displayName(coach.person)}</a>
+                  ) : <span className="text-gray-500">Not assigned</span>}
+                </div>
+              ))}
+            </div>
             <div className="p-2 space-y-1 text-[14px]">
               {Array.from({ length: Math.max(lineups.teamA.starters.length, lineups.teamB.starters.length) }).map((_, i) => {
                 const left = lineups.teamA.starters[i] || null;

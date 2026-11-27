@@ -2,9 +2,7 @@ export const metadata = { title: "Sign In" };
 
 import LoginForm from './login-form';
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  const { next } = await searchParams;
-  const destination = next?.startsWith('/') && !next.startsWith('//') ? next : '/';
+export default function LoginPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
       <div className="absolute inset-0 bg-[radial-gradient(700px_400px_at_20%_10%,#dbeafe_0%,transparent_60%),radial-gradient(800px_420px_at_90%_20%,#dcfce7_0%,transparent_58%),linear-gradient(to_bottom,#f8fbff,#eef4ff)]" />
@@ -25,7 +23,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back</h2>
             <p className="mt-2 text-sm text-slate-500">Enter your account details to sign in.</p>
           </div>
-          <LoginForm destination={destination} />
+          <LoginForm />
           <p className="mt-8 text-center text-xs text-slate-400">Accounts are provided by the workspace administrator.</p>
         </section>
       </div>

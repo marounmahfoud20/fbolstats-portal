@@ -3,7 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function LoginForm({ destination }: { destination: string }) {
+export default function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -23,7 +23,7 @@ export default function LoginForm({ destination }: { destination: string }) {
         setError(response.status === 500 ? 'Sign in is temporarily unavailable. Please try again.' : 'The username or password is incorrect.');
         return;
       }
-      router.replace(destination);
+      router.replace('/');
       router.refresh();
     } catch {
       setError('Could not connect. Please try again.');

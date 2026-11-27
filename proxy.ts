@@ -97,7 +97,6 @@ export async function proxy(req: NextRequest, event: NextFetchEvent) {
   }
 
   const loginUrl = new URL('/login', req.url);
-  loginUrl.searchParams.set('next', `${pathname}${req.nextUrl.search}`);
   return NextResponse.redirect(loginUrl);
 }
 

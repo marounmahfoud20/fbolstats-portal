@@ -17,24 +17,33 @@ function load(file, modules = {}) {
 }
 const plain = value => JSON.parse(JSON.stringify(value));
 
-function formHarness({ fail = false, existingAppearances = [] } = {}) {
-  const states = [], saves = [], navigation = [];
+function formHarness({ fail = false, existingAppearances = [], pendingSave } = {}) {
+  const states = [], saves = [], navigation = [], refs = [];
   let cursor = 0;
+  let refCursor = 0;
   const jsx = (type, props) => ({ type, props });
   const { default: Form } = load('../app/admin/matches/[id]/edit-lineups/EditLineupForm.tsx', {
-    react: { useState: initial => {
-      const index = cursor++;
-      if (!(index in states)) states[index] = typeof initial === 'function' ? initial() : initial;
-      return [states[index], next => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
-    } },
+    react: {
+      useRef: initial => refs[refCursor++] ??= { current: initial },
+      useState: initial => {
+        const index = cursor++;
+        if (!(index in states)) states[index] = typeof initial === 'function' ? initial() : initial;
+        return [states[index], next => { states[index] = typeof next === 'function' ? next(states[index]) : next; }];
+      },
+    },
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/navigation': { useRouter: () => ({ push: path => navigation.push(path), refresh: () => navigation.push('refresh') }) },
-    '@/lib/match-actions': { saveMatchLineups: async (...args) => { saves.push(plain(args)); if (fail) throw Error('offline'); } },
+    '@/lib/edition-shirt-numbers': load('../lib/edition-shirt-numbers.ts'),
+    '@/lib/match-actions': { saveMatchLineups: async (...args) => {
+      saves.push(plain(args));
+      await pendingSave;
+      if (fail) throw Error('offline');
+    } },
     '@/lib/membership-eligibility': { isMembershipActiveOnDate: () => true },
   });
   const people = ['Alpha', 'Beta', 'Hasan Farhat'].map((commonName, i) => ({ id: i + 1, commonName, firstName: null, lastName: null, position: null }));
   const props = { matchId: 878, matchDate: '2026-11-18', teamA: { id: 10, name: 'Lebanon', memberships: people.map(person => ({ id: person.id, role: 'Player', startDate: null, endDate: null, isActive: true, person })) }, teamB: null, existingAppearances, initialShirts: { 1: '9', 2: '' }, suggestedShirts: { '10-1': '4', '10-2': '8', '10-3': '4' } };
-  const render = () => { cursor = 0; return Form(props); };
+  const render = () => { cursor = 0; refCursor = 0; return Form(props); };
   function walk(node) {
     if (!node || typeof node !== 'object') return [];
     if (Array.isArray(node)) return node.flatMap(n => walk(n));
@@ -42,9 +51,24 @@ function formHarness({ fail = false, existingAppearances = [] } = {}) {
   }
   const nodes = () => walk(render());
   const find = label => nodes().find(n => n.props?.['aria-label'] === label);
-  const save = () => nodes().find(n => n.type === 'button' && n.props.children === 'Save Lineups').props.onClick();
-  return { saves, navigation, nodes, find, save };
+  const saveButton = () => nodes().find(n => n.type === 'button' && n.props.children === 'Save Lineups');
+  const save = () => saveButton().props.onClick();
+  return { saves, navigation, nodes, find, save, saveButton };
 }
+
+test('rapid lineup clicks call the save action once and allow another attempt after failure', async () => {
+  const pending = Promise.withResolvers();
+  const h = formHarness({ pendingSave: pending.promise, fail: true });
+  const click = h.saveButton().props.onClick;
+  const first = click();
+  await click();
+  assert.equal(h.saves.length, 1);
+  assert.equal(h.nodes().find(n => n.type === 'button' && n.props.children === 'Saving...').props.disabled, true);
+  pending.resolve();
+  await first;
+  await h.save();
+  assert.equal(h.saves.length, 2);
+});
 
 test('multiple pending selections keep candidate rows in place, remain reversible, and only save on demand', async () => {
   const h = formHarness();
@@ -99,6 +123,18 @@ test('saved starter/substitute sections do not move players until saving a role 
   assert.equal(h.saves.length, 0);
   await h.save();
   assert.equal(h.saves[0][1][0].role, 'Substitute');
+});
+
+test('saved starters are ordered by shirt number, with blank shirts last and drafts kept in place', () => {
+  const h = formHarness({ existingAppearances: [1, 2, 3].map(personId => ({ personId, teamId: 10, role: 'Starter' })) });
+  const roles = () => h.nodes().flatMap(n => {
+    const label = n.props?.['aria-label'];
+    return label?.startsWith('Lineup role for ') ? [label] : [];
+  });
+  const order = ['Lineup role for Hasan Farhat (Lebanon)', 'Lineup role for Alpha (Lebanon)', 'Lineup role for Beta (Lebanon)'];
+  assert.deepEqual(roles(), order);
+  h.find('Shirt number for Hasan Farhat (10)').props.onChange({ target: { value: '99' } });
+  assert.deepEqual(roles(), order);
 });
 
 test('edition number lookup scopes by edition, team and prior date, and only uses the matching player appearance', async () => {

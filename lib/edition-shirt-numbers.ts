@@ -2,6 +2,11 @@ import type { Prisma } from "@prisma/client";
 
 type EditionMatch = { matchId: number; seasonId: number; date: string | null; teamIds: number[] };
 
+export function shirtNumberOrder(number: string | undefined): number {
+  const value = number?.trim();
+  return value && /^\d+$/.test(value) ? Number(value) : Infinity;
+}
+
 export function getMatchShirtNumbers(
   appearances: { personId: number; teamId: number | null; role: string }[],
   shirts: { personId: number; number: string | null }[],

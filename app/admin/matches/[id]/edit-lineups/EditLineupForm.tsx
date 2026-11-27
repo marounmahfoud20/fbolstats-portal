@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { shirtNumberOrder } from "@/lib/edition-shirt-numbers";
 import { saveMatchLineups } from "@/lib/match-actions";
 import { isMembershipActiveOnDate } from "@/lib/membership-eligibility";
 
@@ -29,6 +30,7 @@ export default function EditLineupForm({
   suggestedShirts?: Record<string, string>;
 }) {
   const router = useRouter();
+  const saveInProgress = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [shirtDrafts, setShirtDrafts] = useState<Record<string, string>>({});
@@ -45,8 +47,10 @@ export default function EditLineupForm({
 
   // Keep rows in their saved sections while the user makes multiple selections.
   const [savedLineupSelections, setSavedLineupSelections] = useState(lineupSelections);
+  const savedShirtNumber = (teamId: number, personId: number) =>
+    initialShirts[personId] ?? suggestedShirts[`${teamId}-${personId}`] ?? "";
   const shirtNumber = (teamId: number, personId: number) =>
-    shirtDrafts[`${teamId}-${personId}`] ?? initialShirts[personId] ?? suggestedShirts[`${teamId}-${personId}`] ?? "";
+    shirtDrafts[`${teamId}-${personId}`] ?? savedShirtNumber(teamId, personId);
 
   const renderShirtInput = (teamId: number, player: Person) => (
     <input
@@ -139,9 +143,7 @@ export default function EditLineupForm({
   };
 
   const handleSave = async () => {
-    if (loading) return;
-    setLoading(true);
-    setError("");
+    if (saveInProgress.current) return;
     const appearances: { teamId: number; personId: number; role: string }[] = [];
 
     for (const [key, role] of Object.entries(lineupSelections)) {
@@ -169,6 +171,9 @@ export default function EditLineupForm({
     const shirts = appearances
       .filter(a => a.role === "Starter" || a.role === "Substitute")
       .map(a => ({ personId: a.personId, number: shirtNumber(a.teamId, a.personId) }));
+    saveInProgress.current = true;
+    setLoading(true);
+    setError("");
     try {
       await saveMatchLineups(matchId, appearances, shirts);
       setSavedLineupSelections({ ...lineupSelections });
@@ -177,6 +182,7 @@ export default function EditLineupForm({
     } catch {
       setError("Could not save the lineup. Your selections and shirt numbers are still here. Please try again.");
     } finally {
+      saveInProgress.current = false;
       setLoading(false);
     }
   };
@@ -216,7 +222,9 @@ export default function EditLineupForm({
         <h2 className="text-[#f4a01c] font-bold text-lg mb-4">{team.name}</h2>
 
         {(["Starter", "Substitute"] as const).map((role) => {
-          const selectedPlayers = eligiblePlayers.filter((player) => savedLineupSelections[`${team.id}-${player.id}`] === role);
+          const selectedPlayers = eligiblePlayers
+            .filter((player) => savedLineupSelections[`${team.id}-${player.id}`] === role)
+            .sort((a, b) => shirtNumberOrder(savedShirtNumber(team.id, a.id)) - shirtNumberOrder(savedShirtNumber(team.id, b.id)));
           return (
             <section key={role} className="mb-4">
               <h3 className="font-bold bg-[#dfdfdf] text-[#040f4f] px-2 py-1 mb-2 rounded-sm">
