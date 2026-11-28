@@ -54,8 +54,8 @@ function actionHarness(authenticated = true) {
       create: async ({ data }) => { writes.push(plain(data)); const c = { id: competitions.length + 1, ...data }; competitions.push(c); return c; },
     } },
   });
-  const form = section => new Map([['section', section], ['name', 'Friendlies']]);
-  return { create: section => action.createNationalCompetition(form(section)), writes, redirects };
+  const form = (section, view) => new Map([['section', section], ['name', 'Friendlies'], ['view', view]]);
+  return { create: (section, view) => action.createNationalCompetition(form(section, view)), writes, redirects };
 }
 
 test('creating same-named youth competitions isolates genders and age groups and reuses only the same section', async () => {
@@ -81,12 +81,24 @@ test('invalid sections and unauthenticated competition creation cannot write rec
   assert.equal(unauthenticated.writes.length, 0);
 });
 
+test('creating a competition from a combined view requires an age in that view', async () => {
+  const h = actionHarness();
+  await assert.rejects(h.create('women-u19', 'women-u17-u16'), /Select an age group/);
+  assert.equal(h.writes.length, 0);
+  await h.create('women-u16', 'women-u17-u16');
+  assert.equal(h.writes[0].type, 'Women U16');
+  assert.deepEqual(h.redirects, ['/admin/national-teams/women-u17-u16/competitions/2']);
+});
+
 const jsx = (type, props) => ({ type, props });
 function pageHarness(file, prisma) {
   return load(file, {
     'react/jsx-runtime': { jsx, jsxs: jsx },
     'next/link': 'a',
-    'next/navigation': { notFound: () => { throw Error('not found'); } },
+    'next/navigation': {
+      notFound: () => { throw Error('not found'); },
+      redirect: href => { throw Error(`redirect to ${href}`); },
+    },
     '@/lib/prisma': prisma,
     '@/components/MatchNoteIcon': 'match-note-icon',
     '@/lib/database-read': { retryDatabaseRead: fn => fn() },
@@ -98,7 +110,7 @@ function pageHarness(file, prisma) {
   }).default;
 }
 
-test('youth hub and all-matches pages query only their specific age and gender', async () => {
+test('combined youth views query all and only their age categories', async () => {
   const queries = [];
   const prisma = {
     league: { findMany: async query => { queries.push(plain(query.where)); return []; } },
@@ -107,24 +119,34 @@ test('youth hub and all-matches pages query only their specific age and gender',
   const hub = pageHarness('../app/admin/national-teams/[gender]/page.tsx', prisma);
   const matches = pageHarness('../app/admin/national-teams/[gender]/matches/page.tsx', prisma);
   await hub({ params: Promise.resolve({ gender: 'men-u23' }) });
-  await matches({ params: Promise.resolve({ gender: 'women-u19' }) });
+  await hub({ params: Promise.resolve({ gender: 'women-u20-u19-u18' }) });
+  await matches({ params: Promise.resolve({ gender: 'women-u15-u14-u13' }) });
+  await assert.rejects(hub({ params: Promise.resolve({ gender: 'women-u19' }) }), /redirect to \/admin\/national-teams\/women-u20-u19-u18$/);
+  await assert.rejects(matches({ params: Promise.resolve({ gender: 'women-u13' }) }), /redirect to \/admin\/national-teams\/women-u15-u14-u13\/matches$/);
   assert.deepEqual(queries, [
     { footballType: 'national', type: 'Men U23' },
-    { group: { season: { league: { footballType: 'national', type: 'Women U19' } } } },
+    { footballType: 'national', type: { in: ['Women U20', 'Women U19', 'Women U18'] } },
+    { group: { season: { league: { footballType: 'national', type: { in: ['Women U15', 'Women U14', 'Women U13'] } } } } },
   ]);
 });
 
 test('competition detail refuses a competition from a different youth section', async () => {
   const page = pageHarness('../app/admin/national-teams/[gender]/competitions/[id]/page.tsx', {
-    league: { findFirst: async ({ where }) => where.id === 50 && where.type === 'Men U17' && where.footballType === 'national'
-      ? { id: 50, competitionName: 'WAFF Championship', seasons: [] } : null },
+    league: { findFirst: async ({ where }) => {
+      const type = { 50: 'Men U17', 51: 'Women U16' }[where.id];
+      return type && where.footballType === 'national' && (where.type === type || where.type.in?.includes(type))
+        ? { id: where.id, competitionName: 'WAFF Championship', type, seasons: [] } : null;
+    } },
   });
   await page({ params: Promise.resolve({ gender: 'men-u17', id: '50' }) });
   await assert.rejects(page({ params: Promise.resolve({ gender: 'women-u17', id: '50' }) }), /not found/);
   await assert.rejects(page({ params: Promise.resolve({ gender: 'men-u20', id: '50' }) }), /not found/);
+  await page({ params: Promise.resolve({ gender: 'women-u17-u16', id: '51' }) });
+  await page({ params: Promise.resolve({ gender: 'women-u16', id: '51' }) });
+  await assert.rejects(page({ params: Promise.resolve({ gender: 'women-u15-u14-u13', id: '51' }) }), /not found/);
 });
 
-test('navigation preserves age when switching gender and gender when switching age', () => {
+test('navigation renders one option per Women’s age group and individual ages for Men', () => {
   const pushed = [];
   const Navigation = load('../app/admin/national-teams/[gender]/NationalTeamNavigation.tsx', {
     'react/jsx-runtime': { jsx, jsxs: jsx },
@@ -134,18 +156,24 @@ test('navigation preserves age when switching gender and gender when switching a
   }).default;
   const walk = node => !node || typeof node !== 'object' ? [] : Array.isArray(node)
     ? Array.from(node).flatMap(walk) : [node, ...walk(node.props?.children)];
-  const nodes = walk(Navigation({ section: 'women-u17' }));
+  const nodes = walk(Navigation({ view: sections.getNationalTeamView('women-u17-u16') }));
   assert.ok(nodes.some(n => n.props?.href === '/admin/national-teams/men-u17'));
   const select = nodes.find(n => n.type === 'select');
-  assert.deepEqual(nodes.filter(n => n.type === 'optgroup')
-    .map(n => [n.props.label, walk(n.props.children).map(child => child.props.value)]), [
-    ['U20, U19, U18', [20, 19, 18]],
-    ['U17, U16', [17, 16]],
-    ['U15, U14', [15, 14]],
+  assert.equal(select.props.value, 'women-u17-u16');
+  assert.deepEqual(nodes.filter(n => n.type === 'option').map(n => [n.props.value, n.props.children]), [
+    ['women', 'Senior'],
+    ['women-u23', 'U23'],
+    ['women-u22', 'U22'],
+    ['women-u21', 'U21'],
+    ['women-u20-u19-u18', 'U20, U19, U18'],
+    ['women-u17-u16', 'U17, U16'],
+    ['women-u15-u14-u13', 'U15, U14, U13'],
   ]);
-  assert.deepEqual(nodes.filter(n => n.type === 'option').map(n => n.props.value), ['senior', ...sections.NATIONAL_TEAM_AGES]);
-  assert.ok(!walk(Navigation({ section: 'men-u17' })).some(n => n.type === 'optgroup'));
-  select.props.onChange({ target: { value: '20' } });
-  select.props.onChange({ target: { value: 'senior' } });
-  assert.deepEqual(pushed, ['/admin/national-teams/women-u20', '/admin/national-teams/women']);
+  const men = walk(Navigation({ view: sections.getNationalTeamView('men-u16') }));
+  assert.ok(men.some(n => n.props?.href === '/admin/national-teams/women-u17-u16'));
+  assert.deepEqual(men.filter(n => n.type === 'option').map(n => n.props.value),
+    ['men', ...sections.NATIONAL_TEAM_AGES.map(age => `men-u${age}`)]);
+  select.props.onChange({ target: { value: 'women-u20-u19-u18' } });
+  select.props.onChange({ target: { value: 'women' } });
+  assert.deepEqual(pushed, ['/admin/national-teams/women-u20-u19-u18', '/admin/national-teams/women']);
 });

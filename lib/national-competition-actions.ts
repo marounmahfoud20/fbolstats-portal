@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getAdminUserFromCookies } from "@/lib/adminAuth";
-import { isNationalTeamSection, NATIONAL_TEAM_SECTIONS, nationalCompetitionHref } from "@/lib/national-competitions";
+import { getNationalTeamView, isNationalTeamSection, NATIONAL_TEAM_SECTIONS, nationalCompetitionHref, nationalTeamViewForAge } from "@/lib/national-competitions";
 
 export async function createNationalCompetition(formData: FormData) {
   return withAdminActivity("createNationalCompetition", { formData }, async () => {
@@ -15,7 +15,10 @@ export async function createNationalCompetition(formData: FormData) {
   const section = String(formData.get("section") || "");
   const name = String(formData.get("name") || "").trim();
   if (!isNationalTeamSection(section) || !name) throw new Error("Enter a competition name.");
-  const type = NATIONAL_TEAM_SECTIONS[section].category;
+  const { category: type, gender, age } = NATIONAL_TEAM_SECTIONS[section];
+  const requestedView = formData.get("view");
+  const view = requestedView ? getNationalTeamView(String(requestedView)) : null;
+  if (requestedView && !view?.sections.includes(section)) throw new Error("Select an age group listed on this page.");
   const existing = await prisma.league.findFirst({
     where: { footballType: "national", type, competitionName: { equals: name, mode: "insensitive" } },
     select: { id: true },
@@ -25,7 +28,9 @@ export async function createNationalCompetition(formData: FormData) {
     select: { id: true },
   });
   revalidatePath(`/admin/national-teams/${section}`);
-  redirect(nationalCompetitionHref(section, competition.id));
+  const grouped = nationalTeamViewForAge(gender, age);
+  if (grouped !== section) revalidatePath(`/admin/national-teams/${grouped}`);
+  redirect(nationalCompetitionHref(view?.id ?? section, competition.id));
 
   });
 }

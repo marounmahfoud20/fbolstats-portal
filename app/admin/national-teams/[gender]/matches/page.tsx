@@ -3,20 +3,22 @@ import { createNationalTeamMetadata } from "@/lib/page-metadata";
 export const generateMetadata = createNationalTeamMetadata(true);
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import MatchNoteIcon from "@/components/MatchNoteIcon";
 import { retryDatabaseRead } from "@/lib/database-read";
-import { isNationalTeamSection, NATIONAL_TEAM_SECTIONS, nationalCompetitionHref } from "@/lib/national-competitions";
+import { getNationalTeamView, nationalCompetitionHref, nationalTeamViewForAge } from "@/lib/national-competitions";
 
 export const dynamic = "force-dynamic";
 
 export default async function NationalTeamMatchesPage({ params }: { params: Promise<{ gender: string }> }) {
   const { gender } = await params;
-  if (!isNationalTeamSection(gender)) notFound();
-  const section = NATIONAL_TEAM_SECTIONS[gender];
+  const view = getNationalTeamView(gender);
+  if (!view) notFound();
+  const canonical = nationalTeamViewForAge(view.gender, view.age);
+  if (canonical !== view.id) redirect(`/admin/national-teams/${canonical}/matches`);
   const matches = await retryDatabaseRead(() => prisma.match.findMany({
-    where: { group: { season: { league: { footballType: "national", type: section.category } } } },
+    where: { group: { season: { league: { footballType: "national", type: view.categoryFilter } } } },
     orderBy: [
       { date: { sort: "desc", nulls: "last" } },
       { time: { sort: "desc", nulls: "last" } },
@@ -33,10 +35,10 @@ export default async function NationalTeamMatchesPage({ params }: { params: Prom
     <div className="min-h-screen bg-white py-10 font-sans text-xs text-[#040f4f]">
       <div className="mx-auto w-full max-w-[980px] px-4">
         <Link href={`/admin/national-teams/${gender}`} className="mb-6 inline-block text-sm font-bold text-[#f4a01c] hover:underline">
-          &larr; {section.title}
+          &larr; {view.title}
         </Link>
         <header className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">{section.title} matches</h1>
+          <h1 className="mb-2 text-3xl font-bold">{view.title} matches</h1>
           <p className="text-gray-600">All competitions · Newest to oldest</p>
         </header>
         <div className="flex h-10 items-center border border-[#040f4f] bg-[#f2f2f2] px-4">
@@ -73,7 +75,7 @@ export default async function NationalTeamMatchesPage({ params }: { params: Prom
                     <td className="whitespace-nowrap px-3 py-2 text-center font-bold">
                       {hasScore ? `${match.meta!.ftA}–${match.meta!.ftB}` : "—"}
                     </td>
-                    <td className="px-3 py-2"><Link href={nationalCompetitionHref(gender, competition.id)} className="hover:underline">{competition.competitionName}</Link></td>
+                    <td className="px-3 py-2"><Link href={nationalCompetitionHref(view.id, competition.id)} className="hover:underline">{competition.competitionName}</Link></td>
                     <td className="px-3 py-2"><Link href={`/admin/seasons/${edition.id}`} className="hover:underline">{edition.name}</Link></td>
                     <td className="px-3 py-2 text-gray-600">{match.venue || "—"}</td>
                     <td className="px-3 py-2">{match.status}</td>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { connection } from "next/server";
 import prisma from "@/lib/prisma";
-import { NATIONAL_TEAM_SECTIONS, isNationalTeamSection } from "@/lib/national-competitions";
+import { getNationalTeamView } from "@/lib/national-competitions";
 
 type Entity = "team" | "person" | "match" | "league" | "season" | "group" | "club" | "venue";
 type MetadataProps = { params: Promise<Record<string, string>> };
@@ -61,7 +61,7 @@ export function createEntityMetadata(
 export function createNationalTeamMetadata(matches = false) {
   return async ({ params }: MetadataProps): Promise<Metadata> => {
     const { gender } = await params;
-    const name = isNationalTeamSection(gender) ? NATIONAL_TEAM_SECTIONS[gender].title : "National Teams";
+    const name = getNationalTeamView(gender)?.title ?? "National Teams";
     return { title: `${name}${matches ? " Matches" : ""}` };
   };
 }

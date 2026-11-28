@@ -6,18 +6,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { retryDatabaseRead } from "@/lib/database-read";
-import { isNationalTeamSection, NATIONAL_TEAM_SECTIONS } from "@/lib/national-competitions";
+import { getNationalTeamView, nationalTeamViewForAge } from "@/lib/national-competitions";
 
 export const dynamic = "force-dynamic";
 
 export default async function NationalCompetitionPage({ params }: { params: Promise<{ gender: string; id: string }> }) {
   const { gender, id } = await params;
-  if (!isNationalTeamSection(gender) || !/^\d+$/.test(id)) notFound();
+  const view = getNationalTeamView(gender);
+  if (!view || !/^\d+$/.test(id)) notFound();
   const competitionId = Number(id);
   if (!Number.isSafeInteger(competitionId)) notFound();
-  const section = NATIONAL_TEAM_SECTIONS[gender];
+  const parentView = getNationalTeamView(nationalTeamViewForAge(view.gender, view.age)) ?? view;
   const competition = await retryDatabaseRead(() => prisma.league.findFirst({
-    where: { id: competitionId, footballType: "national", type: section.category },
+    where: { id: competitionId, footballType: "national", type: view.categoryFilter },
     include: {
       seasons: {
         orderBy: [{ name: "desc" }, { id: "desc" }],
@@ -30,11 +31,11 @@ export default async function NationalCompetitionPage({ params }: { params: Prom
   return (
     <div className="min-h-screen bg-white py-10 font-sans text-xs text-[#040f4f]">
       <div className="mx-auto w-full max-w-[980px] px-4">
-      <Link href={`/admin/national-teams/${gender}`} className="mb-6 inline-block text-sm font-bold text-[#f4a01c] hover:underline">← {section.title}</Link>
+      <Link href={`/admin/national-teams/${parentView.id}`} className="mb-6 inline-block text-sm font-bold text-[#f4a01c] hover:underline">← {parentView.title}</Link>
       <header className="mb-8">
         <div>
           <h1 className="mb-2 text-3xl font-bold">{competition.competitionName}</h1>
-          <p className="text-gray-600">{section.title} · {competition.seasons.length} editions</p>
+          <p className="text-gray-600">{view.sections.length > 1 ? competition.type : view.title} · {competition.seasons.length} editions</p>
         </div>
       </header>
       <section>
