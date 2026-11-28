@@ -17,6 +17,7 @@ export type NationalTeamViewDetails = Pick<SectionDetails, "title" | "gender" | 
   categoryFilter: string | { in: string[] };
 };
 const womenGroupIds = Object.keys(WOMEN_NATIONAL_TEAM_GROUPS) as WomenNationalTeamGroup[];
+const ageGroupLabel = (ages: readonly YouthAge[]) => ages.map(age => `U${age}`).join(", ");
 
 export const NATIONAL_TEAM_SECTIONS = Object.fromEntries(
   (["men", "women"] as const).flatMap(gender => {
@@ -53,7 +54,7 @@ export function getNationalTeamView(value: string): NationalTeamViewDetails | nu
   const sections = ages.map(age => `women-u${age}` as const);
   return {
     id: group,
-    title: `Women's ${ages.map(age => `U${age}`).join(", ")} National Teams`,
+    title: `Women's ${ageGroupLabel(ages)} National Teams`,
     gender: "women" as const,
     age: ages[0],
     sections,
@@ -62,15 +63,12 @@ export function getNationalTeamView(value: string): NationalTeamViewDetails | nu
 }
 
 export function nationalTeamOptions(gender: NationalTeamGender) {
+  const youthOptions = gender === "women"
+    ? womenGroupIds.map(value => ({ value, label: ageGroupLabel(WOMEN_NATIONAL_TEAM_GROUPS[value]) }))
+    : NATIONAL_TEAM_AGES.map(age => ({ value: nationalTeamViewForAge(gender, age), label: `U${age}` }));
   return [
     { value: gender, label: "Senior" },
-    ...NATIONAL_TEAM_AGES.flatMap(age => {
-      const value = nationalTeamViewForAge(gender, age);
-      const group = womenGroupIds.find(id => id === value);
-      if (!group) return [{ value, label: `U${age}` }];
-      const ages = WOMEN_NATIONAL_TEAM_GROUPS[group];
-      return ages[0] === age ? [{ value, label: ages.map(age => `U${age}`).join(", ") }] : [];
-    }),
+    ...youthOptions,
   ];
 }
 

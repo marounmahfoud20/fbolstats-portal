@@ -162,9 +162,6 @@ test('navigation renders one option per Women’s age group and individual ages 
   assert.equal(select.props.value, 'women-u17-u16');
   assert.deepEqual(nodes.filter(n => n.type === 'option').map(n => [n.props.value, n.props.children]), [
     ['women', 'Senior'],
-    ['women-u23', 'U23'],
-    ['women-u22', 'U22'],
-    ['women-u21', 'U21'],
     ['women-u20-u19-u18', 'U20, U19, U18'],
     ['women-u17-u16', 'U17, U16'],
     ['women-u15-u14-u13', 'U15, U14, U13'],
@@ -173,6 +170,11 @@ test('navigation renders one option per Women’s age group and individual ages 
   assert.ok(men.some(n => n.props?.href === '/admin/national-teams/women-u17-u16'));
   assert.deepEqual(men.filter(n => n.type === 'option').map(n => n.props.value),
     ['men', ...sections.NATIONAL_TEAM_AGES.map(age => `men-u${age}`)]);
+  const menU23 = walk(Navigation({ view: sections.getNationalTeamView('men-u23') }));
+  assert.ok(menU23.some(n => n.props?.href === '/admin/national-teams/women'));
+  const womenU23 = walk(Navigation({ view: sections.getNationalTeamView('women-u23') }));
+  assert.equal(womenU23.find(n => n.type === 'select').props.value, '');
+  assert.ok(!womenU23.some(n => n.type === 'option' && n.props.value === 'women-u23'));
   select.props.onChange({ target: { value: 'women-u20-u19-u18' } });
   select.props.onChange({ target: { value: 'women' } });
   assert.deepEqual(pushed, ['/admin/national-teams/women-u20-u19-u18', '/admin/national-teams/women']);
