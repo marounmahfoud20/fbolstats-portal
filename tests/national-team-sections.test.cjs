@@ -133,10 +133,18 @@ test('navigation preserves age when switching gender and gender when switching a
     '@/lib/national-competitions': sections,
   }).default;
   const walk = node => !node || typeof node !== 'object' ? [] : Array.isArray(node)
-    ? node.flatMap(walk) : [node, ...walk(node.props?.children)];
+    ? Array.from(node).flatMap(walk) : [node, ...walk(node.props?.children)];
   const nodes = walk(Navigation({ section: 'women-u17' }));
   assert.ok(nodes.some(n => n.props?.href === '/admin/national-teams/men-u17'));
   const select = nodes.find(n => n.type === 'select');
+  assert.deepEqual(nodes.filter(n => n.type === 'optgroup')
+    .map(n => [n.props.label, walk(n.props.children).map(child => child.props.value)]), [
+    ['U20, U19, U18', [20, 19, 18]],
+    ['U17, U16', [17, 16]],
+    ['U15, U14', [15, 14]],
+  ]);
+  assert.deepEqual(nodes.filter(n => n.type === 'option').map(n => n.props.value), ['senior', ...sections.NATIONAL_TEAM_AGES]);
+  assert.ok(!walk(Navigation({ section: 'men-u17' })).some(n => n.type === 'optgroup'));
   select.props.onChange({ target: { value: '20' } });
   select.props.onChange({ target: { value: 'senior' } });
   assert.deepEqual(pushed, ['/admin/national-teams/women-u20', '/admin/national-teams/women']);
