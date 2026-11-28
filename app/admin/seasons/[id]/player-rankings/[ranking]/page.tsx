@@ -5,6 +5,7 @@ export const generateMetadata = createEntityMetadata("Player Rankings", "season"
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { matchAssistCredits } from "@/lib/goal-assist-events";
 import { resolvePositionName } from "@/lib/people-format";
 import { goalkeeperCleanSheet } from "@/lib/substitutions";
 
@@ -145,6 +146,7 @@ export default async function SeasonPlayerRankingPage({
               events: {
                 include: {
                   person: true,
+                  assistPerson: ranking === "assists",
                 },
               },
               appearances: {
@@ -217,9 +219,12 @@ export default async function SeasonPlayerRankingPage({
   if (ranking === "assists") {
     for (const group of season.groups) {
       for (const match of group.matches) {
+        const people = new Map<number, NonNullable<Parameters<typeof increment>[0]>>();
         for (const ev of match.events) {
-          if (ev.eventType === "assist") increment(ev.person);
+          if (ev.person) people.set(ev.person.id, ev.person);
+          if (ev.assistPerson) people.set(ev.assistPerson.id, ev.assistPerson);
         }
+        for (const credit of matchAssistCredits(match.events)) increment(people.get(credit.personId) ?? null);
       }
     }
   }

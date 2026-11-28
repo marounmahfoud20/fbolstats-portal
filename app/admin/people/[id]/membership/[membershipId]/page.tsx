@@ -9,6 +9,7 @@ import MatchNoteIcon from "@/components/MatchNoteIcon";
 import { groupMembershipAppearances } from "@/lib/membership-appearances";
 import { resolvePositionName } from "@/lib/people-format";
 import { goalkeeperCleanSheet } from "@/lib/substitutions";
+import { matchAssistCredits } from "@/lib/goal-assist-events";
 
 function personName(first?: string | null, last?: string | null, common?: string | null) {
   return common || `${first || ""} ${last || ""}`.trim() || "Unknown";
@@ -89,7 +90,8 @@ export default async function MembershipPage(props: { params: Promise<{ id: stri
     const personEvents = a.match.events.filter((e) => e.personId === personId && e.teamId === membership.teamId);
     const goals = personEvents.filter((e) => e.eventType === "goal").length;
     const penaltyGoals = personEvents.filter((e) => e.eventType === "penalty_goal").length;
-    const assists = personEvents.filter((e) => eventMatches(e.eventType, ["assist"])).length;
+    const assists = matchAssistCredits(a.match.events)
+      .filter(credit => credit.personId === personId && credit.teamId === membership.teamId).length;
     const ownGoals = personEvents.filter((e) => e.eventType === "own_goal").length;
     const yellow = personEvents.filter((e) => e.eventType === "yellow_card").length;
     const secondYellow = personEvents.filter((e) => e.eventType === "second_yellow").length;

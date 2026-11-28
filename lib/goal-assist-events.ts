@@ -7,8 +7,8 @@ type GoalAssistEvent = {
   minute: string | null;
   extraTime: string | null;
   assistPersonId: number | null;
-  playerName: string;
-  assistPlayerName: string | null;
+  playerName?: string;
+  assistPlayerName?: string | null;
 };
 
 function eventKey(event: GoalAssistEvent): string | null {
@@ -63,4 +63,13 @@ export function combineGoalAndAssistEvents<T extends GoalAssistEvent>(events: re
     }
   }
   return events.filter((event) => !combinedAssists.has(event.id)).map((event) => combinedGoals.get(event.id) ?? event);
+}
+
+export function matchAssistCredits(events: readonly GoalAssistEvent[]) {
+  return combineGoalAndAssistEvents(events).flatMap(event => {
+    const type = event.eventType.trim().toLowerCase();
+    const personId = type === "assist" ? event.personId
+      : type === "goal" || type === "penalty_goal" ? event.assistPersonId : null;
+    return personId === null ? [] : [{ personId, teamId: event.teamId }];
+  });
 }
